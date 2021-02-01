@@ -1,0 +1,11 @@
+# exclude the node_modules folder
+node_modules
+
+# exclude builds
+demo/demo.js
+
+# tests
+tests/coverage
+
+# other
+.DS_Store
