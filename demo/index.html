@@ -4,14 +4,39 @@
     <title>Web Graph</title>
   </head>
   <body>
-    <h1>Web Graph Test</h1>
-    <div id="webgraph"></div>
+    <form id="searchForm">
+      <input
+        id="searchEndpoint"
+        type="text"
+        value="http://localhost:9002/?q="
+        placeholder="Endpoint"
+      />
+      <input id="searchInput" type="text" placeholder="Query" />
+      <button id="searchButton">Go!</button>
+    </form>
+
+    <div id="webGraph"></div>
 
     <style>
-      #webgraph {
-        width: 600px;
-        height: 600px;
-        background-color: gainsboro;
+      html,
+      body {
+        width: 100%;
+        height: 100%;
+        margin: 0;
+        padding: 0;
+        overflow: hidden;
+      }
+
+      #webGraph {
+        width: 100%;
+        height: 100%;
+      }
+
+      #searchForm {
+        position: absolute;
+        top: 0;
+        left: 0;
+        z-index: 100;
       }
     </style>
 
