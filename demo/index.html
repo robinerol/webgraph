@@ -5,6 +5,7 @@
   </head>
   <body>
     <form id="searchForm">
+      <label>API Endpoint</label>
       <input
         id="searchEndpoint"
         type="text"
@@ -12,7 +13,19 @@
         placeholder="Endpoint"
       />
       <input id="searchInput" type="text" placeholder="Query" />
-      <button id="searchButton">Go!</button>
+      <button id="searchButton">Load data!</button>
+      <hr />
+      <label>AppMode</label>
+      <div class="flex-row">
+        <button class="flex-row-child" id="appModeDynamic">Dynamic</button>
+        <button class="flex-row-child" id="appModeStatic">Static</button>
+      </div>
+      <hr />
+      <label>Layout</label>
+      <button id="layoutRandom">Random</button>
+      <button id="layoutCircular">Circular</button>
+      <button id="layoutCirclePack">CirclePack</button>
+      <button id="layoutForceAtlas2">ForceAtlas2</button>
     </form>
 
     <div id="webGraph"></div>
@@ -33,10 +46,36 @@
       }
 
       #searchForm {
+        display: flex;
+        flex-flow: column;
+
         position: absolute;
         top: 0;
         left: 0;
         z-index: 100;
+
+        width: 15%;
+        min-width: 150px;
+        padding: 5px;
+
+        background-color: rgba(150, 150, 150, 0.333);
+      }
+
+      .flex-row {
+        display: flex;
+        flex-flow: row;
+        flex-wrap: nowrap;
+
+        width: 100%;
+      }
+
+      .flex-row-child {
+        flex-grow: 1;
+        flex-basis: 0;
+      }
+
+      hr {
+        width: 100%;
       }
     </style>
 

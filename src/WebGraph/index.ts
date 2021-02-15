@@ -9,6 +9,7 @@ import {
   Layout,
   ILayoutConfiguration,
   DEFAULT_FORCEATLAS2_LAYOUT_OPTIONS,
+  AppMode,
 } from "../Configuration";
 
 /**
@@ -77,14 +78,49 @@ class WebGraph {
   }
 
   /**
-   * Helper function that returns whether the rendering is active or inactive.
+   * Getter returning whether the rendering is active or inactive.
    *
    * @returns true if {@link AppState.ACTIVE}, false if {@link AppState.INACTIVE}
    *
    * @public
    */
-  public get isActive(): boolean {
+  public get isRenderingActive(): boolean {
     return this.appState === AppState.ACTIVE;
+  }
+
+  /**
+   * Get the currently set mode of the application.
+   *
+   * @returns Returns the current {@link AppMode}.
+   *
+   * @public
+   */
+  public get appMode(): AppMode {
+    return <AppMode>this.configuration.getConfig("appMode");
+  }
+
+  /**
+   * Sets the application mode to the passed {@link AppMode}.
+   *
+   * @public
+   */
+  public set appMode(appMode: AppMode) {
+    this.configuration.setConfig("appMode", appMode);
+  }
+
+  /**
+   * Sets and apply layout
+   * @param layout
+   * @param layoutConfiguration
+   */
+  public setAndApplyLayout(
+    layout: Layout,
+    layoutConfiguration: ILayoutConfiguration
+  ): void {
+    this.configuration.setConfig("layout", layout);
+    this.configuration.setConfig("layoutConfiguration", layoutConfiguration);
+
+    this.applyLayout(layout, layoutConfiguration);
   }
 
   /**
@@ -98,7 +134,7 @@ class WebGraph {
    * @public
    */
   public render(): void {
-    if (this.isActive) throw new Error("Already rendering.");
+    if (this.isRenderingActive) throw new Error("Already rendering.");
 
     this.appState = AppState.ACTIVE;
 
@@ -112,7 +148,26 @@ class WebGraph {
       this.container,
       this.renderSettings
     );
+
+    this.registerEventHandlers();
   }
+
+  /**
+   * Destroys the WebGraph.
+   *
+   * @public
+   */
+  public destroy(): void {
+    this.renderer?.removeAllListeners();
+    this.renderer?.getMouseCaptor().removeAllListeners();
+    this.renderer?.clear();
+    this.renderer?.kill();
+    this.appState = AppState.INACTIVE;
+  }
+
+  /**---------------------------------------------------------------------------
+   * Internal methods.
+   *--------------------------------------------------------------------------*/
 
   /**
    * Applies a layout to the graph stored in [graphData]. @see {@link Layout} for all available
@@ -184,15 +239,87 @@ class WebGraph {
   }
 
   /**
-   * Destroys the WebGraph.
+   * Registers all available event handlers.
    *
-   * @public
+   * @internal
    */
-  public destroy(): void {
-    this.renderer?.removeAllListeners();
-    this.renderer?.clear();
-    this.renderer?.kill();
-    this.appState = AppState.INACTIVE;
+  private registerEventHandlers(): void {
+    if (!this.renderer) return;
+
+    // click listeners
+    // this.renderer.on("clickNode", ({ node }) => {
+    //   console.log("Click on node: " + node);
+    // });
+
+    // this.renderer.on("rightClickNode", ({ node }) => {
+    //   console.log("Right click on node: " + node);
+    // });
+
+    // hover listeners
+    // this.renderer.on("enterNode", ({ node }) => {
+    //   console.log("Enter node: " + node);
+    // });
+
+    // this.renderer.on("leaveNode", ({ node }) => {
+    //   console.log("Leave node: " + node);
+    // });
+
+    // drag listener
+    this.initializeDragListeners();
+  }
+
+  /**
+   * This method handles the dragging of nodes. If the {@link AppMode} is set to static,
+   * dragging is disabled. When being set to dynamic, nodes can be dragged.
+   *
+   * @internal
+   */
+  private initializeDragListeners(): void {
+    if (!this.renderer) return;
+
+    const camera = this.renderer.getCamera();
+    const mouseCaptor = this.renderer.getMouseCaptor();
+    let draggedNode: number | undefined;
+    let dragging = false;
+
+    this.renderer.on("downNode", (event) => {
+      if (this.appMode === AppMode.STATIC) return;
+
+      dragging = true;
+      draggedNode = event.node;
+      camera.disable();
+    });
+
+    mouseCaptor.on("mouseup", () => {
+      if (this.appMode === AppMode.STATIC) return;
+
+      dragging = false;
+      draggedNode = undefined;
+      camera.enable();
+    });
+
+    mouseCaptor.on("mousemove", (e) => {
+      if (
+        !this.renderer ||
+        this.appMode === AppMode.STATIC ||
+        !dragging ||
+        !draggedNode
+      ) {
+        return;
+      }
+
+      // get new position of node
+      const normalizationFunction = this.renderer.normalizationFunction;
+      if (normalizationFunction === null) return;
+
+      const pos = normalizationFunction.inverse(
+        camera.viewportToGraph(this.renderer, e)
+      );
+
+      // set new position of node
+      this.graphData.setNodeAttribute(draggedNode, "x", pos.x);
+      this.graphData.setNodeAttribute(draggedNode, "y", pos.y);
+    });
   }
 }
 

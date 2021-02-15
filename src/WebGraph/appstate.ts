@@ -7,11 +7,15 @@
 enum AppState {
   /**
    * When the {@link AppState} is set to ACTIVE, the application is rendering.
+   *
+   * {@label ACTIVE}
    */
   ACTIVE,
 
   /**
    * When the {@link AppState} is set to INACTIVE, the application is not rendering.
+   *
+   * {@label INACTIVE}
    */
   INACTIVE,
 }

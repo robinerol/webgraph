@@ -5,39 +5,15 @@ import {
   Utils,
   Layout,
   DEFAULT_FORCEATLAS2_ITERATIONS,
+  AppMode,
 } from "../src/index";
 import Graph from "graphology";
 
+/**---------------------------------------------------------------------------
+ * Graph drawing
+ *--------------------------------------------------------------------------*/
+let webGraph: WebGraph | undefined = undefined;
 const webGraphContainer = document.getElementById("webGraph");
-const searchButton = document.getElementById("searchButton");
-let webGraph: WebGraph;
-
-searchButton?.addEventListener("click", (e) => {
-  e.preventDefault();
-
-  const searchEndpointElement = document.getElementById("searchEndpoint");
-  const searchInputElement = document.getElementById("searchInput");
-
-  if (!searchEndpointElement || !searchInputElement) return;
-
-  // parse inputs to url
-  const url =
-    (<HTMLInputElement>searchEndpointElement).value +
-    encodeURIComponent((<HTMLInputElement>searchInputElement).value);
-
-  fetchGraphData(url);
-});
-
-async function fetchGraphData(url: string) {
-  // fetch json resource
-  await fetch(url)
-    .then((response) => response.json())
-    .then((json) => drawGraph(json))
-    .catch((e) => {
-      console.error(e);
-      drawExampleGraph();
-    });
-}
 
 function drawGraph(graphDataJSON: any[]) {
   if (!webGraphContainer) {
@@ -54,7 +30,7 @@ function drawGraph(graphDataJSON: any[]) {
     });
   });
 
-  if (webGraph?.isActive) webGraph.destroy();
+  if (webGraph?.isRenderingActive) webGraph.destroy();
 
   // initialize and render graph
   webGraph = new WebGraph(webGraphContainer, graph, {
@@ -95,14 +71,108 @@ function drawExampleGraph() {
 
   graph.addEdge("Node 1", "Node 2");
 
-  if (webGraph?.isActive) webGraph.destroy();
+  if (webGraph?.isRenderingActive) webGraph.destroy();
 
   webGraph = new WebGraph(webGraphContainer, graph);
 
   webGraph.render();
 }
 
-// render default graph example
-if (webGraphContainer) {
+window.onload = () => {
+  if (webGraphContainer === null) return;
+
+  // render default graph example
   drawExampleGraph();
+};
+
+/**---------------------------------------------------------------------------
+ * Settings Menu
+ *--------------------------------------------------------------------------*/
+/**---------------------------------
+ * Settings Menu - API endpoint
+ *--------------------------------*/
+document.getElementById("searchButton")?.addEventListener("click", (e) => {
+  e.preventDefault();
+
+  const searchEndpointElement = document.getElementById("searchEndpoint");
+  const searchInputElement = document.getElementById("searchInput");
+
+  if (!searchEndpointElement || !searchInputElement) return;
+
+  // parse inputs to url
+  const url =
+    (<HTMLInputElement>searchEndpointElement).value +
+    encodeURIComponent((<HTMLInputElement>searchInputElement).value);
+
+  fetchGraphData(url);
+});
+
+async function fetchGraphData(url: string) {
+  // fetch json resource
+  await fetch(url)
+    .then((response) => response.json())
+    .then((json) => drawGraph(json))
+    .catch((e) => {
+      console.error(e);
+      drawExampleGraph();
+    });
 }
+
+/**---------------------------------
+ * Settings Menu - App Mode
+ *--------------------------------*/
+document.getElementById("appModeDynamic")?.addEventListener("click", (e) => {
+  e.preventDefault();
+
+  if (!webGraph || !webGraph.isRenderingActive) return;
+
+  webGraph.appMode = AppMode.DYNAMIC;
+});
+
+document.getElementById("appModeStatic")?.addEventListener("click", (e) => {
+  e.preventDefault();
+
+  if (!webGraph || !webGraph.isRenderingActive) return;
+
+  webGraph.appMode = AppMode.STATIC;
+});
+
+/**---------------------------------
+ * Settings Menu - Layout
+ *--------------------------------*/
+document.getElementById("layoutRandom")?.addEventListener("click", (e) => {
+  e.preventDefault();
+
+  if (!webGraph || !webGraph.isRenderingActive) return;
+
+  webGraph.setAndApplyLayout(Layout.RANDOM, {});
+});
+
+document.getElementById("layoutCircular")?.addEventListener("click", (e) => {
+  e.preventDefault();
+
+  if (!webGraph || !webGraph.isRenderingActive) return;
+
+  webGraph.setAndApplyLayout(Layout.CIRCULAR, {});
+});
+
+document.getElementById("layoutCirclePack")?.addEventListener("click", (e) => {
+  e.preventDefault();
+
+  if (!webGraph || !webGraph.isRenderingActive) return;
+
+  webGraph.setAndApplyLayout(Layout.CIRCLEPACK, {});
+});
+
+document.getElementById("layoutForceAtlas2")?.addEventListener("click", (e) => {
+  e.preventDefault();
+
+  if (!webGraph || !webGraph.isRenderingActive) return;
+
+  webGraph.setAndApplyLayout(Layout.FORCEATLAS2, {
+    forceAtlas2LayoutOptions: {
+      iterations: DEFAULT_FORCEATLAS2_ITERATIONS,
+      preAppliedLayout: Layout.CIRCULAR,
+    },
+  });
+});
