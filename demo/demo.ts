@@ -27,6 +27,7 @@ function drawGraph(graphDataJSON: any[]) {
     graph.addNode(result.id, {
       label: result.content.originalTitle,
       size: Utils.getNodeSizeForValue(result.score, 25),
+      type: Math.round(Math.random()),
     });
   });
 
@@ -39,6 +40,37 @@ function drawGraph(graphDataJSON: any[]) {
       forceAtlas2LayoutOptions: {
         iterations: DEFAULT_FORCEATLAS2_ITERATIONS,
         preAppliedLayout: Layout.CIRCULAR,
+      },
+    },
+    contextMenus: {
+      0: {
+        entries: [
+          {
+            label: "delete node",
+            callback: () => {
+              console.log("todo: delete node");
+            },
+            icon: "https://test.test/test.jpg",
+          },
+        ],
+      },
+      1: {
+        entries: [
+          {
+            label: "delete node",
+            callback: () => {
+              console.log("todo: delete node");
+            },
+            icon: "https://test.test/test.jpg",
+          },
+          {
+            label: "add node",
+            callback: () => {
+              console.log("todo: add node");
+            },
+            icon: "https://test.test/test.jpg",
+          },
+        ],
       },
     },
   });

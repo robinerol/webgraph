@@ -1,5 +1,6 @@
 import { Layout, ILayoutConfiguration } from "./layouts";
 import { AppMode } from "./appmode";
+import { IContextMenu } from "./contextmenu";
 
 /**
  * Interface for the graphs configurations.
@@ -10,6 +11,8 @@ interface IGraphConfiguration {
   layout: Layout;
   layoutConfiguration: ILayoutConfiguration;
   appMode: AppMode;
+  contextMenus?: Record<number, IContextMenu>;
+  suppressContextMenu?: boolean;
 }
 
 /**
@@ -23,6 +26,7 @@ const defaultGraphConfiguration: IGraphConfiguration = {
     predefinedLayoutOptions: {},
   },
   appMode: AppMode.STATIC,
+  suppressContextMenu: false,
 };
 
 /**
@@ -72,7 +76,13 @@ class GraphConfiguration {
    */
   public getConfig<T extends keyof IGraphConfiguration>(
     fieldName: T
-  ): Layout | AppMode | ILayoutConfiguration {
+  ):
+    | Layout
+    | ILayoutConfiguration
+    | AppMode
+    | Record<number, IContextMenu>
+    | boolean
+    | undefined {
     return this.graphConfigurations[fieldName];
   }
 
@@ -88,11 +98,18 @@ class GraphConfiguration {
   public setConfig<T extends keyof IGraphConfiguration>(
     fieldName: T,
     value: IGraphConfiguration[T]
-  ): Layout | AppMode | ILayoutConfiguration {
+  ):
+    | Layout
+    | ILayoutConfiguration
+    | AppMode
+    | Record<number, IContextMenu>
+    | boolean
+    | undefined {
     return (this.graphConfigurations[fieldName] = value);
   }
 }
 
 export * from "./layouts";
 export * from "./appmode";
+export * from "./contextmenu";
 export { IGraphConfiguration, GraphConfiguration };

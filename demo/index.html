@@ -29,6 +29,7 @@
     </form>
 
     <div id="webGraph"></div>
+    <div id="webGraphCM" class="hide"></div>
 
     <style>
       html,
@@ -54,8 +55,7 @@
         left: 0;
         z-index: 100;
 
-        width: 15%;
-        min-width: 150px;
+        width: 150px;
         padding: 5px;
 
         background-color: rgba(150, 150, 150, 0.333);
@@ -76,6 +76,19 @@
 
       hr {
         width: 100%;
+      }
+
+      .show {
+        z-index: 1000;
+        position: absolute;
+        background-color: #c0c0c0;
+        border: 1px solid blue;
+        display: block;
+        margin: 0;
+      }
+
+      .hide {
+        display: none;
       }
     </style>
 

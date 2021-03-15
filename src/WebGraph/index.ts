@@ -10,6 +10,7 @@ import {
   ILayoutConfiguration,
   DEFAULT_FORCEATLAS2_LAYOUT_OPTIONS,
   AppMode,
+  IContextMenu,
 } from "../Configuration";
 
 /**
@@ -44,7 +45,7 @@ class WebGraph {
    * ```
    *
    * @example
-   * An example where all infos are provided
+   * An example where multiple infos are provided
    * ```
    * const container = document.getElementById("container");
    * const graph = new Graph();
@@ -147,6 +148,11 @@ class WebGraph {
       this.graphData,
       this.container,
       this.renderSettings
+      // {
+      //   hoverRenderer: (context, data, settings) => {
+      //     console.log("hover", context, data, settings);
+      //   },
+      // }
     );
 
     this.registerEventHandlers();
@@ -178,6 +184,8 @@ class WebGraph {
    * layout. This can be changed by also passing a {@link ILayoutConfiguration} with a custom
    * {@link IExtendedForceAtlas2LayoutOptions} holding a different {@label Layout} in the
    * [preAppliedLayout] field.
+   *
+   * @throws Error - If the selected layout and pre applied layout are both {@link Layout.FORCEATLAS2}
    *
    * @internal
    */
@@ -244,28 +252,105 @@ class WebGraph {
    * @internal
    */
   private registerEventHandlers(): void {
+    // context menu listeners
+    this.initializeContextMenuListeners();
+
+    // drag listeners
+    this.initializeDragListeners();
+  }
+
+  /**
+   * Initializes the context menu listeners. Loads all context menus as well as the
+   * "suppressContextMenu" value from the {@link ILayoutConfiguration} and initializes
+   * the listeners.
+   *
+   * @remarks - Regarding {@link IContextMenu}:
+   * The number given for a context menu represents the type the context
+   * menu belongs to:
+   * A node with type 0 would get the {@link IContextMenu} mapped to 0
+   * A node with type 1 would get the {@link IContextMenu} mapped to 1
+   * ...
+   *
+   * @internal
+   */
+  private initializeContextMenuListeners(): void {
     if (!this.renderer) return;
 
-    // click listeners
-    // this.renderer.on("clickNode", ({ node }) => {
-    //   console.log("Click on node: " + node);
-    // });
+    const cmelement = document.getElementById("webGraphCM");
+    let contextMenuOpen = false;
 
-    // this.renderer.on("rightClickNode", ({ node }) => {
-    //   console.log("Right click on node: " + node);
-    // });
+    this.renderer.on("rightClickNode", ({ node, event }) => {
+      if (event.original.type !== "contextmenu") return;
+      if (!cmelement) return;
 
-    // hover listeners
-    // this.renderer.on("enterNode", ({ node }) => {
-    //   console.log("Enter node: " + node);
-    // });
+      if (contextMenuOpen) {
+        // hide the context menu that's open
+        cmelement.className = "hide";
+        contextMenuOpen = false;
+      }
 
-    // this.renderer.on("leaveNode", ({ node }) => {
-    //   console.log("Leave node: " + node);
-    // });
+      event.preventDefault();
 
-    // drag listener
-    this.initializeDragListeners();
+      // load context menus from the active configuration
+      const allContextMenus = <Record<number, IContextMenu>>(
+        this.configuration.getConfig("contextMenus")
+      );
+      if (!allContextMenus) return;
+
+      // retrieve node type, if none was given use 0
+      const nodeType = this.graphData.getNodeAttribute(node, "type");
+      const type = nodeType ? nodeType : 0;
+
+      // retrieve nodes corresponding context menu
+      const contextMenu = allContextMenus[type];
+      if (!contextMenu) return;
+
+      // generate context menus content
+      const contextMenuContent = document.createElement("ol");
+      contextMenu.entries.forEach((ci) => {
+        const item: HTMLElement = document.createElement("li");
+
+        item.innerHTML = ci.label;
+
+        item.addEventListener("click", () => {
+          ci.callback();
+
+          // hide the context menu that's open
+          cmelement.className = "hide";
+          contextMenuOpen = false;
+        });
+
+        contextMenuContent.append(item);
+      });
+
+      // display the context menu
+      cmelement.innerHTML = "";
+      cmelement.append(contextMenuContent);
+      cmelement.className = "show";
+      cmelement.style.top = event.y + "px";
+      cmelement.style.left = event.x + "px";
+      contextMenuOpen = true;
+    });
+
+    this.container.addEventListener("click", () => {
+      if (!contextMenuOpen) return;
+      if (!cmelement) return;
+
+      // hide the context menu if open
+      cmelement.className = "hide";
+      contextMenuOpen = false;
+    });
+
+    // handles whether the default context menu is suppressed or not
+    this.container.addEventListener("contextmenu", (event) => {
+      const suppressContextMenu = <boolean>(
+        this.configuration.getConfig("suppressContextMenu")
+      );
+
+      if (!suppressContextMenu) return;
+
+      event.preventDefault();
+    });
   }
 
   /**
