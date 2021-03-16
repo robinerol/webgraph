@@ -27,7 +27,7 @@
     "graphology": "^0.19.3",
     "graphology-layout": "^0.4.0",
     "graphology-layout-forceatlas2": "^0.6.0",
-    "sigma": "^2.0.0-alpha40"
+    "sigma": "jacomyal/sigma.js.git#v2"
   },
   "devDependencies": {
     "@types/jest": "^26.0.20",
