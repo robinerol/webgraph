@@ -262,7 +262,8 @@ class WebGraph {
   /**
    * Initializes the context menu listeners. Loads all context menus as well as the
    * "suppressContextMenu" value from the {@link ILayoutConfiguration} and initializes
-   * the listeners.
+   * the listeners. When no {@link IContextMenu} is available, there will be no context
+   * menu on a right click on a node.
    *
    * @remarks - Regarding {@link IContextMenu}:
    * The number given for a context menu represents the type the context

@@ -1,6 +1,7 @@
 import { Layout, ILayoutConfiguration } from "./layouts";
 import { AppMode } from "./appmode";
 import { IContextMenu } from "./contextmenu";
+import { IHoverCallback } from "./hover";
 
 /**
  * Interface for the graphs configurations.
@@ -13,6 +14,7 @@ interface IGraphConfiguration {
   appMode: AppMode;
   contextMenus?: Record<number, IContextMenu>;
   suppressContextMenu?: boolean;
+  hoverCallbacks?: Record<number, IHoverCallback>;
 }
 
 /**
@@ -82,6 +84,7 @@ class GraphConfiguration {
     | AppMode
     | Record<number, IContextMenu>
     | boolean
+    | Record<number, IHoverCallback>
     | undefined {
     return this.graphConfigurations[fieldName];
   }
@@ -104,6 +107,7 @@ class GraphConfiguration {
     | AppMode
     | Record<number, IContextMenu>
     | boolean
+    | Record<number, IHoverCallback>
     | undefined {
     return (this.graphConfigurations[fieldName] = value);
   }
@@ -112,4 +116,5 @@ class GraphConfiguration {
 export * from "./layouts";
 export * from "./appmode";
 export * from "./contextmenu";
+export * from "./hover";
 export { IGraphConfiguration, GraphConfiguration };
