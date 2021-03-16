@@ -1,7 +1,7 @@
 import { Layout, ILayoutConfiguration } from "./layouts";
 import { AppMode } from "./appmode";
 import { IContextMenu } from "./contextmenu";
-import { IHoverCallback } from "./hover";
+import { IHoverCallback } from "./hovercallback";
 
 /**
  * Interface for the graphs configurations.
@@ -116,5 +116,5 @@ class GraphConfiguration {
 export * from "./layouts";
 export * from "./appmode";
 export * from "./contextmenu";
-export * from "./hover";
+export * from "./hovercallback";
 export { IGraphConfiguration, GraphConfiguration };

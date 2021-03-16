@@ -2,6 +2,9 @@ import Graph from "graphology";
 import { circlepack, circular, random } from "graphology-layout";
 import forceatlas2 from "graphology-layout-forceatlas2";
 import { WebGLRenderer } from "sigma";
+import { PartialButFor } from "sigma/types/utils";
+import { WebGLSettings } from "sigma/types/renderers/webgl/settings";
+import { NodeAttributes } from "sigma/types/types";
 import { AppState } from "./appstate";
 import {
   GraphConfiguration,
@@ -11,7 +14,9 @@ import {
   DEFAULT_FORCEATLAS2_LAYOUT_OPTIONS,
   AppMode,
   IContextMenu,
+  IHoverCallback,
 } from "../Configuration";
+import drawHover from "./Renderer/hover";
 
 /**
  * The WebGraph class represents the main endpoint of the module.
@@ -144,15 +149,12 @@ class WebGraph {
       <ILayoutConfiguration>this.configuration.getConfig("layoutConfiguration")
     );
 
+    this.modifyRenderSettings();
+
     this.renderer = new WebGLRenderer(
       this.graphData,
       this.container,
       this.renderSettings
-      // {
-      //   hoverRenderer: (context, data, settings) => {
-      //     console.log("hover", context, data, settings);
-      //   },
-      // }
     );
 
     this.registerEventHandlers();
@@ -174,6 +176,45 @@ class WebGraph {
   /**---------------------------------------------------------------------------
    * Internal methods.
    *--------------------------------------------------------------------------*/
+
+  /**
+   * Injects settings into the [this.renderSettings] variable.
+   *
+   * @internal
+   */
+  private modifyRenderSettings(): void {
+    // override the hover renderer
+    this.renderSettings.hoverRenderer = (
+      context: CanvasRenderingContext2D,
+      data: PartialButFor<
+        NodeAttributes,
+        "x" | "y" | "size" | "label" | "color"
+      >,
+      settings: WebGLSettings
+    ) => {
+      const hoverCallbacks: Record<number, IHoverCallback> = <
+        Record<number, IHoverCallback>
+      >this.configuration.getConfig("hoverCallbacks");
+
+      if (hoverCallbacks) {
+        // retrieve node type, if none was given use 0
+        const nodeType = this.graphData.getNodeAttribute(data.key, "type");
+        const type = nodeType ? nodeType : 0;
+
+        // retrieve nodes hover callback
+        const hoverCallback = hoverCallbacks[type];
+
+        if (hoverCallback) {
+          //TODO: load hover data from server and pass it on by executing: const dataToDisplay = hoverCallback.callback();
+          drawHover(context, data, settings);
+          return;
+        }
+      }
+
+      //TODO: no hover callback given, pass on default values
+      drawHover(context, data, settings);
+    };
+  }
 
   /**
    * Applies a layout to the graph stored in [graphData]. @see {@link Layout} for all available

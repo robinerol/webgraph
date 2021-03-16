@@ -22,12 +22,22 @@ function drawGraph(graphDataJSON: any[]) {
 
   const graph = new Graph();
 
+  const COLOR_PALETTE = [
+    "#EDAE49",
+    "#D1495B",
+    "#00798C",
+    "#30638E",
+    "#003D5B",
+    "#BBBDF6",
+  ];
+
   // create nodes
   graphDataJSON.forEach((result) => {
     graph.addNode(result.id, {
-      label: result.content.originalTitle,
+      label: result.content.originalTitle.substring(0, 10) + "...",
       size: Utils.getNodeSizeForValue(result.score, 25),
       type: Math.round(Math.random()),
+      color: COLOR_PALETTE[Math.round(Math.random() * 5)],
     });
   });
 
@@ -73,6 +83,7 @@ function drawGraph(graphDataJSON: any[]) {
         ],
       },
     },
+    suppressContextMenu: false,
   });
 
   webGraph.render();
