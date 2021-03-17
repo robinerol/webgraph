@@ -9,9 +9,7 @@
  *   entries: [
  *     {
  *       label: "delete node",
- *       callback: () => {
- *         console.log("todo: delete node");
- *       },
+ *       callback: () => console.log("todo: delete node"),
  *       icon: "https://example-link.to/fancy_icon.jpg",
  *     },
  *   ],
@@ -32,7 +30,7 @@ interface IContextMenu {
  * ```
  * const cmitem: IContextMenuItem = {
  *   label: "Delete Node",
- *   callback: () => { console.log("todo: delete node") },
+ *   callback: (key: string) => console.log("todo: delete node " + key),
  *   icon: "https://example-link.to/fancy_icon.jpg",
  * }
  * ```
@@ -41,7 +39,7 @@ interface IContextMenu {
  */
 interface IContextMenuItem {
   label: string;
-  callback: () => void;
+  callback: (key: string) => void;
   icon?: string;
 }
 

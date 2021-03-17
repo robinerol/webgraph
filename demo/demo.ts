@@ -52,14 +52,21 @@ function drawGraph(graphDataJSON: any[]) {
         preAppliedLayout: Layout.CIRCULAR,
       },
     },
+    appMode: AppMode.DYNAMIC,
+    hoverCallbacks: {
+      0: {
+        callback: (key: string) => console.log("type 0, hover over: " + key),
+      },
+      1: {
+        callback: (key: string) => console.log("type 1, hover over: " + key),
+      },
+    },
     contextMenus: {
       0: {
         entries: [
           {
             label: "delete node",
-            callback: () => {
-              console.log("todo: delete node");
-            },
+            callback: (key: string) => console.log("todo: delete node " + key),
             icon: "https://test.test/test.jpg",
           },
         ],
@@ -68,16 +75,12 @@ function drawGraph(graphDataJSON: any[]) {
         entries: [
           {
             label: "delete node",
-            callback: () => {
-              console.log("todo: delete node");
-            },
+            callback: (key: string) => console.log("todo: delete node " + key),
             icon: "https://test.test/test.jpg",
           },
           {
             label: "add node",
-            callback: () => {
-              console.log("todo: add node");
-            },
+            callback: (key: string) => console.log("todo: add node " + key),
             icon: "https://test.test/test.jpg",
           },
         ],

@@ -5,14 +5,14 @@
  * An example usage.
  * ```
  * const hc: IHoverCallback = {
- *   callback: () => { console.log("todo: hover") },
+ *   callback: (key: string) => console.log("hover over " + key),
  * }
  * ```
  *
  * {@label IHoverCallback}
  */
 interface IHoverCallback {
-  callback: () => void;
+  callback: (key: string) => void;
 }
 
 export { IHoverCallback };

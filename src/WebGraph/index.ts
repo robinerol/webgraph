@@ -205,13 +205,12 @@ class WebGraph {
         const hoverCallback = hoverCallbacks[type];
 
         if (hoverCallback) {
-          //TODO: load hover data from server and pass it on by executing: const dataToDisplay = hoverCallback.callback();
+          hoverCallback.callback(data.key);
           drawHover(context, data, settings);
           return;
         }
       }
 
-      //TODO: no hover callback given, pass on default values
       drawHover(context, data, settings);
     };
   }
@@ -355,7 +354,7 @@ class WebGraph {
         item.innerHTML = ci.label;
 
         item.addEventListener("click", () => {
-          ci.callback();
+          ci.callback(node);
 
           // hide the context menu that's open
           cmelement.className = "hide";
