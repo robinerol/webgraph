@@ -8,6 +8,7 @@ import {
   AppMode,
 } from "../src/index";
 import Graph from "graphology";
+import { SerializedEdge } from "graphology-types";
 
 /**---------------------------------------------------------------------------
  * Graph drawing
@@ -44,7 +45,7 @@ function drawGraph(graphDataJSON: any[]) {
   if (webGraph?.isRenderingActive) webGraph.destroy();
 
   // initialize and render graph
-  webGraph = new WebGraph(webGraphContainer, graph, {
+  webGraph = new WebGraph(webGraphContainer, graph, undefined, {
     layout: Layout.FORCEATLAS2,
     layoutConfiguration: {
       forceAtlas2LayoutOptions: {
@@ -98,6 +99,7 @@ function drawExampleGraph() {
   }
 
   const graph = new Graph();
+  const edges: Array<SerializedEdge> = [];
 
   graph.addNode("Node 1", {
     label: "Node 1",
@@ -115,11 +117,11 @@ function drawExampleGraph() {
     size: 10,
   });
 
-  graph.addEdge("Node 1", "Node 2");
+  edges.push({ source: "Node 1", target: "Node 2" });
 
   if (webGraph?.isRenderingActive) webGraph.destroy();
 
-  webGraph = new WebGraph(webGraphContainer, graph);
+  webGraph = new WebGraph(webGraphContainer, graph, edges);
 
   webGraph.render();
 }
@@ -221,4 +223,23 @@ document.getElementById("layoutForceAtlas2")?.addEventListener("click", (e) => {
       preAppliedLayout: Layout.CIRCULAR,
     },
   });
+});
+
+/**---------------------------------
+ * Settings Menu - Edges
+ *--------------------------------*/
+document.getElementById("edgeShow")?.addEventListener("click", (e) => {
+  e.preventDefault();
+
+  if (!webGraph || !webGraph.isRenderingActive) return;
+
+  webGraph.toggleEdgeRendering(true);
+});
+
+document.getElementById("edgeHide")?.addEventListener("click", (e) => {
+  e.preventDefault();
+
+  if (!webGraph || !webGraph.isRenderingActive) return;
+
+  webGraph.toggleEdgeRendering(false);
 });

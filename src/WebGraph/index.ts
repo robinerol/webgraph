@@ -1,4 +1,5 @@
 import Graph from "graphology";
+import { SerializedEdge, EdgeKey } from "graphology-types";
 import { circlepack, circular, random } from "graphology-layout";
 import forceatlas2 from "graphology-layout-forceatlas2";
 import { WebGLRenderer } from "sigma";
@@ -26,6 +27,7 @@ import drawHover from "./Renderer/hover";
 class WebGraph {
   private container: HTMLElement;
   private graphData: Graph;
+  private edges: Array<SerializedEdge> | undefined = undefined;
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   private renderSettings: Record<string, any>;
   private configuration: GraphConfiguration;
@@ -37,6 +39,7 @@ class WebGraph {
    *
    * @param container - The container where to hook the graph into
    * @param graphData - The graph to be rendered
+   * @param [edges] - An array of edges of the graph. @remarks Edges can also be applied to the graphData object directly, this is just an additional option.
    * @param [graphConfiguration] - Configurations to be applied. @see {@link IGraphConfiguration} for all available configs.
    * @param [renderSettings] - Render settings to be applied and directly passed to the sigma.js WebGLRenderer. @see {@link https://github.com/jacomyal/sigma.js/blob/v2/src/renderers/webgl/settings.ts} for all available configs.
    *
@@ -67,18 +70,20 @@ class WebGraph {
    *    renderEdgeLabels: true,
    * }
    *
-   * const webGraph = new WebGraph(container, graph, graphConfig, renderSettings);
+   * const webGraph = new WebGraph(container, graph, undefined, graphConfig, renderSettings);
    * ```
    */
   constructor(
     container: HTMLElement,
     graphData: Graph,
+    edges: Array<SerializedEdge> | undefined = undefined,
     graphConfiguration: Partial<IGraphConfiguration> = {},
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     renderSettings: Record<string, any> = {}
   ) {
     this.container = container;
     this.graphData = graphData;
+    this.edges = edges;
     this.configuration = new GraphConfiguration(graphConfiguration);
     this.renderSettings = renderSettings;
   }
@@ -108,6 +113,8 @@ class WebGraph {
   /**
    * Sets the application mode to the passed {@link AppMode}.
    *
+   * @param appMode - The {@link AppMode} the application should switch to
+   *
    * @public
    */
   public set appMode(appMode: AppMode) {
@@ -115,9 +122,12 @@ class WebGraph {
   }
 
   /**
-   * Sets and apply layout
-   * @param layout
-   * @param layoutConfiguration
+   * Sets and applies the required layout to the graph.
+   *
+   * @param layout - The {@link Layout} to be set and applied
+   * @param layoutConfiguration - The {@link ILayoutConfiguration} of the layout
+   *
+   * @public
    */
   public setAndApplyLayout(
     layout: Layout,
@@ -134,6 +144,8 @@ class WebGraph {
    * selected layout to the graph and initializing the WebGLRenderer provided
    * by sigma.js.
    *
+   * {@see https://github.com/jacomyal/sigma.js/tree/v2}
+   *
    * @throws Error
    * This is thrown if the rendering is already active.
    *
@@ -143,6 +155,8 @@ class WebGraph {
     if (this.isRenderingActive) throw new Error("Already rendering.");
 
     this.appState = AppState.ACTIVE;
+
+    this.mergeEdgesIntoGraph();
 
     this.applyLayout(
       <Layout>this.configuration.getConfig("layout"),
@@ -158,6 +172,42 @@ class WebGraph {
     );
 
     this.registerEventHandlers();
+  }
+
+  /**
+   * Removes all existing edges and replaces them with the given array
+   * of edges.
+   *
+   * @param edges - An array holding the new Graphology.SerializedEdge (s)
+   *
+   * @public
+   */
+  public updateEdges(edges: Array<SerializedEdge>): void {
+    if (!edges) return;
+
+    this.graphData.clearEdges();
+    this.edges = edges;
+    this.mergeEdgesIntoGraph();
+  }
+
+  /**
+   * Changes whether edges are rendered or not.
+   *
+   * @param renderEdges - if true: renders edges, if false: removes edges
+   *
+   * @public
+   */
+  public toggleEdgeRendering(renderEdges: boolean): void {
+    if (!renderEdges) {
+      if (this.graphData.edges().length <= 0) return;
+
+      this.graphData.clearEdges();
+
+      return;
+    }
+
+    if (this.graphData.edges().length > 0) return;
+    this.mergeEdgesIntoGraph();
   }
 
   /**
@@ -204,15 +254,35 @@ class WebGraph {
         // retrieve nodes hover callback
         const hoverCallback = hoverCallbacks[type];
 
-        if (hoverCallback) {
-          hoverCallback.callback(data.key);
-          drawHover(context, data, settings);
-          return;
-        }
+        hoverCallback?.callback(data.key);
       }
 
       drawHover(context, data, settings);
     };
+  }
+
+  /**
+   * Merges edges into the graph.
+   *
+   * @internal
+   */
+  private mergeEdgesIntoGraph(): void {
+    if (!this.edges) return;
+
+    this.edges.forEach((edge) => {
+      const key: EdgeKey | undefined = edge.key;
+
+      if (key) {
+        this.graphData.addEdgeWithKey(
+          key,
+          edge.source,
+          edge.target,
+          edge.attributes
+        );
+      } else {
+        this.graphData.addEdge(edge.source, edge.target, edge.attributes);
+      }
+    });
   }
 
   /**
