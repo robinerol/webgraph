@@ -7,8 +7,7 @@ import {
   DEFAULT_FORCEATLAS2_ITERATIONS,
   AppMode,
 } from "../src/index";
-import Graph from "graphology";
-import { SerializedEdge } from "graphology-types";
+import Graph, { MultiGraph } from "graphology";
 
 /**---------------------------------------------------------------------------
  * Graph drawing
@@ -21,7 +20,7 @@ function drawGraph(graphDataJSON: any[]) {
     throw new Error("No div container with the ID 'webGraph' has been found.");
   }
 
-  const graph = new Graph();
+  const graph = new MultiGraph();
 
   const COLOR_PALETTE = [
     "#EDAE49",
@@ -42,10 +41,24 @@ function drawGraph(graphDataJSON: any[]) {
     });
   });
 
+  // create random edges
+  const nodes = graph.nodes();
+  for (let i = 0; i < nodes.length; i++) {
+    const sourceNode = nodes[Math.round(Math.random() * nodes.length - 1)];
+    const targetNode = nodes[Math.round(Math.random() * nodes.length - 1)];
+
+    if (!sourceNode || !targetNode) continue;
+
+    graph.addEdge(sourceNode, targetNode, {
+      weight: Math.random(),
+      color: "#ccc",
+    });
+  }
+
   if (webGraph?.isRenderingActive) webGraph.destroy();
 
   // initialize and render graph
-  webGraph = new WebGraph(webGraphContainer, graph, undefined, {
+  webGraph = new WebGraph(webGraphContainer, graph, {
     layout: Layout.FORCEATLAS2,
     layoutConfiguration: {
       forceAtlas2LayoutOptions: {
@@ -99,7 +112,6 @@ function drawExampleGraph() {
   }
 
   const graph = new Graph();
-  const edges: Array<SerializedEdge> = [];
 
   graph.addNode("Node 1", {
     label: "Node 1",
@@ -117,11 +129,20 @@ function drawExampleGraph() {
     size: 10,
   });
 
-  edges.push({ source: "Node 1", target: "Node 2" });
+  graph.addNode("Node 3", {
+    label: "Node 3",
+    x: 0,
+    y: 0,
+    color: "#AFF",
+    size: 10,
+  });
+
+  graph.addEdge("Node 1", "Node 2", { weight: 0.5, color: "#ccc" });
+  graph.addEdge("Node 1", "Node 3", { weight: 1.0, color: "#ccc" });
 
   if (webGraph?.isRenderingActive) webGraph.destroy();
 
-  webGraph = new WebGraph(webGraphContainer, graph, edges);
+  webGraph = new WebGraph(webGraphContainer, graph);
 
   webGraph.render();
 }
@@ -221,6 +242,9 @@ document.getElementById("layoutForceAtlas2")?.addEventListener("click", (e) => {
     forceAtlas2LayoutOptions: {
       iterations: DEFAULT_FORCEATLAS2_ITERATIONS,
       preAppliedLayout: Layout.CIRCULAR,
+      settings: {
+        edgeWeightInfluence: 1,
+      },
     },
   });
 });

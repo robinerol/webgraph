@@ -1,11 +1,11 @@
 import Graph from "graphology";
-import { SerializedEdge, EdgeKey } from "graphology-types";
+import { SerializedEdge, EdgeKey, NodeKey } from "graphology-types";
 import { circlepack, circular, random } from "graphology-layout";
 import forceatlas2 from "graphology-layout-forceatlas2";
 import { WebGLRenderer } from "sigma";
 import { PartialButFor } from "sigma/types/utils";
 import { WebGLSettings } from "sigma/types/renderers/webgl/settings";
-import { NodeAttributes } from "sigma/types/types";
+import { NodeAttributes, EdgeAttributes } from "sigma/types/types";
 import { AppState } from "./appstate";
 import {
   GraphConfiguration,
@@ -27,19 +27,20 @@ import drawHover from "./Renderer/hover";
 class WebGraph {
   private container: HTMLElement;
   private graphData: Graph;
-  private edges: Array<SerializedEdge> | undefined = undefined;
+  private edges: Array<SerializedEdge> = [];
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   private renderSettings: Record<string, any>;
   private configuration: GraphConfiguration;
   private appState: AppState = AppState.INACTIVE;
   private renderer: WebGLRenderer | undefined = undefined;
+  private highlighedNodes = new Set<NodeKey>();
+  private highlighedEdges = new Set<EdgeKey>();
 
   /**
    * Creates an instance of web graph.
    *
    * @param container - The container where to hook the graph into
    * @param graphData - The graph to be rendered
-   * @param [edges] - An array of edges of the graph. @remarks Edges can also be applied to the graphData object directly, this is just an additional option.
    * @param [graphConfiguration] - Configurations to be applied. @see {@link IGraphConfiguration} for all available configs.
    * @param [renderSettings] - Render settings to be applied and directly passed to the sigma.js WebGLRenderer. @see {@link https://github.com/jacomyal/sigma.js/blob/v2/src/renderers/webgl/settings.ts} for all available configs.
    *
@@ -70,20 +71,18 @@ class WebGraph {
    *    renderEdgeLabels: true,
    * }
    *
-   * const webGraph = new WebGraph(container, graph, undefined, graphConfig, renderSettings);
+   * const webGraph = new WebGraph(container, graph, graphConfig, renderSettings);
    * ```
    */
   constructor(
     container: HTMLElement,
     graphData: Graph,
-    edges: Array<SerializedEdge> | undefined = undefined,
     graphConfiguration: Partial<IGraphConfiguration> = {},
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     renderSettings: Record<string, any> = {}
   ) {
     this.container = container;
     this.graphData = graphData;
-    this.edges = edges;
     this.configuration = new GraphConfiguration(graphConfiguration);
     this.renderSettings = renderSettings;
   }
@@ -156,8 +155,6 @@ class WebGraph {
 
     this.appState = AppState.ACTIVE;
 
-    this.mergeEdgesIntoGraph();
-
     this.applyLayout(
       <Layout>this.configuration.getConfig("layout"),
       <ILayoutConfiguration>this.configuration.getConfig("layoutConfiguration")
@@ -200,6 +197,17 @@ class WebGraph {
   public toggleEdgeRendering(renderEdges: boolean): void {
     if (!renderEdges) {
       if (this.graphData.edges().length <= 0) return;
+
+      if (this.edges.length <= 0) {
+        this.graphData.forEachEdge((edge, attributes, source, target) => {
+          this.edges.push({
+            key: edge,
+            source: source,
+            target: target,
+            attributes: attributes,
+          });
+        });
+      }
 
       this.graphData.clearEdges();
 
@@ -259,6 +267,33 @@ class WebGraph {
 
       drawHover(context, data, settings);
     };
+
+    // create reducers for highlighting sub graphs on hover if turned on
+    if (<boolean>this.configuration.getConfig("highlightSubGraphOnHover")) {
+      const hcolor = <string>(
+        this.configuration.getConfig("subGraphHighlightColor")
+      );
+
+      const nodeReducer = (node: NodeKey, data: NodeAttributes) => {
+        if (this.highlighedNodes.has(node)) {
+          return { ...data, color: hcolor, zIndex: 1 };
+        }
+
+        return data;
+      };
+
+      const edgeReducer = (edge: EdgeKey, data: EdgeAttributes) => {
+        if (this.highlighedEdges.has(edge)) {
+          return { ...data, color: hcolor, zIndex: 1 };
+        }
+
+        return data;
+      };
+
+      this.renderSettings.nodeReducer = nodeReducer;
+      this.renderSettings.edgeReducer = edgeReducer;
+      this.renderSettings.zIndex = true;
+    }
   }
 
   /**
@@ -267,7 +302,7 @@ class WebGraph {
    * @internal
    */
   private mergeEdgesIntoGraph(): void {
-    if (!this.edges) return;
+    if (this.edges.length <= 0) return;
 
     this.edges.forEach((edge) => {
       const key: EdgeKey | undefined = edge.key;
@@ -283,6 +318,8 @@ class WebGraph {
         this.graphData.addEdge(edge.source, edge.target, edge.attributes);
       }
     });
+
+    this.edges = [];
   }
 
   /**
@@ -367,6 +404,9 @@ class WebGraph {
 
     // drag listeners
     this.initializeDragListeners();
+
+    // hover highlight listeners
+    this.initializeHoverHighlightingListeners();
   }
 
   /**
@@ -515,6 +555,47 @@ class WebGraph {
       // set new position of node
       this.graphData.setNodeAttribute(draggedNode, "x", pos.x);
       this.graphData.setNodeAttribute(draggedNode, "y", pos.y);
+    });
+  }
+
+  /**
+   * Initializes listeners to highlight a nodes sub graph on hover.
+   * This can be turned on or off using the 'highlightSubGraphOnHover'
+   * setting in the configuration, which is true by default.
+   *
+   * @internal
+   */
+  private initializeHoverHighlightingListeners(): void {
+    if (!this.renderer) return;
+    if (!(<boolean>this.configuration.getConfig("highlightSubGraphOnHover")))
+      return;
+
+    this.renderer.on("enterNode", ({ node }) => {
+      // add nodes
+      this.highlighedNodes = new Set(this.graphData.neighbors(node));
+      this.highlighedNodes.add(node);
+
+      // add edges
+      this.highlighedEdges = new Set(this.graphData.edges(node));
+
+      this.renderer?.refresh();
+    });
+
+    this.renderer.on("leaveNode", ({ node }) => {
+      // reset the zIndex
+      this.graphData.setNodeAttribute(node, "zIndex", 0);
+      this.highlighedNodes.forEach((node) => {
+        this.graphData.setNodeAttribute(node, "zIndex", 0);
+      });
+      this.highlighedEdges.forEach((edge) => {
+        this.graphData.setEdgeAttribute(edge, "zIndex", 0);
+      });
+
+      // clear the lists
+      this.highlighedNodes.clear();
+      this.highlighedEdges.clear();
+
+      this.renderer?.refresh();
     });
   }
 }

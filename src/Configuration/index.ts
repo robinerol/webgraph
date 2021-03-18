@@ -15,6 +15,8 @@ interface IGraphConfiguration {
   contextMenus?: Record<number, IContextMenu>;
   suppressContextMenu?: boolean;
   hoverCallbacks?: Record<number, IHoverCallback>;
+  highlightSubGraphOnHover?: boolean;
+  subGraphHighlightColor?: string;
 }
 
 /**
@@ -29,6 +31,8 @@ const defaultGraphConfiguration: IGraphConfiguration = {
   },
   appMode: AppMode.STATIC,
   suppressContextMenu: false,
+  highlightSubGraphOnHover: true,
+  subGraphHighlightColor: "#e57a2d",
 };
 
 /**
@@ -85,6 +89,7 @@ class GraphConfiguration {
     | Record<number, IContextMenu>
     | boolean
     | Record<number, IHoverCallback>
+    | string
     | undefined {
     return this.graphConfigurations[fieldName];
   }
@@ -108,6 +113,7 @@ class GraphConfiguration {
     | Record<number, IContextMenu>
     | boolean
     | Record<number, IHoverCallback>
+    | string
     | undefined {
     return (this.graphConfigurations[fieldName] = value);
   }
