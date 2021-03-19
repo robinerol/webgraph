@@ -33,8 +33,8 @@ class WebGraph {
   private configuration: GraphConfiguration;
   private appState: AppState = AppState.INACTIVE;
   private renderer: WebGLRenderer | undefined = undefined;
-  private highlighedNodes = new Set<NodeKey>();
-  private highlighedEdges = new Set<EdgeKey>();
+  private highlightedNodes = new Set<NodeKey>();
+  private highlightedEdges = new Set<EdgeKey>();
 
   /**
    * Creates an instance of web graph.
@@ -219,6 +219,30 @@ class WebGraph {
   }
 
   /**
+   * Drops a node from the graph.
+   *
+   * @param nodeKey - The key of the node to drop
+   *
+   * @public
+   */
+  public dropNode(nodeKey: string): void {
+    if (!this.graphData.hasNode(nodeKey)) return;
+
+    if (this.highlightedNodes.has(nodeKey))
+      this.highlightedNodes.delete(nodeKey);
+
+    const edges = this.graphData.edges(nodeKey);
+    edges.forEach((edge) => {
+      if (this.highlightedEdges.has(edge)) {
+        this.highlightedEdges.delete(edge);
+      }
+    });
+
+    this.graphData.dropNode(nodeKey);
+    this.renderer?.refresh();
+  }
+
+  /**
    * Destroys the WebGraph.
    *
    * @public
@@ -250,6 +274,8 @@ class WebGraph {
       >,
       settings: WebGLSettings
     ) => {
+      if (!this.graphData.hasNode(data.key)) return;
+
       const hoverCallbacks: Record<number, IHoverCallback> = <
         Record<number, IHoverCallback>
       >this.configuration.getConfig("hoverCallbacks");
@@ -275,7 +301,7 @@ class WebGraph {
       );
 
       const nodeReducer = (node: NodeKey, data: NodeAttributes) => {
-        if (this.highlighedNodes.has(node)) {
+        if (this.highlightedNodes.has(node)) {
           return { ...data, color: hcolor, zIndex: 1 };
         }
 
@@ -283,7 +309,7 @@ class WebGraph {
       };
 
       const edgeReducer = (edge: EdgeKey, data: EdgeAttributes) => {
-        if (this.highlighedEdges.has(edge)) {
+        if (this.highlightedEdges.has(edge)) {
           return { ...data, color: hcolor, zIndex: 1 };
         }
 
@@ -572,28 +598,31 @@ class WebGraph {
 
     this.renderer.on("enterNode", ({ node }) => {
       // add nodes
-      this.highlighedNodes = new Set(this.graphData.neighbors(node));
-      this.highlighedNodes.add(node);
+      this.highlightedNodes = new Set(this.graphData.neighbors(node));
+      this.highlightedNodes.add(node);
 
       // add edges
-      this.highlighedEdges = new Set(this.graphData.edges(node));
+      this.highlightedEdges = new Set(this.graphData.edges(node));
 
       this.renderer?.refresh();
     });
 
     this.renderer.on("leaveNode", ({ node }) => {
       // reset the zIndex
-      this.graphData.setNodeAttribute(node, "zIndex", 0);
-      this.highlighedNodes.forEach((node) => {
+      if (this.graphData.hasNode(node)) {
+        // check that hovered node is still part of the graph
+        this.graphData.setNodeAttribute(node, "zIndex", 0);
+      }
+      this.highlightedNodes.forEach((node) => {
         this.graphData.setNodeAttribute(node, "zIndex", 0);
       });
-      this.highlighedEdges.forEach((edge) => {
+      this.highlightedEdges.forEach((edge) => {
         this.graphData.setEdgeAttribute(edge, "zIndex", 0);
       });
 
       // clear the lists
-      this.highlighedNodes.clear();
-      this.highlighedEdges.clear();
+      this.highlightedNodes.clear();
+      this.highlightedEdges.clear();
 
       this.renderer?.refresh();
     });

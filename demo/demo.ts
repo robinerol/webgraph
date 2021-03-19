@@ -79,8 +79,8 @@ function drawGraph(graphDataJSON: any[]) {
       0: {
         entries: [
           {
-            label: "delete node",
-            callback: (key: string) => console.log("todo: delete node " + key),
+            label: "drop node",
+            callback: (key: string) => webGraph?.dropNode(key),
             icon: "https://test.test/test.jpg",
           },
         ],
@@ -88,8 +88,8 @@ function drawGraph(graphDataJSON: any[]) {
       1: {
         entries: [
           {
-            label: "delete node",
-            callback: (key: string) => console.log("todo: delete node " + key),
+            label: "drop node",
+            callback: (key: string) => webGraph?.dropNode(key),
             icon: "https://test.test/test.jpg",
           },
           {
