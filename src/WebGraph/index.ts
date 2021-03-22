@@ -1,5 +1,6 @@
 import Graph from "graphology";
 import {
+  SerializedGraph,
   SerializedNode,
   SerializedEdge,
   EdgeKey,
@@ -81,13 +82,19 @@ class WebGraph {
    */
   constructor(
     container: HTMLElement,
-    graphData: Graph,
+    graphData: Graph | SerializedGraph,
     graphConfiguration: Partial<IGraphConfiguration> = {},
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     renderSettings: Record<string, any> = {}
   ) {
     this.container = container;
-    this.graphData = graphData;
+
+    if (graphData instanceof Graph) {
+      this.graphData = graphData;
+    } else {
+      this.graphData = Graph.from(graphData);
+    }
+
     this.configuration = new GraphConfiguration(graphConfiguration);
     this.renderSettings = renderSettings;
   }
@@ -228,6 +235,8 @@ class WebGraph {
    * the attributes of the existing and the new node will be merged.
    *
    * @param nodes - An array holding all SerializedNodes to merge into the graph
+   *
+   * @public
    */
   public mergeNodes(nodes: Array<SerializedNode>): void {
     if (nodes.length <= 0) return;
@@ -278,6 +287,25 @@ class WebGraph {
     this.renderer?.clear();
     this.renderer?.kill();
     this.appState = AppState.INACTIVE;
+  }
+
+  /**
+   * Exports the graph as a Graphology.SerializedGraph object.
+   *
+   * @param [excludeEdges] - whether the edges of the graph should be included or excluded
+   *
+   * @returns the graph as SerializedGraph object
+   *
+   * @public
+   */
+  public exportGraph(excludeEdges = false): SerializedGraph {
+    if (excludeEdges) {
+      this.graphData.clearEdges();
+    } else {
+      this.mergeEdgesIntoGraph();
+    }
+
+    return this.graphData.export();
   }
 
   /**---------------------------------------------------------------------------
