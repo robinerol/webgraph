@@ -1,5 +1,10 @@
 import Graph from "graphology";
-import { SerializedEdge, EdgeKey, NodeKey } from "graphology-types";
+import {
+  SerializedNode,
+  SerializedEdge,
+  EdgeKey,
+  NodeKey,
+} from "graphology-types";
 import { circlepack, circular, random } from "graphology-layout";
 import forceatlas2 from "graphology-layout-forceatlas2";
 import { WebGLRenderer } from "sigma";
@@ -219,6 +224,22 @@ class WebGraph {
   }
 
   /**
+   * Adds a node if not present already. If the node exists already,
+   * the attributes of the existing and the new node will be merged.
+   *
+   * @param nodes - An array holding all SerializedNodes to merge into the graph
+   */
+  public mergeNodes(nodes: Array<SerializedNode>): void {
+    if (nodes.length <= 0) return;
+
+    nodes.forEach((node) =>
+      this.graphData.mergeNode(node.key, node.attributes)
+    );
+
+    this.renderer?.refresh();
+  }
+
+  /**
    * Drops a node from the graph.
    *
    * @param nodeKey - The key of the node to drop
@@ -228,9 +249,12 @@ class WebGraph {
   public dropNode(nodeKey: string): void {
     if (!this.graphData.hasNode(nodeKey)) return;
 
+    // remove node from highlightedNodes set
     if (this.highlightedNodes.has(nodeKey))
       this.highlightedNodes.delete(nodeKey);
 
+    // remove all to the node connected edges that are currently being highlighted
+    // from the highlightedEdges set
     const edges = this.graphData.edges(nodeKey);
     edges.forEach((edge) => {
       if (this.highlightedEdges.has(edge)) {
@@ -238,6 +262,7 @@ class WebGraph {
       }
     });
 
+    // drop the node and refresh
     this.graphData.dropNode(nodeKey);
     this.renderer?.refresh();
   }
