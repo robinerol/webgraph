@@ -15,12 +15,18 @@ module.exports = {
       {
         test: /\.ts$/,
         loader: "ts-loader",
-        include: [PATHS.src, PATHS.demo],
+        options: {
+          allowTsInNodeModules: true,
+        },
+      },
+      {
+        test: /\.glsl$/,
+        loader: "ts-shader-loader",
       },
     ],
   },
   resolve: {
-    extensions: [".ts", ".js"],
+    extensions: [".ts", ".js", ".glsl"],
   },
   output: {
     filename: "demo.js",

@@ -24,6 +24,7 @@ import {
   IHoverCallback,
 } from "../Configuration";
 import drawHover from "./Renderer/hover";
+import CustomNodeProgram from "./Program";
 
 /**
  * The WebGraph class represents the main endpoint of the module.
@@ -373,6 +374,11 @@ class WebGraph {
       this.renderSettings.edgeReducer = edgeReducer;
       this.renderSettings.zIndex = true;
     }
+
+    // apply custom node program
+    this.renderSettings.nodeProgramClasses = {
+      circle: CustomNodeProgram,
+    };
   }
 
   /**
