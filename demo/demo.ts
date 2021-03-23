@@ -6,6 +6,7 @@ import {
   Layout,
   DEFAULT_FORCEATLAS2_ITERATIONS,
   AppMode,
+  NodeShape,
 } from "../src/index";
 import Graph, { MultiGraph } from "graphology";
 
@@ -101,6 +102,7 @@ function drawGraph(graphDataJSON: any[]) {
       },
     },
     suppressContextMenu: false,
+    defaultNodeShape: NodeShape.RING,
   });
 
   webGraph.render();
@@ -117,7 +119,7 @@ function drawExampleGraph() {
     label: "Node 1",
     x: 1,
     y: 1,
-    color: "#FFA",
+    color: "#D1495B",
     size: 10,
   });
 
@@ -125,7 +127,7 @@ function drawExampleGraph() {
     label: "Node 2",
     x: 1,
     y: 0,
-    color: "#FAF",
+    color: "#EDAE49",
     size: 10,
   });
 
@@ -133,7 +135,7 @@ function drawExampleGraph() {
     label: "Node 3",
     x: 0,
     y: 0,
-    color: "#AFF",
+    color: "#30638E",
     size: 10,
   });
 
@@ -266,4 +268,31 @@ document.getElementById("edgeHide")?.addEventListener("click", (e) => {
   if (!webGraph || !webGraph.isRenderingActive) return;
 
   webGraph.toggleEdgeRendering(false);
+});
+
+/**---------------------------------
+ * Settings Menu - Node Shape
+ *--------------------------------*/
+document.getElementById("shapeRing")?.addEventListener("click", (e) => {
+  e.preventDefault();
+
+  if (!webGraph || !webGraph.isRenderingActive) return;
+
+  webGraph.setAndApplyNodeShape(NodeShape.RING);
+});
+
+document.getElementById("shapeCircle")?.addEventListener("click", (e) => {
+  e.preventDefault();
+
+  if (!webGraph || !webGraph.isRenderingActive) return;
+
+  webGraph.setAndApplyNodeShape(NodeShape.CIRCLE);
+});
+
+document.getElementById("shapeSquare")?.addEventListener("click", (e) => {
+  e.preventDefault();
+
+  if (!webGraph || !webGraph.isRenderingActive) return;
+
+  webGraph.setAndApplyNodeShape(NodeShape.SQUARE);
 });

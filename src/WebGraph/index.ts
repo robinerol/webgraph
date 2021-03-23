@@ -22,9 +22,14 @@ import {
   AppMode,
   IContextMenu,
   IHoverCallback,
+  NodeShape,
 } from "../Configuration";
 import drawHover from "./Renderer/hover";
-import CustomNodeProgram from "./Program";
+import {
+  NodeRingProgram,
+  NodeCircleProgram,
+  NodeSquareProgram,
+} from "./Program";
 
 /**
  * The WebGraph class represents the main endpoint of the module.
@@ -134,7 +139,7 @@ class WebGraph {
   }
 
   /**
-   * Sets and applies the required layout to the graph.
+   * Sets and applies the requested layout to the graph.
    *
    * @param layout - The {@link Layout} to be set and applied
    * @param layoutConfiguration - The {@link ILayoutConfiguration} of the layout
@@ -149,6 +154,24 @@ class WebGraph {
     this.configuration.setConfig("layoutConfiguration", layoutConfiguration);
 
     this.applyLayout(layout, layoutConfiguration);
+  }
+
+  /**
+   * Sets and applies the requested nodeShape as default node shape.
+   *
+   * @param nodeShape - The {@link NodeShape} to be set and applied
+   *
+   * @public
+   */
+  public setAndApplyNodeShape(nodeShape: NodeShape): void {
+    if (!this.renderer) return;
+
+    this.configuration.setConfig("defaultNodeShape", nodeShape);
+    this.renderSettings.defaultNodeType = nodeShape;
+    this.renderer.settings.defaultNodeType = nodeShape;
+
+    this.renderer.process();
+    this.renderer.refresh();
   }
 
   /**
@@ -375,9 +398,14 @@ class WebGraph {
       this.renderSettings.zIndex = true;
     }
 
-    // apply custom node program
+    // apply custom node programs
+    this.renderSettings.defaultNodeType = <NodeShape>(
+      this.configuration.getConfig("defaultNodeShape")
+    );
     this.renderSettings.nodeProgramClasses = {
-      circle: CustomNodeProgram,
+      ring: NodeRingProgram,
+      circle: NodeCircleProgram,
+      square: NodeSquareProgram,
     };
   }
 
