@@ -5,13 +5,12 @@ precision mediump float;
 
 varying vec4 v_color;
 varying float v_border;
-varying vec4 v_type;
 
 const float radius = 0.5;
 const float halfRadius = 0.25;
 
 void main(void) {
-  vec4 color0 = vec4(0.1, 0.1, 0.1, 0.1);
+  vec4 color0 = vec4(0.0, 0.0, 0.0, 0.0);
   vec4 color1 = vec4(1.0, 1.0, 1.0, 1.0);
   vec2 m = gl_PointCoord - vec2(0.5, 0.5);
   float dist = length(m);

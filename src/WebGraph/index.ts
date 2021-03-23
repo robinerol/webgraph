@@ -39,14 +39,14 @@ import {
 class WebGraph {
   private container: HTMLElement;
   private graphData: Graph;
-  private edges: Array<SerializedEdge> = [];
+  private edges: Set<SerializedEdge> = new Set<SerializedEdge>();
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   private renderSettings: Record<string, any>;
   private configuration: GraphConfiguration;
   private appState: AppState = AppState.INACTIVE;
   private renderer: WebGLRenderer | undefined = undefined;
-  private highlightedNodes = new Set<NodeKey>();
-  private highlightedEdges = new Set<EdgeKey>();
+  private highlightedNodes: Set<NodeKey> = new Set<NodeKey>();
+  private highlightedEdges: Set<EdgeKey> = new Set<EdgeKey>();
 
   /**
    * Creates an instance of web graph.
@@ -215,7 +215,7 @@ class WebGraph {
    *
    * @public
    */
-  public updateEdges(edges: Array<SerializedEdge>): void {
+  public updateEdges(edges: Set<SerializedEdge>): void {
     if (!edges) return;
 
     this.graphData.clearEdges();
@@ -234,9 +234,9 @@ class WebGraph {
     if (!renderEdges) {
       if (this.graphData.edges().length <= 0) return;
 
-      if (this.edges.length <= 0) {
+      if (this.edges.size <= 0) {
         this.graphData.forEachEdge((edge, attributes, source, target) => {
-          this.edges.push({
+          this.edges.add({
             key: edge,
             source: source,
             target: target,
@@ -294,6 +294,16 @@ class WebGraph {
         this.highlightedEdges.delete(edge);
       }
     });
+
+    // in case edges are currently hidden, remove all connected edges
+    // from the temporary edge buffer
+    if (this.edges.size > 0) {
+      this.edges.forEach((edge) => {
+        if (edge.source === nodeKey || edge.target === nodeKey) {
+          this.edges.delete(edge);
+        }
+      });
+    }
 
     // drop the node and refresh
     this.graphData.dropNode(nodeKey);
@@ -415,7 +425,7 @@ class WebGraph {
    * @internal
    */
   private mergeEdgesIntoGraph(): void {
-    if (this.edges.length <= 0) return;
+    if (this.edges.size <= 0) return;
 
     this.edges.forEach((edge) => {
       const key: EdgeKey | undefined = edge.key;
@@ -432,7 +442,7 @@ class WebGraph {
       }
     });
 
-    this.edges = [];
+    this.edges = new Set<SerializedEdge>();
   }
 
   /**
