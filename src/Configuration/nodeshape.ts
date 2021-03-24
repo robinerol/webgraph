@@ -25,6 +25,13 @@ enum NodeShape {
    * {@label SQUARE}
    */
   SQUARE = "square",
+
+  /**
+   * The "TRIANGLE" shape turns the node into a basic triangle.
+   *
+   * {@label TRIANGLE}
+   */
+  TRIANGLE = "triangle",
 }
 
 export { NodeShape };

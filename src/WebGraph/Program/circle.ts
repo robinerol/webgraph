@@ -32,7 +32,7 @@ class NodeCircleProgram extends AbstractNodeProgram {
       array[i++] = 0;
       array[i++] = 0;
       array[i++] = 0;
-      array[i++] = 0;
+      array[i] = 0;
 
       return;
     }

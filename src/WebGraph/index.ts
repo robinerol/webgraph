@@ -29,6 +29,7 @@ import {
   NodeRingProgram,
   NodeCircleProgram,
   NodeSquareProgram,
+  NodeTriangleProgram,
 } from "./Program";
 
 /**
@@ -416,6 +417,7 @@ class WebGraph {
       ring: NodeRingProgram,
       circle: NodeCircleProgram,
       square: NodeSquareProgram,
+      triangle: NodeTriangleProgram,
     };
   }
 

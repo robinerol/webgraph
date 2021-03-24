@@ -94,8 +94,19 @@ function drawGraph(graphDataJSON: any[]) {
             icon: "https://test.test/test.jpg",
           },
           {
-            label: "add node",
-            callback: (key: string) => console.log("todo: add node " + key),
+            label: "hide node",
+            callback: (key: string) =>
+              webGraph?.mergeNodes([
+                { key: key, attributes: { hidden: true } },
+              ]),
+            icon: "https://test.test/test.jpg",
+          },
+          {
+            label: "show node",
+            callback: (key: string) =>
+              webGraph?.mergeNodes([
+                { key: key, attributes: { hidden: false } },
+              ]),
             icon: "https://test.test/test.jpg",
           },
         ],
@@ -295,4 +306,12 @@ document.getElementById("shapeSquare")?.addEventListener("click", (e) => {
   if (!webGraph || !webGraph.isRenderingActive) return;
 
   webGraph.setAndApplyNodeShape(NodeShape.SQUARE);
+});
+
+document.getElementById("shapeTriangle")?.addEventListener("click", (e) => {
+  e.preventDefault();
+
+  if (!webGraph || !webGraph.isRenderingActive) return;
+
+  webGraph.setAndApplyNodeShape(NodeShape.TRIANGLE);
 });

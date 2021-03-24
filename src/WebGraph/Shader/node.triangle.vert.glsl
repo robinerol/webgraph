@@ -21,7 +21,7 @@ void main() {
     1
   );
 
-  gl_PointSize = a_size * u_ratio * u_scale * 1.5;
+  gl_PointSize = a_size * u_ratio * u_scale * 2.0;
 
   v_color = a_color;
   v_color.a *= bias;
