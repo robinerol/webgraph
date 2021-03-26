@@ -300,12 +300,12 @@ document.getElementById("shapeCircle")?.addEventListener("click", (e) => {
   webGraph.setAndApplyNodeShape(NodeShape.CIRCLE);
 });
 
-document.getElementById("shapeSquare")?.addEventListener("click", (e) => {
+document.getElementById("shapeRectangle")?.addEventListener("click", (e) => {
   e.preventDefault();
 
   if (!webGraph || !webGraph.isRenderingActive) return;
 
-  webGraph.setAndApplyNodeShape(NodeShape.SQUARE);
+  webGraph.setAndApplyNodeShape(NodeShape.RECTANGLE);
 });
 
 document.getElementById("shapeTriangle")?.addEventListener("click", (e) => {

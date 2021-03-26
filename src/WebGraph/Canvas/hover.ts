@@ -3,6 +3,7 @@ import { WebGLSettings } from "sigma/types/renderers/webgl/settings";
 import { NodeAttributes } from "sigma/types/types";
 import drawNode from "./node";
 import drawLabel from "./label";
+import { GraphConfiguration } from "../../Configuration";
 
 /**
  * Draws hover
@@ -17,7 +18,8 @@ import drawLabel from "./label";
 function drawHover(
   context: CanvasRenderingContext2D,
   data: PartialButFor<NodeAttributes, "x" | "y" | "size" | "label" | "color">,
-  settings: WebGLSettings
+  settings: WebGLSettings,
+  config: GraphConfiguration
 ): void {
   const size = settings.labelSize;
   const font = settings.labelFont;
@@ -58,7 +60,7 @@ function drawHover(
   context.shadowBlur = 0;
 
   // Then we need to draw the node
-  drawNode(context, data);
+  drawNode(context, data, config);
 
   // And finally we draw the label
   drawLabel(context, data, settings);

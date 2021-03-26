@@ -20,11 +20,11 @@ enum NodeShape {
   CIRCLE = "circle",
 
   /**
-   * The "SQUARE" shape turns the node into a basic square.
+   * The "RECTANGLE" shape turns the node into a basic rectangle.
    *
-   * {@label SQUARE}
+   * {@label RECTANGLE}
    */
-  SQUARE = "square",
+  RECTANGLE = "rectangle",
 
   /**
    * The "TRIANGLE" shape turns the node into a basic triangle.

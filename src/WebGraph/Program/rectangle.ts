@@ -1,5 +1,5 @@
 /**
- * Node square program
+ * Node rectangle program
  *
  * This file is heavily copied from/based on:
  * {@see https://github.com/jacomyal/sigma.js/blob/v2/src/renderers/webgl/programs/node.fast.ts}
@@ -9,13 +9,13 @@ import { RenderNodeParams } from "sigma/types/renderers/webgl/programs/common/no
 import { AbstractNodeProgram } from "sigma/src/renderers/webgl/programs/common/node";
 import { NodeAttributes } from "sigma/types/types";
 import { floatColor } from "sigma/src/renderers/webgl/utils";
-import vertexShaderSource from "../Shader/node.square.vert.glsl";
-import fragmentShaderSource from "../Shader/node.square.frag.glsl";
+import vertexShaderSource from "../Shader/node.rectangle.vert.glsl";
+import fragmentShaderSource from "../Shader/node.rectangle.frag.glsl";
 
 const POINTS = 1,
   ATTRIBUTES = 4;
 
-class NodeSquareProgram extends AbstractNodeProgram {
+class NodeRectangleProgram extends AbstractNodeProgram {
   constructor(gl: WebGLRenderingContext) {
     super(gl, vertexShaderSource, fragmentShaderSource, POINTS, ATTRIBUTES);
     this.bind();
@@ -60,4 +60,4 @@ class NodeSquareProgram extends AbstractNodeProgram {
   }
 }
 
-export { NodeSquareProgram };
+export { NodeRectangleProgram };

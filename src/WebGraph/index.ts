@@ -24,11 +24,11 @@ import {
   IHoverCallback,
   NodeShape,
 } from "../Configuration";
-import drawHover from "./Renderer/hover";
+import drawHover from "./Canvas/hover";
 import {
   NodeRingProgram,
   NodeCircleProgram,
-  NodeSquareProgram,
+  NodeRectangleProgram,
   NodeTriangleProgram,
 } from "./Program";
 
@@ -379,7 +379,7 @@ class WebGraph {
         hoverCallback?.callback(data.key);
       }
 
-      drawHover(context, data, settings);
+      drawHover(context, data, settings, this.configuration);
     };
 
     // create reducers for highlighting sub graphs on hover if turned on
@@ -416,7 +416,7 @@ class WebGraph {
     this.renderSettings.nodeProgramClasses = {
       ring: NodeRingProgram,
       circle: NodeCircleProgram,
-      square: NodeSquareProgram,
+      rectangle: NodeRectangleProgram,
       triangle: NodeTriangleProgram,
     };
   }

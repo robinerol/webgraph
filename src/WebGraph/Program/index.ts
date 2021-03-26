@@ -1,4 +1,4 @@
 export * from "./circle";
 export * from "./ring";
-export * from "./square";
+export * from "./rectangle";
 export * from "./triangle";
