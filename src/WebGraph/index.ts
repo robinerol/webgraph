@@ -6,8 +6,15 @@ import {
   EdgeKey,
   NodeKey,
 } from "graphology-types";
-import { circlepack, circular, random } from "graphology-layout";
-import forceatlas2 from "graphology-layout-forceatlas2";
+import { circular, circlepack, random } from "graphology-layout";
+import randomLayout, { RandomLayoutOptions } from "graphology-layout/random";
+import circularLayout, {
+  CircularLayoutOptions,
+} from "graphology-layout/circular";
+import circlePackLayout, {
+  CirclePackLayoutOptions,
+} from "graphology-layout/circlepack";
+import forceatlas2Layout from "graphology-layout-forceatlas2";
 import { WebGLRenderer } from "sigma";
 import { PartialButFor } from "sigma/types/utils";
 import { WebGLSettings } from "sigma/types/renderers/webgl/settings";
@@ -31,6 +38,8 @@ import {
   NodeRectangleProgram,
   NodeTriangleProgram,
 } from "./Program";
+import { animateNodes } from "sigma/src/animate";
+import { cubicInOut } from "sigma/src/easings";
 
 /**
  * The WebGraph class represents the main endpoint of the module.
@@ -154,7 +163,7 @@ class WebGraph {
     this.configuration.setConfig("layout", layout);
     this.configuration.setConfig("layoutConfiguration", layoutConfiguration);
 
-    this.applyLayout(layout, layoutConfiguration);
+    this.applyLayout(layout, layoutConfiguration, false);
   }
 
   /**
@@ -194,7 +203,8 @@ class WebGraph {
 
     this.applyLayout(
       <Layout>this.configuration.getConfig("layout"),
-      <ILayoutConfiguration>this.configuration.getConfig("layoutConfiguration")
+      <ILayoutConfiguration>this.configuration.getConfig("layoutConfiguration"),
+      true
     );
 
     this.modifyRenderSettings();
@@ -379,6 +389,8 @@ class WebGraph {
         hoverCallback?.callback(data.key);
       }
 
+      data.shape = this.graphData.getNodeAttribute(data.key, "shape");
+
       drawHover(context, data, settings, this.configuration);
     };
 
@@ -459,27 +471,46 @@ class WebGraph {
    *
    * @throws Error - If the selected layout and pre applied layout are both {@link Layout.FORCEATLAS2}
    *
+   * @param layout - The {@link Layout} to apply to the graph
+   * @param layoutConfig - The corresponding {@link ILayoutConfiguration} to the given layout
+   * @param initialLayout - true: If this is the first layout to apply, apply random layout for incoming animation | false: nothing happens
+   *
    * @internal
    */
   private applyLayout(
     layout: Layout,
-    layoutConfig: ILayoutConfiguration
+    layoutConfig: ILayoutConfiguration,
+    initialLayout: boolean
   ): void {
+    if (initialLayout && layout !== Layout.PREDEFINED) {
+      random.assign(this.graphData);
+    }
+
+    let newLayout;
+
     switch (layout) {
       case Layout.RANDOM:
-        random.assign(this.graphData, layoutConfig.randomLayoutOptions);
+        newLayout = randomLayout(
+          this.graphData,
+          layoutConfig.randomLayoutOptions
+        );
+        //random.assign(this.graphData, layoutConfig.randomLayoutOptions);
         break;
 
       case Layout.CIRCULAR:
-        circular.assign(this.graphData, layoutConfig.circularLayoutOptions);
+        newLayout = circularLayout(
+          this.graphData,
+          layoutConfig.circularLayoutOptions
+        );
+        //circular.assign(this.graphData, layoutConfig.circularLayoutOptions);
         break;
 
       case Layout.CIRCLEPACK:
-        circlepack.assign(this.graphData, layoutConfig.circlePackLayoutOptions);
-        break;
-
-      case Layout.PREDEFINED:
-        // do nothing
+        newLayout = circlePackLayout(
+          this.graphData,
+          layoutConfig.circlePackLayoutOptions
+        );
+        //circlepack.assign(this.graphData, layoutConfig.circlePackLayoutOptions);
         break;
 
       case Layout.FORCEATLAS2: {
@@ -498,24 +529,64 @@ class WebGraph {
               );
             }
 
-            this.applyLayout(
-              preAppliedLayout,
-              forceAtlas2LayoutOptions.preAppliedLayoutOptions || {}
-            );
+            const preAppliedLayoutOptions =
+              forceAtlas2LayoutOptions.preAppliedLayoutOptions || {};
+
+            switch (preAppliedLayout) {
+              case Layout.RANDOM:
+                random.assign(
+                  this.graphData,
+                  <RandomLayoutOptions>preAppliedLayoutOptions || {}
+                );
+                break;
+              case Layout.CIRCULAR:
+                circular.assign(
+                  this.graphData,
+                  <CircularLayoutOptions>preAppliedLayoutOptions || {}
+                );
+                break;
+              case Layout.CIRCLEPACK:
+                circlepack.assign(
+                  this.graphData,
+                  <CirclePackLayoutOptions>preAppliedLayoutOptions || {}
+                );
+                break;
+            }
           }
 
-          forceatlas2.assign(this.graphData, forceAtlas2LayoutOptions);
+          newLayout = forceatlas2Layout(
+            this.graphData,
+            forceAtlas2LayoutOptions
+          );
           break;
         }
 
-        forceatlas2.assign(this.graphData, DEFAULT_FORCEATLAS2_LAYOUT_OPTIONS);
+        newLayout = forceatlas2Layout(
+          this.graphData,
+          DEFAULT_FORCEATLAS2_LAYOUT_OPTIONS
+        );
         break;
       }
+
+      case Layout.PREDEFINED:
+        /** do nothing */
+        break;
 
       default:
         random.assign(this.graphData);
         break;
     }
+
+    if (!newLayout || layout === Layout.PREDEFINED) return;
+
+    animateNodes(
+      this.graphData,
+      newLayout,
+      { duration: 1000, easing: cubicInOut },
+      () => {
+        /** do nothing */
+      }
+    );
   }
 
   /**

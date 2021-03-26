@@ -64,7 +64,7 @@ function drawGraph(graphDataJSON: any[]) {
     layoutConfiguration: {
       forceAtlas2LayoutOptions: {
         iterations: DEFAULT_FORCEATLAS2_ITERATIONS,
-        preAppliedLayout: Layout.CIRCULAR,
+        preAppliedLayout: Layout.CIRCLEPACK,
       },
     },
     appMode: AppMode.DYNAMIC,
@@ -254,7 +254,6 @@ document.getElementById("layoutForceAtlas2")?.addEventListener("click", (e) => {
   webGraph.setAndApplyLayout(Layout.FORCEATLAS2, {
     forceAtlas2LayoutOptions: {
       iterations: DEFAULT_FORCEATLAS2_ITERATIONS,
-      preAppliedLayout: Layout.CIRCULAR,
       settings: {
         edgeWeightInfluence: 1,
       },
