@@ -1,0 +1,13 @@
+.github
+node_modules
+demo
+tests
+.eslintignore
+.eslintrc.js
+.gitignore
+.npmignore
+.prettierignore
+jest.config.js
+package-lock.json
+webpack.config.js
+.DS_Store

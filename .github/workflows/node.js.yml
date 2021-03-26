@@ -24,4 +24,6 @@ jobs:
           node-version: ${{ matrix.node-version }}
       - run: echo "npm_package_sigma_clean=$HOME/test" >> $GITHUB_ENV
       - run: npm install
-      - run: npm test
+      - run: npm run lint
+      - run: npm run prettier:check
+      - run: npm run test
