@@ -57,6 +57,9 @@ class WebGraph {
   private renderer: WebGLRenderer | undefined = undefined;
   private highlightedNodes: Set<NodeKey> = new Set<NodeKey>();
   private highlightedEdges: Set<EdgeKey> = new Set<EdgeKey>();
+  private hoveredNode: NodeKey | undefined = undefined;
+  private hoverContainerVisible = false;
+  private draggingNode = false;
 
   /**
    * Creates an instance of web graph.
@@ -149,42 +152,6 @@ class WebGraph {
   }
 
   /**
-   * Sets and applies the requested layout to the graph.
-   *
-   * @param layout - The {@link Layout} to be set and applied
-   * @param layoutConfiguration - The {@link ILayoutConfiguration} of the layout
-   *
-   * @public
-   */
-  public setAndApplyLayout(
-    layout: Layout,
-    layoutConfiguration: ILayoutConfiguration
-  ): void {
-    this.configuration.setConfig("layout", layout);
-    this.configuration.setConfig("layoutConfiguration", layoutConfiguration);
-
-    this.applyLayout(layout, layoutConfiguration, false);
-  }
-
-  /**
-   * Sets and applies the requested nodeShape as default node shape.
-   *
-   * @param nodeShape - The {@link NodeShape} to be set and applied
-   *
-   * @public
-   */
-  public setAndApplyNodeShape(nodeShape: NodeShape): void {
-    if (!this.renderer) return;
-
-    this.configuration.setConfig("defaultNodeShape", nodeShape);
-    this.renderSettings.defaultNodeType = nodeShape;
-    this.renderer.settings.defaultNodeType = nodeShape;
-
-    this.renderer.process();
-    this.renderer.refresh();
-  }
-
-  /**
    * Starts rendering the graph with the provided settings, by applying the
    * selected layout to the graph and initializing the WebGLRenderer provided
    * by sigma.js.
@@ -207,7 +174,7 @@ class WebGraph {
       true
     );
 
-    this.modifyRenderSettings();
+    this.overwriteRenderSettings();
 
     this.renderer = new WebGLRenderer(
       this.graphData,
@@ -215,7 +182,7 @@ class WebGraph {
       this.renderSettings
     );
 
-    this.registerEventHandlers();
+    this.initializeEventHandlers();
   }
 
   /**
@@ -284,6 +251,42 @@ class WebGraph {
   }
 
   /**
+   * Sets and applies the requested layout to the graph.
+   *
+   * @param layout - The {@link Layout} to be set and applied
+   * @param layoutConfiguration - The {@link ILayoutConfiguration} of the layout
+   *
+   * @public
+   */
+  public setAndApplyLayout(
+    layout: Layout,
+    layoutConfiguration: ILayoutConfiguration
+  ): void {
+    this.configuration.setConfig("layout", layout);
+    this.configuration.setConfig("layoutConfiguration", layoutConfiguration);
+
+    this.applyLayout(layout, layoutConfiguration, false);
+  }
+
+  /**
+   * Sets and applies the requested nodeShape as default node shape.
+   *
+   * @param nodeShape - The {@link NodeShape} to be set and applied
+   *
+   * @public
+   */
+  public setAndApplyNodeShape(nodeShape: NodeShape): void {
+    if (!this.renderer) return;
+
+    this.configuration.setConfig("defaultNodeShape", nodeShape);
+    this.renderSettings.defaultNodeType = nodeShape;
+    this.renderer.settings.defaultNodeType = nodeShape;
+
+    this.renderer.process();
+    this.renderer.refresh();
+  }
+
+  /**
    * Drops a node from the graph.
    *
    * @param nodeKey - The key of the node to drop
@@ -315,6 +318,9 @@ class WebGraph {
         }
       });
     }
+
+    // hide the hover container
+    this.hideHoverContainer();
 
     // drop the node and refresh
     this.graphData.dropNode(nodeKey);
@@ -356,108 +362,6 @@ class WebGraph {
   /**---------------------------------------------------------------------------
    * Internal methods.
    *--------------------------------------------------------------------------*/
-
-  /**
-   * Injects settings into the [this.renderSettings] variable.
-   *
-   * @internal
-   */
-  private modifyRenderSettings(): void {
-    // override the hover renderer
-    this.renderSettings.hoverRenderer = (
-      context: CanvasRenderingContext2D,
-      data: PartialButFor<
-        NodeAttributes,
-        "x" | "y" | "size" | "label" | "color"
-      >,
-      settings: WebGLSettings
-    ) => {
-      if (!this.graphData.hasNode(data.key)) return;
-
-      const hoverCallbacks: Record<number, IHoverCallback> = <
-        Record<number, IHoverCallback>
-      >this.configuration.getConfig("hoverCallbacks");
-
-      if (hoverCallbacks) {
-        // retrieve node type, if none was given use 0
-        const nodeType = this.graphData.getNodeAttribute(data.key, "type");
-        const type = nodeType ? nodeType : 0;
-
-        // retrieve nodes hover callback
-        const hoverCallback = hoverCallbacks[type];
-
-        hoverCallback?.callback(data.key);
-      }
-
-      data.shape = this.graphData.getNodeAttribute(data.key, "shape");
-
-      drawHover(context, data, settings, this.configuration);
-    };
-
-    // create reducers for highlighting sub graphs on hover if turned on
-    if (<boolean>this.configuration.getConfig("highlightSubGraphOnHover")) {
-      const hcolor = <string>(
-        this.configuration.getConfig("subGraphHighlightColor")
-      );
-
-      const nodeReducer = (node: NodeKey, data: NodeAttributes) => {
-        if (this.highlightedNodes.has(node)) {
-          return { ...data, color: hcolor, zIndex: 1 };
-        }
-
-        return data;
-      };
-
-      const edgeReducer = (edge: EdgeKey, data: EdgeAttributes) => {
-        if (this.highlightedEdges.has(edge)) {
-          return { ...data, color: hcolor, zIndex: 1 };
-        }
-
-        return data;
-      };
-
-      this.renderSettings.nodeReducer = nodeReducer;
-      this.renderSettings.edgeReducer = edgeReducer;
-      this.renderSettings.zIndex = true;
-    }
-
-    // apply custom node programs
-    this.renderSettings.defaultNodeType = <NodeShape>(
-      this.configuration.getConfig("defaultNodeShape")
-    );
-    this.renderSettings.nodeProgramClasses = {
-      ring: NodeRingProgram,
-      circle: NodeCircleProgram,
-      rectangle: NodeRectangleProgram,
-      triangle: NodeTriangleProgram,
-    };
-  }
-
-  /**
-   * Merges edges into the graph.
-   *
-   * @internal
-   */
-  private mergeEdgesIntoGraph(): void {
-    if (this.edges.size <= 0) return;
-
-    this.edges.forEach((edge) => {
-      const key: EdgeKey | undefined = edge.key;
-
-      if (key) {
-        this.graphData.addEdgeWithKey(
-          key,
-          edge.source,
-          edge.target,
-          edge.attributes
-        );
-      } else {
-        this.graphData.addEdge(edge.source, edge.target, edge.attributes);
-      }
-    });
-
-    this.edges = new Set<SerializedEdge>();
-  }
 
   /**
    * Applies a layout to the graph stored in [graphData]. @see {@link Layout} for all available
@@ -590,11 +494,209 @@ class WebGraph {
   }
 
   /**
-   * Registers all available event handlers.
+   * Injects settings into the [this.renderSettings] variable.
    *
    * @internal
    */
-  private registerEventHandlers(): void {
+  private overwriteRenderSettings(): void {
+    // override the hover renderer
+    this.overwriteHoverRenderer();
+
+    // create reducers for highlighting sub graphs on hover if turned on
+    this.overwriteReducers();
+
+    // apply custom node programs
+    this.overwriteNodePrograms();
+  }
+
+  /**
+   * Overwrites the hoverRenderer by adding support for custom hover callbacks.
+   * If no {@link IHoverCallback} is present, the sigma.js default hoverRenderer
+   * will be used. Otherwise a nodes corresponding {@link IHoverCallback} will be
+   * executed and the resulting {@link IHoverContent} applied to the given container.
+   *
+   * @remarks - Regarding {@link IHoverCallback}:
+   * The number given in the 'callback' field of a {@link IHoverCallback} represents
+   * the nodes callback:
+   * A node with type 0 would get the callback mapped to 0
+   * A node with type 1 would get the callback mapped to 1
+   * ...
+   *
+   * @internal
+   */
+  private overwriteHoverRenderer(): void {
+    const hoverCallbacks: IHoverCallback = <IHoverCallback>(
+      this.configuration.getConfig("hoverCallbacks")
+    );
+
+    const hoverContainer = hoverCallbacks?.container;
+
+    this.renderSettings.hoverRenderer = (
+      context: CanvasRenderingContext2D,
+      data: PartialButFor<
+        NodeAttributes,
+        "x" | "y" | "size" | "label" | "color"
+      >,
+      settings: WebGLSettings
+    ) => {
+      if (!this.graphData.hasNode(data.key)) return;
+
+      data.shape = this.graphData.getNodeAttribute(data.key, "shape");
+
+      // if no hover callbacks are provided, use the sigma.js library default
+      if (!hoverCallbacks || !hoverContainer) {
+        drawHover(context, data, settings, this.configuration);
+        return;
+      }
+
+      if (this.draggingNode) return;
+
+      // retrieve node type, if none was given use 0
+      const nodeType = this.graphData.getNodeAttribute(data.key, "type");
+      const type = nodeType ? nodeType : 0;
+
+      // retrieve nodes hover callback
+      const hoverCallback = hoverCallbacks.callback[type];
+
+      // retrieve score
+      const nodeScore = this.graphData.getNodeAttribute(data.key, "score");
+
+      // execute callback
+      hoverCallback(data.key, nodeScore).then((result) => {
+        // reset hoverContainer
+        hoverContainer.innerHTML = "";
+
+        let preheader, header, content, footer;
+
+        if (result.preheader) {
+          preheader = document.createElement("span");
+          preheader.setAttribute("id", "preheader");
+          preheader.innerHTML = result.preheader;
+          hoverContainer.append(preheader);
+        }
+
+        if (result.header) {
+          header = document.createElement("span");
+          header.setAttribute("id", "header");
+          header.innerHTML = result.header;
+          hoverContainer.append(header);
+        }
+
+        if (result.content) {
+          content = document.createElement("span");
+          content.setAttribute("id", "content");
+          content.innerHTML = result.content;
+          hoverContainer.append(content);
+        }
+
+        if (result.footer) {
+          footer = document.createElement("span");
+          footer.setAttribute("id", "footer");
+          footer.innerHTML = result.footer.toString();
+          hoverContainer.append(footer);
+        }
+
+        // get possible offsets
+        const yoffset = hoverCallbacks.yoffset || 0;
+        const xoffset = hoverCallbacks.xoffset || 0;
+
+        // reposition the hover container and make it visible
+        hoverContainer.style.top = data.y + yoffset + "px";
+        hoverContainer.style.left = data.x + xoffset + "px";
+        hoverContainer.className = hoverCallbacks.cssShow;
+        this.hoverContainerVisible = true;
+      });
+    };
+
+    // when leaving the hover container, hide it
+    hoverContainer?.addEventListener("mouseleave", () =>
+      this.hideHoverContainer()
+    );
+  }
+
+  /**
+   * Hides the hover container.
+   *
+   * @param [rightClickNode] - Whether a node has been right clicked to open the context menu
+   *
+   * @internal
+   */
+  private hideHoverContainer(rightClickNode?: boolean): void {
+    if (!this.hoverContainerVisible) return;
+    // if right click on node, continue to hide the node
+    // if not right clicked, but still hovering over the node, return
+    if (!rightClickNode && this.hoveredNode) return;
+
+    const hoverCallbacks: IHoverCallback = <IHoverCallback>(
+      this.configuration.getConfig("hoverCallbacks")
+    );
+
+    if (!hoverCallbacks) return;
+
+    hoverCallbacks.container.className = hoverCallbacks.cssHide;
+    this.hoverContainerVisible = false;
+  }
+
+  /**
+   * Overwrites node and edge reducers for when "highlightSubGraphOnHover"
+   * is true in the {@link IGraphConfiguration}.
+   *
+   * @internal
+   */
+  private overwriteReducers(): void {
+    if (!(<boolean>this.configuration.getConfig("highlightSubGraphOnHover"))) {
+      return;
+    }
+
+    const hcolor = <string>(
+      this.configuration.getConfig("subGraphHighlightColor")
+    );
+
+    const nodeReducer = (node: NodeKey, data: NodeAttributes) => {
+      if (this.highlightedNodes.has(node)) {
+        return { ...data, color: hcolor, zIndex: 1 };
+      }
+
+      return data;
+    };
+
+    const edgeReducer = (edge: EdgeKey, data: EdgeAttributes) => {
+      if (this.highlightedEdges.has(edge)) {
+        return { ...data, color: hcolor, zIndex: 1 };
+      }
+
+      return data;
+    };
+
+    this.renderSettings.nodeReducer = nodeReducer;
+    this.renderSettings.edgeReducer = edgeReducer;
+    this.renderSettings.zIndex = true;
+  }
+
+  /**
+   * Overwrites node programs.
+   *
+   * @internal
+   */
+  private overwriteNodePrograms(): void {
+    this.renderSettings.defaultNodeType = <NodeShape>(
+      this.configuration.getConfig("defaultNodeShape")
+    );
+
+    this.renderSettings.nodeProgramClasses = {
+      ring: NodeRingProgram,
+      circle: NodeCircleProgram,
+      rectangle: NodeRectangleProgram,
+      triangle: NodeTriangleProgram,
+    };
+  }
+
+  /**
+   * Initialize all available event handlers.
+   *
+   * @internal
+   */
+  private initializeEventHandlers(): void {
     // context menu listeners
     this.initializeContextMenuListeners();
 
@@ -612,10 +714,10 @@ class WebGraph {
    * menu on a right click on a node.
    *
    * @remarks - Regarding {@link IContextMenu}:
-   * The number given for a context menu represents the type the context
-   * menu belongs to:
-   * A node with type 0 would get the {@link IContextMenu} mapped to 0
-   * A node with type 1 would get the {@link IContextMenu} mapped to 1
+   * The number given in the 'entries' field of a {@link IContextMenu} represents the  node
+   * type the array of {@link IContextMenuItem}s belongs to:
+   * A node with type 0 would get the Array<IContextMenuItem> mapped to 0
+   * A node with type 1 would get the Array<IContextMenuItem> mapped to 1
    * ...
    *
    * @internal
@@ -673,13 +775,20 @@ class WebGraph {
         contextMenuContent.append(item);
       });
 
+      // get possible offsets
+      const yoffset = allContextMenus.yoffset || 0;
+      const xoffset = allContextMenus.xoffset || 0;
+
       // display the context menu
       cmcontainer.innerHTML = "";
       cmcontainer.append(contextMenuContent);
       cmcontainer.className = cssShow;
-      cmcontainer.style.top = event.y + "px";
-      cmcontainer.style.left = event.x + "px";
+      cmcontainer.style.top = event.y + yoffset + "px";
+      cmcontainer.style.left = event.x + xoffset + "px";
       contextMenuOpen = true;
+
+      // hide the hover container
+      this.hideHoverContainer(true);
     });
 
     this.container.addEventListener("click", () => {
@@ -715,12 +824,11 @@ class WebGraph {
     const camera = this.renderer.getCamera();
     const mouseCaptor = this.renderer.getMouseCaptor();
     let draggedNode: number | undefined;
-    let dragging = false;
 
     this.renderer.on("downNode", (event) => {
       if (this.appMode === AppMode.STATIC) return;
 
-      dragging = true;
+      this.draggingNode = true;
       draggedNode = event.node;
       camera.disable();
     });
@@ -728,7 +836,7 @@ class WebGraph {
     mouseCaptor.on("mouseup", () => {
       if (this.appMode === AppMode.STATIC) return;
 
-      dragging = false;
+      this.draggingNode = false;
       draggedNode = undefined;
       camera.enable();
     });
@@ -737,7 +845,7 @@ class WebGraph {
       if (
         !this.renderer ||
         this.appMode === AppMode.STATIC ||
-        !dragging ||
+        !this.draggingNode ||
         !draggedNode
       ) {
         return;
@@ -762,14 +870,28 @@ class WebGraph {
    * This can be turned on or off using the 'highlightSubGraphOnHover'
    * setting in the configuration, which is true by default.
    *
+   * @remarks - Regarding this.hideHoverContainer()
+   * Since creating multiple events on "leaveNode" would overwrite existing ones
+   * the hiding of the hover container has to be done here, where the enterNode
+   * and leaveNode events are being created for the highlighting.
+   *
    * @internal
    */
   private initializeHoverHighlightingListeners(): void {
     if (!this.renderer) return;
-    if (!(<boolean>this.configuration.getConfig("highlightSubGraphOnHover")))
+    if (!(<boolean>this.configuration.getConfig("highlightSubGraphOnHover"))) {
+      // if highlighting the subgraph is disabled just add that the hover container
+      // will be hidden when leaving a node
+      this.renderer.on("leaveNode", () => {
+        this.hideHoverContainer();
+      });
+
       return;
+    }
 
     this.renderer.on("enterNode", ({ node }) => {
+      this.hoveredNode = node;
+
       // add nodes
       this.highlightedNodes = new Set(this.graphData.neighbors(node));
       this.highlightedNodes.add(node);
@@ -781,6 +903,8 @@ class WebGraph {
     });
 
     this.renderer.on("leaveNode", ({ node }) => {
+      this.hoveredNode = undefined;
+
       // reset the zIndex
       if (this.graphData.hasNode(node)) {
         // check that hovered node is still part of the graph
@@ -798,7 +922,36 @@ class WebGraph {
       this.highlightedEdges.clear();
 
       this.renderer?.refresh();
+
+      // if hoverContainerVisible is true, get the hover container and hide it
+      this.hideHoverContainer();
     });
+  }
+
+  /**
+   * Merges edges into the graph.
+   *
+   * @internal
+   */
+  private mergeEdgesIntoGraph(): void {
+    if (this.edges.size <= 0) return;
+
+    this.edges.forEach((edge) => {
+      const key: EdgeKey | undefined = edge.key;
+
+      if (key) {
+        this.graphData.addEdgeWithKey(
+          key,
+          edge.source,
+          edge.target,
+          edge.attributes
+        );
+      } else {
+        this.graphData.addEdge(edge.source, edge.target, edge.attributes);
+      }
+    });
+
+    this.edges = new Set<SerializedEdge>();
   }
 }
 

@@ -42,6 +42,7 @@
 
     <div id="webGraph"></div>
     <div id="webGraphCM" class="hide"></div>
+    <div id="webGraphHC" class="hide"></div>
 
     <style>
       html,
@@ -51,6 +52,7 @@
         margin: 0;
         padding: 0;
         overflow: hidden;
+        font-family: Helvetica, Arial, sans-serif;
       }
 
       #webGraph {
@@ -65,7 +67,7 @@
         position: absolute;
         top: 0;
         left: 0;
-        z-index: 100;
+        z-index: 1001;
 
         width: 150px;
         padding: 5px;
@@ -110,6 +112,61 @@
 
       .hide {
         display: none;
+      }
+
+      .show-hover {
+        z-index: 1000;
+        position: absolute;
+        display: block;
+
+        height: auto;
+        width: 150px;
+        background: white;
+        box-shadow: 0 0 5px 2px #dbdbdb;
+
+        padding: 5px;
+      }
+
+      .show-hover::before {
+        content: "";
+        position: absolute;
+        top: -webkit-calc(-10px);
+        top: calc(-10px);
+        left: 65px;
+        height: 20px;
+        width: 20px;
+        background: inherit;
+        transform: rotate(45deg);
+        -moz-transform: rotate(45deg);
+        -ms-transform: rotate(45deg);
+        -o-transform: rotate(45deg);
+        -webkit-transform: rotate(45deg);
+        box-shadow: -2px -2px 2px 0 #dbdbdb;
+      }
+
+      #preheader {
+        display: block;
+        font-weight: lighter;
+        padding-bottom: 5px;
+        font-size: smaller;
+      }
+
+      #header {
+        display: block;
+        font-weight: bolder;
+        padding-bottom: 5px;
+      }
+
+      #content {
+        display: block;
+        color: rgb(111, 111, 111);
+        font-size: smaller;
+      }
+
+      #footer {
+        display: block;
+        padding-top: 5px;
+        font-size: small;
       }
     </style>
 

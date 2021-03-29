@@ -33,6 +33,8 @@ interface IContextMenu {
   container: HTMLElement;
   cssShow: string;
   cssHide: string;
+  xoffset?: number;
+  yoffset?: number;
   entries: Record<number, Array<IContextMenuItem>>;
 }
 

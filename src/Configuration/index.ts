@@ -15,7 +15,7 @@ interface IGraphConfiguration {
   appMode: AppMode;
   contextMenus?: IContextMenu;
   suppressContextMenu?: boolean;
-  hoverCallbacks?: Record<number, IHoverCallback>;
+  hoverCallbacks?: IHoverCallback;
   highlightSubGraphOnHover?: boolean;
   subGraphHighlightColor?: string;
   defaultNodeShape?: NodeShape;
@@ -91,7 +91,7 @@ class GraphConfiguration {
     | AppMode
     | IContextMenu
     | boolean
-    | Record<number, IHoverCallback>
+    | IHoverCallback
     | string
     | NodeShape
     | undefined {
@@ -116,7 +116,7 @@ class GraphConfiguration {
     | AppMode
     | IContextMenu
     | boolean
-    | Record<number, IHoverCallback>
+    | IHoverCallback
     | string
     | NodeShape
     | undefined {

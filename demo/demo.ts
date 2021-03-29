@@ -16,6 +16,7 @@ import Graph, { MultiGraph } from "graphology";
 let webGraph: WebGraph | undefined = undefined;
 const webGraphContainer = document.getElementById("webGraph");
 const webGraphContextMenuContainer = document.getElementById("webGraphCM");
+const webGraphHoverContainer = document.getElementById("webGraphHC");
 
 function drawGraph(graphDataJSON: any[]) {
   if (!webGraphContainer) {
@@ -25,6 +26,12 @@ function drawGraph(graphDataJSON: any[]) {
   if (!webGraphContextMenuContainer) {
     throw new Error(
       "No div container with the ID 'webGraphCM' has been found."
+    );
+  }
+
+  if (!webGraphHoverContainer) {
+    throw new Error(
+      "No div container with the ID 'webGraphHC' has been found."
     );
   }
 
@@ -42,10 +49,11 @@ function drawGraph(graphDataJSON: any[]) {
   // create nodes
   graphDataJSON.forEach((result) => {
     graph.addNode(result.id, {
-      label: result.content.originalTitle,
+      label: result.content.year,
       size: Utils.getNodeSizeForValue(result.score, 25),
       type: Math.round(Math.random()),
       color: COLOR_PALETTE[Math.round(Math.random() * 5)],
+      score: result.score,
     });
   });
 
@@ -66,63 +74,103 @@ function drawGraph(graphDataJSON: any[]) {
   if (webGraph?.isRenderingActive) webGraph.destroy();
 
   // initialize and render graph
-  webGraph = new WebGraph(webGraphContainer, graph, {
-    layout: Layout.FORCEATLAS2,
-    layoutConfiguration: {
-      forceAtlas2LayoutOptions: {
-        iterations: DEFAULT_FORCEATLAS2_ITERATIONS,
-        preAppliedLayout: Layout.CIRCLEPACK,
+  webGraph = new WebGraph(
+    webGraphContainer,
+    graph,
+    {
+      layout: Layout.FORCEATLAS2,
+      layoutConfiguration: {
+        forceAtlas2LayoutOptions: {
+          iterations: DEFAULT_FORCEATLAS2_ITERATIONS,
+          preAppliedLayout: Layout.CIRCLEPACK,
+        },
       },
+      appMode: AppMode.DYNAMIC,
+      hoverCallbacks: {
+        container: webGraphHoverContainer,
+        cssShow: "show-hover",
+        cssHide: "hide",
+        xoffset: -75,
+        yoffset: 20,
+        callback: {
+          0: async (key: string, score?: number) => {
+            const dataJson: any = await fetch(
+              "http://localhost:9002/node?q=" + key
+            )
+              .then((response) => response.json())
+              .then((json) => json);
+
+            if (!dataJson) return { header: "error" };
+
+            return {
+              preheader: dataJson.year,
+              header: dataJson.originalTitle,
+              content: dataJson.publisher,
+              footer: "Score: " + score,
+            };
+          },
+          1: async (key: string) => {
+            const dataJson: any = await fetch(
+              "http://localhost:9002/node?q=" + key
+            )
+              .then((response) => response.json())
+              .then((json) => json);
+
+            if (!dataJson) return { header: "error" };
+
+            return {
+              preheader: dataJson.year,
+              header: dataJson.originalTitle,
+              content: dataJson.publisher,
+            };
+          },
+        },
+      },
+      contextMenus: {
+        container: webGraphContextMenuContainer,
+        cssHide: "hide",
+        cssShow: "show",
+        entries: {
+          0: [
+            {
+              label: "drop node",
+              callback: (key: string) => webGraph?.dropNode(key),
+              icon: "https://test.test/test.jpg",
+            },
+          ],
+          1: [
+            {
+              label: "drop node",
+              callback: (key: string) => webGraph?.dropNode(key),
+              icon: "https://test.test/test.jpg",
+            },
+            {
+              label: "hide node",
+              callback: (key: string) =>
+                webGraph?.mergeNodes([
+                  { key: key, attributes: { hidden: true } },
+                ]),
+              icon: "https://test.test/test.jpg",
+            },
+            {
+              label: "show node",
+              callback: (key: string) =>
+                webGraph?.mergeNodes([
+                  { key: key, attributes: { hidden: false } },
+                ]),
+              icon: "https://test.test/test.jpg",
+            },
+          ],
+        },
+      },
+      suppressContextMenu: false,
+      defaultNodeShape: NodeShape.RING,
+      highlightSubGraphOnHover: true,
     },
-    appMode: AppMode.DYNAMIC,
-    hoverCallbacks: {
-      0: {
-        callback: (key: string) => console.log("type 0, hover over: " + key),
-      },
-      1: {
-        callback: (key: string) => console.log("type 1, hover over: " + key),
-      },
-    },
-    contextMenus: {
-      container: webGraphContextMenuContainer,
-      cssHide: "hide",
-      cssShow: "show",
-      entries: {
-        0: [
-          {
-            label: "drop node",
-            callback: (key: string) => webGraph?.dropNode(key),
-            icon: "https://test.test/test.jpg",
-          },
-        ],
-        1: [
-          {
-            label: "drop node",
-            callback: (key: string) => webGraph?.dropNode(key),
-            icon: "https://test.test/test.jpg",
-          },
-          {
-            label: "hide node",
-            callback: (key: string) =>
-              webGraph?.mergeNodes([
-                { key: key, attributes: { hidden: true } },
-              ]),
-            icon: "https://test.test/test.jpg",
-          },
-          {
-            label: "show node",
-            callback: (key: string) =>
-              webGraph?.mergeNodes([
-                { key: key, attributes: { hidden: false } },
-              ]),
-            icon: "https://test.test/test.jpg",
-          },
-        ],
-      },
-    },
-    suppressContextMenu: false,
-    defaultNodeShape: NodeShape.RING,
-  });
+    {
+      renderLabels: true,
+    }
+  );
 
   webGraph.render();
 }
