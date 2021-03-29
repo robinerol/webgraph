@@ -5,21 +5,35 @@
  * @example
  * An example usage.
  * ```
- * const cm: IContextMenu = {
- *   entries: [
- *     {
- *       label: "delete node",
- *       callback: () => console.log("todo: delete node"),
- *       icon: "https://example-link.to/fancy_icon.jpg",
- *     },
- *   ],
+ * const webGraphContextMenuContainer = document.getElementById("webGraphCM");
+ * 
+ * if (!webGraphContextMenuContainer) {
+ *  throw new Error("No div container with the ID 'webGraphCM' has been found.");
  * }
+ * 
+ * const cm: IContextMenu = {
+ *    container: webGraphContextMenuContainer,
+ *    cssHide: "hide",
+ *    cssShow: "show",
+ *    entries: {
+ *      0: [
+ *        {
+ *          label: "drop node",
+ *          callback: (key: string) => webGraph?.dropNode(key),
+ *          icon: "https://test.test/test.jpg",
+ *        },
+ *      ],
+      },
+    }
  * ```
  *
  * {@label IContextMenu}
  */
 interface IContextMenu {
-  entries: Array<IContextMenuItem>;
+  container: HTMLElement;
+  cssShow: string;
+  cssHide: string;
+  entries: Record<number, Array<IContextMenuItem>>;
 }
 
 /**

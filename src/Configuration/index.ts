@@ -13,7 +13,7 @@ interface IGraphConfiguration {
   layout: Layout;
   layoutConfiguration: ILayoutConfiguration;
   appMode: AppMode;
-  contextMenus?: Record<number, IContextMenu>;
+  contextMenus?: IContextMenu;
   suppressContextMenu?: boolean;
   hoverCallbacks?: Record<number, IHoverCallback>;
   highlightSubGraphOnHover?: boolean;
@@ -89,7 +89,7 @@ class GraphConfiguration {
     | Layout
     | ILayoutConfiguration
     | AppMode
-    | Record<number, IContextMenu>
+    | IContextMenu
     | boolean
     | Record<number, IHoverCallback>
     | string
@@ -114,7 +114,7 @@ class GraphConfiguration {
     | Layout
     | ILayoutConfiguration
     | AppMode
-    | Record<number, IContextMenu>
+    | IContextMenu
     | boolean
     | Record<number, IHoverCallback>
     | string

@@ -15,10 +15,17 @@ import Graph, { MultiGraph } from "graphology";
  *--------------------------------------------------------------------------*/
 let webGraph: WebGraph | undefined = undefined;
 const webGraphContainer = document.getElementById("webGraph");
+const webGraphContextMenuContainer = document.getElementById("webGraphCM");
 
 function drawGraph(graphDataJSON: any[]) {
   if (!webGraphContainer) {
     throw new Error("No div container with the ID 'webGraph' has been found.");
+  }
+
+  if (!webGraphContextMenuContainer) {
+    throw new Error(
+      "No div container with the ID 'webGraphCM' has been found."
+    );
   }
 
   const graph = new MultiGraph();
@@ -35,7 +42,7 @@ function drawGraph(graphDataJSON: any[]) {
   // create nodes
   graphDataJSON.forEach((result) => {
     graph.addNode(result.id, {
-      label: result.content.originalTitle.substring(0, 10) + "...",
+      label: result.content.originalTitle,
       size: Utils.getNodeSizeForValue(result.score, 25),
       type: Math.round(Math.random()),
       color: COLOR_PALETTE[Math.round(Math.random() * 5)],
@@ -77,17 +84,18 @@ function drawGraph(graphDataJSON: any[]) {
       },
     },
     contextMenus: {
-      0: {
-        entries: [
+      container: webGraphContextMenuContainer,
+      cssHide: "hide",
+      cssShow: "show",
+      entries: {
+        0: [
           {
             label: "drop node",
             callback: (key: string) => webGraph?.dropNode(key),
             icon: "https://test.test/test.jpg",
           },
         ],
-      },
-      1: {
-        entries: [
+        1: [
           {
             label: "drop node",
             callback: (key: string) => webGraph?.dropNode(key),

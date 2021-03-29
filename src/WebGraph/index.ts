@@ -623,38 +623,41 @@ class WebGraph {
   private initializeContextMenuListeners(): void {
     if (!this.renderer) return;
 
-    const cmelement = document.getElementById("webGraphCM");
+    // load context menus from the active configuration
+    const allContextMenus = <IContextMenu>(
+      this.configuration.getConfig("contextMenus")
+    );
+    if (!allContextMenus) return;
+
+    const cmcontainer = allContextMenus.container;
+    const cssHide = allContextMenus.cssHide;
+    const cssShow = allContextMenus.cssShow;
+
     let contextMenuOpen = false;
 
     this.renderer.on("rightClickNode", ({ node, event }) => {
       if (event.original.type !== "contextmenu") return;
-      if (!cmelement) return;
+      if (!cmcontainer) return;
 
       if (contextMenuOpen) {
         // hide the context menu that's open
-        cmelement.className = "hide";
+        cmcontainer.className = cssHide;
         contextMenuOpen = false;
       }
 
       event.preventDefault();
-
-      // load context menus from the active configuration
-      const allContextMenus = <Record<number, IContextMenu>>(
-        this.configuration.getConfig("contextMenus")
-      );
-      if (!allContextMenus) return;
 
       // retrieve node type, if none was given use 0
       const nodeType = this.graphData.getNodeAttribute(node, "type");
       const type = nodeType ? nodeType : 0;
 
       // retrieve nodes corresponding context menu
-      const contextMenu = allContextMenus[type];
+      const contextMenu = allContextMenus.entries[type];
       if (!contextMenu) return;
 
       // generate context menus content
       const contextMenuContent = document.createElement("ol");
-      contextMenu.entries.forEach((ci) => {
+      contextMenu.forEach((ci) => {
         const item: HTMLElement = document.createElement("li");
 
         item.innerHTML = ci.label;
@@ -663,7 +666,7 @@ class WebGraph {
           ci.callback(node);
 
           // hide the context menu that's open
-          cmelement.className = "hide";
+          cmcontainer.className = cssHide;
           contextMenuOpen = false;
         });
 
@@ -671,20 +674,20 @@ class WebGraph {
       });
 
       // display the context menu
-      cmelement.innerHTML = "";
-      cmelement.append(contextMenuContent);
-      cmelement.className = "show";
-      cmelement.style.top = event.y + "px";
-      cmelement.style.left = event.x + "px";
+      cmcontainer.innerHTML = "";
+      cmcontainer.append(contextMenuContent);
+      cmcontainer.className = cssShow;
+      cmcontainer.style.top = event.y + "px";
+      cmcontainer.style.left = event.x + "px";
       contextMenuOpen = true;
     });
 
     this.container.addEventListener("click", () => {
       if (!contextMenuOpen) return;
-      if (!cmelement) return;
+      if (!cmcontainer) return;
 
       // hide the context menu if open
-      cmelement.className = "hide";
+      cmcontainer.className = cssHide;
       contextMenuOpen = false;
     });
 
