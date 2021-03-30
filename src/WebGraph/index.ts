@@ -562,50 +562,60 @@ class WebGraph {
       const nodeScore = this.graphData.getNodeAttribute(data.key, "score");
 
       // execute callback
-      hoverCallback(data.key, nodeScore).then((result) => {
-        // reset hoverContainer
-        hoverContainer.innerHTML = "";
+      hoverCallback(data.key, nodeScore)
+        .then((result) => {
+          // reset hoverContainer
+          hoverContainer.innerHTML = "";
 
-        let preheader, header, content, footer;
+          let preheader, header, content, footer;
 
-        if (result.preheader) {
-          preheader = document.createElement("span");
-          preheader.setAttribute("id", "preheader");
-          preheader.innerHTML = result.preheader;
-          hoverContainer.append(preheader);
-        }
+          if (result.preheader) {
+            preheader = document.createElement("span");
+            preheader.setAttribute("id", "preheader");
+            preheader.innerHTML = result.preheader;
+            hoverContainer.append(preheader);
+          }
 
-        if (result.header) {
-          header = document.createElement("span");
-          header.setAttribute("id", "header");
-          header.innerHTML = result.header;
-          hoverContainer.append(header);
-        }
+          if (result.header) {
+            header = document.createElement("span");
+            header.setAttribute("id", "header");
+            header.innerHTML = result.header;
+            hoverContainer.append(header);
+          }
 
-        if (result.content) {
-          content = document.createElement("span");
-          content.setAttribute("id", "content");
-          content.innerHTML = result.content;
-          hoverContainer.append(content);
-        }
+          if (result.content) {
+            content = document.createElement("span");
+            content.setAttribute("id", "content");
+            content.innerHTML = result.content;
+            hoverContainer.append(content);
+          }
 
-        if (result.footer) {
-          footer = document.createElement("span");
-          footer.setAttribute("id", "footer");
-          footer.innerHTML = result.footer.toString();
-          hoverContainer.append(footer);
-        }
+          if (result.footer) {
+            footer = document.createElement("span");
+            footer.setAttribute("id", "footer");
+            footer.innerHTML = result.footer.toString();
+            hoverContainer.append(footer);
+          }
 
-        // get possible offsets
-        const yoffset = hoverCallbacks.yoffset || 0;
-        const xoffset = hoverCallbacks.xoffset || 0;
+          // get possible offsets
+          const yoffset = hoverCallbacks.yoffset || 0;
+          const xoffset = hoverCallbacks.xoffset || 0;
 
-        // reposition the hover container and make it visible
-        hoverContainer.style.top = data.y + yoffset + "px";
-        hoverContainer.style.left = data.x + xoffset + "px";
-        hoverContainer.className = hoverCallbacks.cssShow;
-        this.hoverContainerVisible = true;
-      });
+          // reposition the hover container and make it visible
+          hoverContainer.style.top = data.y + yoffset + "px";
+          hoverContainer.style.left = data.x + xoffset + "px";
+          hoverContainer.className = hoverCallbacks.cssShow;
+          this.hoverContainerVisible = true;
+        })
+        .catch((e) => {
+          console.error(e);
+
+          hoverContainer.className = hoverCallbacks.cssHide;
+          this.hoverContainerVisible = false;
+
+          // fallback to the default sigma.js label if unable to execute callback
+          drawHover(context, data, settings, this.configuration);
+        });
     };
 
     // when leaving the hover container, hide it
