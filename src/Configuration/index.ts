@@ -19,6 +19,7 @@ interface IGraphConfiguration {
   highlightSubGraphOnHover?: boolean;
   subGraphHighlightColor?: string;
   defaultNodeShape?: NodeShape;
+  enableHistory?: boolean;
 }
 
 /**
@@ -36,6 +37,7 @@ const defaultGraphConfiguration: IGraphConfiguration = {
   highlightSubGraphOnHover: true,
   subGraphHighlightColor: "#e57a2d",
   defaultNodeShape: NodeShape.RING,
+  enableHistory: true,
 };
 
 /**

@@ -40,6 +40,7 @@ import {
 } from "./Program";
 import { animateNodes } from "sigma/src/animate";
 import { cubicInOut } from "sigma/src/easings";
+import { HistoryManager } from "./History";
 
 /**
  * The WebGraph class represents the main endpoint of the module.
@@ -58,8 +59,10 @@ class WebGraph {
   private highlightedNodes: Set<NodeKey> = new Set<NodeKey>();
   private highlightedEdges: Set<EdgeKey> = new Set<EdgeKey>();
   private hoveredNode: NodeKey | undefined = undefined;
-  private hoverContainerVisible = false;
-  private draggingNode = false;
+  private isHoverContainerVisible = false;
+  private isNodeDragged = false;
+  private isHistoryEnabled = false;
+  private history: HistoryManager | undefined = undefined;
 
   /**
    * Creates an instance of web graph.
@@ -183,6 +186,12 @@ class WebGraph {
     );
 
     this.initializeEventHandlers();
+
+    this.isHistoryEnabled = <boolean>(
+      this.configuration.getConfig("enableHistory")
+    );
+
+    if (this.isHistoryEnabled) this.history = new HistoryManager();
   }
 
   /**
@@ -357,6 +366,30 @@ class WebGraph {
     }
 
     return this.graphData.export();
+  }
+
+  /**
+   * WIP
+   * Currently just a placeholder method to perform an undo operation.
+   *
+   * @public
+   */
+  public undo(): boolean {
+    if (!this.isHistoryEnabled) return false;
+    console.log(this.history);
+    throw new Error("Undo not implemented yet.");
+  }
+
+  /**
+   * WIP
+   * Currently just a placeholder method to perform a redo operation.
+   *
+   * @public
+   */
+  public redo(): boolean {
+    if (!this.isHistoryEnabled) return false;
+    console.log(this.history);
+    throw new Error("Redo not implemented yet.");
   }
 
   /**---------------------------------------------------------------------------
@@ -549,7 +582,7 @@ class WebGraph {
         return;
       }
 
-      if (this.draggingNode) return;
+      if (this.isNodeDragged) return;
 
       // retrieve node type, if none was given use 0
       const nodeType = this.graphData.getNodeAttribute(data.key, "type");
@@ -605,13 +638,13 @@ class WebGraph {
           hoverContainer.style.top = data.y + yoffset + "px";
           hoverContainer.style.left = data.x + xoffset + "px";
           hoverContainer.className = hoverCallbacks.cssShow;
-          this.hoverContainerVisible = true;
+          this.isHoverContainerVisible = true;
         })
         .catch((e) => {
           console.error(e);
 
           hoverContainer.className = hoverCallbacks.cssHide;
-          this.hoverContainerVisible = false;
+          this.isHoverContainerVisible = false;
 
           // fallback to the default sigma.js label if unable to execute callback
           drawHover(context, data, settings, this.configuration);
@@ -632,7 +665,7 @@ class WebGraph {
    * @internal
    */
   private hideHoverContainer(rightClickNode?: boolean): void {
-    if (!this.hoverContainerVisible) return;
+    if (!this.isHoverContainerVisible) return;
     // if right click on node, continue to hide the node
     // if not right clicked, but still hovering over the node, return
     if (!rightClickNode && this.hoveredNode) return;
@@ -644,7 +677,7 @@ class WebGraph {
     if (!hoverCallbacks) return;
 
     hoverCallbacks.container.className = hoverCallbacks.cssHide;
-    this.hoverContainerVisible = false;
+    this.isHoverContainerVisible = false;
   }
 
   /**
@@ -745,16 +778,16 @@ class WebGraph {
     const cssHide = allContextMenus.cssHide;
     const cssShow = allContextMenus.cssShow;
 
-    let contextMenuOpen = false;
+    let isContextMenuOpen = false;
 
     this.renderer.on("rightClickNode", ({ node, event }) => {
       if (event.original.type !== "contextmenu") return;
       if (!cmcontainer) return;
 
-      if (contextMenuOpen) {
+      if (isContextMenuOpen) {
         // hide the context menu that's open
         cmcontainer.className = cssHide;
-        contextMenuOpen = false;
+        isContextMenuOpen = false;
       }
 
       event.preventDefault();
@@ -779,7 +812,7 @@ class WebGraph {
 
           // hide the context menu that's open
           cmcontainer.className = cssHide;
-          contextMenuOpen = false;
+          isContextMenuOpen = false;
         });
 
         contextMenuContent.append(item);
@@ -795,19 +828,19 @@ class WebGraph {
       cmcontainer.className = cssShow;
       cmcontainer.style.top = event.y + yoffset + "px";
       cmcontainer.style.left = event.x + xoffset + "px";
-      contextMenuOpen = true;
+      isContextMenuOpen = true;
 
       // hide the hover container
       this.hideHoverContainer(true);
     });
 
     this.container.addEventListener("click", () => {
-      if (!contextMenuOpen) return;
+      if (!isContextMenuOpen) return;
       if (!cmcontainer) return;
 
       // hide the context menu if open
       cmcontainer.className = cssHide;
-      contextMenuOpen = false;
+      isContextMenuOpen = false;
     });
 
     // handles whether the default context menu is suppressed or not
@@ -838,7 +871,7 @@ class WebGraph {
     this.renderer.on("downNode", (event) => {
       if (this.appMode === AppMode.STATIC) return;
 
-      this.draggingNode = true;
+      this.isNodeDragged = true;
       draggedNode = event.node;
       camera.disable();
     });
@@ -846,7 +879,7 @@ class WebGraph {
     mouseCaptor.on("mouseup", () => {
       if (this.appMode === AppMode.STATIC) return;
 
-      this.draggingNode = false;
+      this.isNodeDragged = false;
       draggedNode = undefined;
       camera.enable();
     });
@@ -855,7 +888,7 @@ class WebGraph {
       if (
         !this.renderer ||
         this.appMode === AppMode.STATIC ||
-        !this.draggingNode ||
+        !this.isNodeDragged ||
         !draggedNode
       ) {
         return;

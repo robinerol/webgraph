@@ -370,3 +370,22 @@ document.getElementById("shapeTriangle")?.addEventListener("click", (e) => {
 
   webGraph.setAndApplyNodeShape(NodeShape.TRIANGLE);
 });
+
+/**---------------------------------
+ * Settings Menu - History
+ *--------------------------------*/
+document.getElementById("undo")?.addEventListener("click", (e) => {
+  e.preventDefault();
+
+  if (!webGraph || !webGraph.isRenderingActive) return;
+
+  webGraph.undo();
+});
+
+document.getElementById("redo")?.addEventListener("click", (e) => {
+  e.preventDefault();
+
+  if (!webGraph || !webGraph.isRenderingActive) return;
+
+  webGraph.redo();
+});
