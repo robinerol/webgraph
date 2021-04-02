@@ -40,7 +40,7 @@
     "graphology": "^0.19.3",
     "graphology-layout": "^0.4.0",
     "graphology-layout-forceatlas2": "^0.6.0",
-    "sigma": "git://github.com/jacomyal/sigma.js.git#0f3dbdf53322b57028ea0d0fe49a594ed83598e2"
+    "sigma": "git+https://github.com/jacomyal/sigma.js.git#0f3dbdf53322b57028ea0d0fe49a594ed83598e2"
   },
   "devDependencies": {
     "@types/jest": "^26.0.20",
