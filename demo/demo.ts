@@ -166,6 +166,7 @@ function drawGraph(graphDataJSON: any[]) {
       suppressContextMenu: false,
       defaultNodeShape: NodeShape.RING,
       highlightSubGraphOnHover: true,
+      enableHistory: true,
     },
     {
       renderLabels: true,

@@ -37,7 +37,7 @@ const defaultGraphConfiguration: IGraphConfiguration = {
   highlightSubGraphOnHover: true,
   subGraphHighlightColor: "#e57a2d",
   defaultNodeShape: NodeShape.RING,
-  enableHistory: true,
+  enableHistory: false,
 };
 
 /**

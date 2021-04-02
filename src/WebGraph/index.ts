@@ -40,7 +40,7 @@ import {
 } from "./Program";
 import { animateNodes } from "sigma/src/animate";
 import { cubicInOut } from "sigma/src/easings";
-import { HistoryManager } from "./History";
+import { ActionType, HistoryManager } from "./History";
 
 /**
  * The WebGraph class represents the main endpoint of the module.
@@ -151,7 +151,21 @@ class WebGraph {
    * @public
    */
   public set appMode(appMode: AppMode) {
+    const oldAppMode = this.appMode;
+
     this.configuration.setConfig("appMode", appMode);
+
+    if (this.isHistoryEnabled) {
+      this.history?.addAction(
+        {
+          appMode: oldAppMode,
+        },
+        ActionType.UPDATE_APP_MODE,
+        {
+          appMode: appMode,
+        }
+      );
+    }
   }
 
   /**
@@ -207,7 +221,7 @@ class WebGraph {
 
     this.graphData.clearEdges();
     this.edges = edges;
-    this.mergeEdgesIntoGraph();
+    this.mergeEdgesIntoGraph(this.edges);
   }
 
   /**
@@ -238,7 +252,7 @@ class WebGraph {
     }
 
     if (this.graphData.edges().length > 0) return;
-    this.mergeEdgesIntoGraph();
+    this.mergeEdgesIntoGraph(this.edges);
   }
 
   /**
@@ -299,11 +313,14 @@ class WebGraph {
    * Drops a node from the graph.
    *
    * @param nodeKey - The key of the node to drop
+   * @param [addToHistory] - True by default. Whether the action should be added to the history or not.
+   *
+   * @returns true if the operation was successfull, false if not
    *
    * @public
    */
-  public dropNode(nodeKey: string): void {
-    if (!this.graphData.hasNode(nodeKey)) return;
+  public dropNode(nodeKey: string, addToHistory = true): boolean {
+    if (!this.graphData.hasNode(nodeKey)) return false;
 
     // remove node from highlightedNodes set
     if (this.highlightedNodes.has(nodeKey))
@@ -312,9 +329,19 @@ class WebGraph {
     // remove all to the node connected edges that are currently being highlighted
     // from the highlightedEdges set
     const edges = this.graphData.edges(nodeKey);
+    const edgeSetForHistory: Set<SerializedEdge> = new Set<SerializedEdge>();
     edges.forEach((edge) => {
       if (this.highlightedEdges.has(edge)) {
         this.highlightedEdges.delete(edge);
+      }
+
+      if (this.isHistoryEnabled && addToHistory) {
+        edgeSetForHistory.add({
+          key: edge,
+          source: this.graphData.source(edge),
+          target: this.graphData.target(edge),
+          attributes: this.graphData.getEdgeAttributes(edge),
+        });
       }
     });
 
@@ -331,9 +358,25 @@ class WebGraph {
     // hide the hover container
     this.hideHoverContainer();
 
+    // add to history
+    if (this.isHistoryEnabled && addToHistory) {
+      this.history?.addAction(
+        {
+          node: {
+            key: nodeKey,
+            attributes: this.graphData.getNodeAttributes(nodeKey),
+          },
+          edges: edgeSetForHistory,
+        },
+        ActionType.DROP_NODE,
+        {}
+      );
+    }
+
     // drop the node and refresh
     this.graphData.dropNode(nodeKey);
     this.renderer?.refresh();
+    return true;
   }
 
   /**
@@ -362,34 +405,96 @@ class WebGraph {
     if (excludeEdges) {
       this.graphData.clearEdges();
     } else {
-      this.mergeEdgesIntoGraph();
+      this.mergeEdgesIntoGraph(this.edges);
     }
 
     return this.graphData.export();
   }
 
   /**
-   * WIP
-   * Currently just a placeholder method to perform an undo operation.
+   * This method performs an undo operation on the latest action
+   * of the history.
+   *
+   * @remarks - Regardting the {@link IGraphConfiguration}
+   * The history feature is just available if it was enabled in the
+   * {@link IGraphConfiguration} using the "enableHistory" boolean.
+   *
+   * @throws Error - If the History is disabled.
+   *
+   * @returns true if the operation was successfull, false if not
    *
    * @public
    */
   public undo(): boolean {
-    if (!this.isHistoryEnabled) return false;
-    console.log(this.history);
-    throw new Error("Undo not implemented yet.");
+    if (!this.isHistoryEnabled) {
+      throw new Error(
+        "The history is not enabled. Use the 'enableHistory' boolean to enable it in the IGraphConfiguration."
+      );
+    }
+
+    const latestAction = this.history?.getLatestAction();
+    if (!latestAction) return false;
+
+    switch (latestAction.actionType) {
+      case ActionType.UPDATE_APP_MODE:
+        if (!latestAction.oldData.appMode) return false;
+        this.configuration.setConfig("appMode", latestAction.oldData.appMode);
+        break;
+
+      case ActionType.DROP_NODE:
+        if (!latestAction.oldData.node || !latestAction.oldData.edges) {
+          return false;
+        }
+        this.mergeNodes([latestAction.oldData.node]);
+        this.mergeEdgesIntoGraph(latestAction.oldData.edges);
+        break;
+    }
+
+    this.history?.markLatestActionAsReverted();
+    return true;
   }
 
   /**
-   * WIP
-   * Currently just a placeholder method to perform a redo operation.
+   * This method performs a redo operation on the latest reverted action
+   * of the history.
+   *
+   * @remarks - Regardting the {@link IGraphConfiguration}
+   * The history feature is just available if it was enabled in the
+   * {@link IGraphConfiguration} using the "enableHistory" boolean.
+   *
+   * @throws Error - If the History is disabled.
+   *
+   * @returns true if the operation was successfull, false if not
    *
    * @public
    */
   public redo(): boolean {
-    if (!this.isHistoryEnabled) return false;
-    console.log(this.history);
-    throw new Error("Redo not implemented yet.");
+    if (!this.isHistoryEnabled) {
+      throw new Error(
+        "The history is not enabled. Use the 'enableHistory' boolean to enable it in the IGraphConfiguration."
+      );
+    }
+
+    const latestRevertedAction = this.history?.getLatestRevertedAction();
+    if (!latestRevertedAction) return false;
+
+    switch (latestRevertedAction?.actionType) {
+      case ActionType.UPDATE_APP_MODE:
+        if (!latestRevertedAction.newData.appMode) return false;
+        this.configuration.setConfig(
+          "appMode",
+          latestRevertedAction.newData.appMode
+        );
+        break;
+
+      case ActionType.DROP_NODE:
+        if (!latestRevertedAction.oldData.node) return false;
+        this.dropNode(latestRevertedAction.oldData.node.key, false);
+        break;
+    }
+
+    this.history?.markLatestRevertedActionAsNotReverted();
+    return true;
   }
 
   /**---------------------------------------------------------------------------
@@ -974,12 +1079,14 @@ class WebGraph {
   /**
    * Merges edges into the graph.
    *
+   * @param edges - A Set of SerializedEdge to merge into the graph
+   *
    * @internal
    */
-  private mergeEdgesIntoGraph(): void {
-    if (this.edges.size <= 0) return;
+  private mergeEdgesIntoGraph(edges: Set<SerializedEdge>): void {
+    if (edges.size <= 0) return;
 
-    this.edges.forEach((edge) => {
+    edges.forEach((edge) => {
       const key: EdgeKey | undefined = edge.key;
 
       if (key) {
@@ -994,7 +1101,7 @@ class WebGraph {
       }
     });
 
-    this.edges = new Set<SerializedEdge>();
+    edges = new Set<SerializedEdge>();
   }
 }
 
