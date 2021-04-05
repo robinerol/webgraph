@@ -213,11 +213,35 @@ class WebGraph {
    * of edges.
    *
    * @param edges - An array holding the new Graphology.SerializedEdge (s)
+   * @param [addToHistory] - True by default. Whether the action should be added to the history or not.
    *
    * @public
    */
-  public updateEdges(edges: Set<SerializedEdge>): void {
+  public updateEdges(edges: Set<SerializedEdge>, addToHistory = true): void {
     if (!edges) return;
+
+    if (this.isHistoryEnabled && addToHistory) {
+      const existingEdges = new Set<SerializedEdge>();
+
+      this.graphData.forEachEdge((edge) =>
+        existingEdges.add({
+          key: edge,
+          attributes: this.graphData.getEdgeAttributes(edge),
+          source: this.graphData.source(edge),
+          target: this.graphData.target(edge),
+        })
+      );
+
+      this.history?.addAction(
+        {
+          edges: existingEdges,
+        },
+        ActionType.UPDATE_EDGES,
+        {
+          edges: edges,
+        }
+      );
+    }
 
     this.graphData.clearEdges();
     this.edges = edges;
@@ -228,10 +252,23 @@ class WebGraph {
    * Changes whether edges are rendered or not.
    *
    * @param renderEdges - if true: renders edges, if false: removes edges
+   * @param [addToHistory] - True by default. Whether the action should be added to the history or not.
    *
    * @public
    */
-  public toggleEdgeRendering(renderEdges: boolean): void {
+  public toggleEdgeRendering(renderEdges: boolean, addToHistory = true): void {
+    if (this.isHistoryEnabled && addToHistory) {
+      this.history?.addAction(
+        {
+          toggleEdgeRendering: this.graphData.edges().length > 0,
+        },
+        ActionType.TOGGLE_EDGE_RENDERING,
+        {
+          toggleEdgeRendering: renderEdges,
+        }
+      );
+    }
+
     if (!renderEdges) {
       if (this.graphData.edges().length <= 0) return;
 
@@ -260,17 +297,46 @@ class WebGraph {
    * the attributes of the existing and the new node will be merged.
    *
    * @param nodes - An array holding all SerializedNodes to merge into the graph
+   * @param [addToHistory] - True by default. Whether the action should be added to the history or not.
    *
    * @public
    */
-  public mergeNodes(nodes: Array<SerializedNode>): void {
+  public mergeNodes(nodes: Array<SerializedNode>, addToHistory = true): void {
     if (nodes.length <= 0) return;
 
-    nodes.forEach((node) =>
-      this.graphData.mergeNode(node.key, node.attributes)
-    );
+    const existingNodes = new Array<SerializedNode>();
+
+    nodes.forEach((node) => {
+      if (
+        this.isHistoryEnabled &&
+        addToHistory &&
+        this.graphData.hasNode(node.key)
+      ) {
+        existingNodes.push({
+          key: node.key,
+          attributes: Object.assign(
+            {},
+            this.graphData.getNodeAttributes(node.key)
+          ),
+        });
+      }
+
+      this.graphData.mergeNode(node.key, node.attributes);
+    });
 
     this.renderer?.refresh();
+
+    if (this.isHistoryEnabled && addToHistory) {
+      this.history?.addAction(
+        {
+          nodes: existingNodes,
+        },
+        ActionType.UPDATE_OR_ADD_NODE,
+        {
+          nodes: nodes,
+        }
+      );
+    }
   }
 
   /**
@@ -278,13 +344,31 @@ class WebGraph {
    *
    * @param layout - The {@link Layout} to be set and applied
    * @param layoutConfiguration - The {@link ILayoutConfiguration} of the layout
+   * @param [addToHistory] - True by default. Whether the action should be added to the history or not.
    *
    * @public
    */
   public setAndApplyLayout(
     layout: Layout,
-    layoutConfiguration: ILayoutConfiguration
+    layoutConfiguration: ILayoutConfiguration,
+    addToHistory = true
   ): void {
+    if (this.isHistoryEnabled && addToHistory) {
+      this.history?.addAction(
+        {
+          layout: <Layout>this.configuration.getConfig("layout"),
+          layoutConfig: <ILayoutConfiguration>(
+            this.configuration.getConfig("layoutConfiguration")
+          ),
+        },
+        ActionType.SET_LAYOUT,
+        {
+          layout: layout,
+          layoutConfig: layoutConfiguration,
+        }
+      );
+    }
+
     this.configuration.setConfig("layout", layout);
     this.configuration.setConfig("layoutConfiguration", layoutConfiguration);
 
@@ -295,18 +379,30 @@ class WebGraph {
    * Sets and applies the requested nodeShape as default node shape.
    *
    * @param nodeShape - The {@link NodeShape} to be set and applied
+   * @param [addToHistory] - True by default. Whether the action should be added to the history or not.
    *
    * @public
    */
-  public setAndApplyNodeShape(nodeShape: NodeShape): void {
+  public setAndApplyNodeShape(nodeShape: NodeShape, addToHistory = true): void {
     if (!this.renderer) return;
 
+    const oldNodeShape = <NodeShape>(
+      this.configuration.getConfig("defaultNodeShape")
+    );
     this.configuration.setConfig("defaultNodeShape", nodeShape);
     this.renderSettings.defaultNodeType = nodeShape;
     this.renderer.settings.defaultNodeType = nodeShape;
 
     this.renderer.process();
     this.renderer.refresh();
+
+    if (this.isHistoryEnabled && addToHistory) {
+      this.history?.addAction(
+        { nodeShape: oldNodeShape },
+        ActionType.UPDATE_NODE_SHAPE,
+        { nodeShape: nodeShape }
+      );
+    }
   }
 
   /**
@@ -362,10 +458,12 @@ class WebGraph {
     if (this.isHistoryEnabled && addToHistory) {
       this.history?.addAction(
         {
-          node: {
-            key: nodeKey,
-            attributes: this.graphData.getNodeAttributes(nodeKey),
-          },
+          nodes: [
+            {
+              key: nodeKey,
+              attributes: this.graphData.getNodeAttributes(nodeKey),
+            },
+          ],
           edges: edgeSetForHistory,
         },
         ActionType.DROP_NODE,
@@ -395,7 +493,7 @@ class WebGraph {
   /**
    * Exports the graph as a Graphology.SerializedGraph object.
    *
-   * @param [excludeEdges] - whether the edges of the graph should be included or excluded
+   * @param [excludeEdges] - whether the edges of the graph should be included (default: false) or excluded (true)
    *
    * @returns the graph as SerializedGraph object
    *
@@ -441,12 +539,60 @@ class WebGraph {
         this.configuration.setConfig("appMode", latestAction.oldData.appMode);
         break;
 
-      case ActionType.DROP_NODE:
-        if (!latestAction.oldData.node || !latestAction.oldData.edges) {
+      case ActionType.UPDATE_OR_ADD_NODE:
+        if (!latestAction.oldData.nodes || !latestAction.newData.nodes) {
           return false;
         }
-        this.mergeNodes([latestAction.oldData.node]);
+        latestAction.newData.nodes.forEach((node) =>
+          this.dropNode(node.key, false)
+        );
+        this.mergeNodes(
+          // https://stackoverflow.com/a/24273055 since Object.assign doesn't work...
+          JSON.parse(JSON.stringify(latestAction.oldData.nodes)),
+          false
+        );
+        break;
+
+      case ActionType.DROP_NODE:
+        if (!latestAction.oldData.nodes || !latestAction.oldData.edges) {
+          return false;
+        }
+        this.mergeNodes(latestAction.oldData.nodes, false);
         this.mergeEdgesIntoGraph(latestAction.oldData.edges);
+        break;
+
+      case ActionType.UPDATE_NODE_SHAPE:
+        if (!latestAction.oldData.nodeShape) return false;
+        this.setAndApplyNodeShape(latestAction.oldData.nodeShape, false);
+        break;
+
+      case ActionType.UPDATE_EDGES:
+        if (!latestAction.oldData.edges) return false;
+        this.updateEdges(latestAction.oldData.edges, false);
+        break;
+
+      case ActionType.TOGGLE_EDGE_RENDERING:
+        if (latestAction.oldData.toggleEdgeRendering === undefined) {
+          return false;
+        }
+        this.toggleEdgeRendering(
+          latestAction.oldData.toggleEdgeRendering,
+          false
+        );
+        break;
+
+      case ActionType.SET_LAYOUT:
+        if (
+          !latestAction.oldData.layout ||
+          !latestAction.oldData.layoutConfig
+        ) {
+          return false;
+        }
+        this.setAndApplyLayout(
+          latestAction.oldData.layout,
+          latestAction.oldData.layoutConfig,
+          false
+        );
         break;
     }
 
@@ -487,9 +633,53 @@ class WebGraph {
         );
         break;
 
+      case ActionType.UPDATE_OR_ADD_NODE:
+        if (!latestRevertedAction.newData.nodes) return false;
+        this.mergeNodes(latestRevertedAction.newData.nodes, false);
+        break;
+
       case ActionType.DROP_NODE:
-        if (!latestRevertedAction.oldData.node) return false;
-        this.dropNode(latestRevertedAction.oldData.node.key, false);
+        if (!latestRevertedAction.oldData.nodes) return false;
+        latestRevertedAction.oldData.nodes.forEach((node) =>
+          this.dropNode(node.key, false)
+        );
+        break;
+
+      case ActionType.UPDATE_NODE_SHAPE:
+        if (!latestRevertedAction.newData.nodeShape) return false;
+        this.setAndApplyNodeShape(
+          latestRevertedAction.newData.nodeShape,
+          false
+        );
+        break;
+
+      case ActionType.UPDATE_EDGES:
+        if (!latestRevertedAction.newData.edges) return false;
+        this.updateEdges(latestRevertedAction.newData.edges, false);
+        break;
+
+      case ActionType.TOGGLE_EDGE_RENDERING:
+        if (latestRevertedAction.newData.toggleEdgeRendering === undefined) {
+          return false;
+        }
+        this.toggleEdgeRendering(
+          latestRevertedAction.newData.toggleEdgeRendering,
+          false
+        );
+        break;
+
+      case ActionType.SET_LAYOUT:
+        if (
+          !latestRevertedAction.newData.layout ||
+          !latestRevertedAction.newData.layoutConfig
+        ) {
+          return false;
+        }
+        this.setAndApplyLayout(
+          latestRevertedAction.newData.layout,
+          latestRevertedAction.newData.layoutConfig,
+          false
+        );
         break;
     }
 

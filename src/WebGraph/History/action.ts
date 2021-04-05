@@ -16,9 +16,8 @@ enum ActionType {
   UPDATE_APP_MODE = "update_app_mode",
 
   // Nodes
-  ADD_NODE = "add_node",
   DROP_NODE = "drop_node",
-  UPDATE_NODE_DATA = "update_node_data",
+  UPDATE_OR_ADD_NODE = "update_or_add_node",
   UPDATE_NODE_SHAPE = "update_node_shape",
 
   // Edges
@@ -27,7 +26,6 @@ enum ActionType {
 
   // Layout
   SET_LAYOUT = "set_layout",
-  SET_LAYOUT_CONFIG = "set_layout_config",
 }
 
 /**
@@ -38,7 +36,7 @@ enum ActionType {
  */
 interface IActionPayload {
   appMode?: AppMode;
-  node?: SerializedNode;
+  nodes?: Array<SerializedNode>;
   nodeShape?: NodeShape;
   edges?: Set<SerializedEdge>;
   toggleEdgeRendering?: boolean;
