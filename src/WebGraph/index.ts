@@ -29,7 +29,7 @@ import {
   AppMode,
   IContextMenu,
   IHoverCallback,
-  NodeShape,
+  NodeType,
 } from "../Configuration";
 import drawHover from "./Canvas/hover";
 import {
@@ -324,6 +324,7 @@ class WebGraph {
       this.graphData.mergeNode(node.key, node.attributes);
     });
 
+    this.renderer?.process();
     this.renderer?.refresh();
 
     if (this.isHistoryEnabled && addToHistory) {
@@ -376,31 +377,31 @@ class WebGraph {
   }
 
   /**
-   * Sets and applies the requested nodeShape as default node shape.
+   * Sets and applies the requested nodeType as default node type.
    *
-   * @param nodeShape - The {@link NodeShape} to be set and applied
+   * @param nodeType - The {@link NodeType} to be set and applied
    * @param [addToHistory] - True by default. Whether the action should be added to the history or not.
    *
    * @public
    */
-  public setAndApplyNodeShape(nodeShape: NodeShape, addToHistory = true): void {
+  public setAndApplyNodeType(nodeType: NodeType, addToHistory = true): void {
     if (!this.renderer) return;
 
-    const oldNodeShape = <NodeShape>(
-      this.configuration.getConfig("defaultNodeShape")
+    const oldNodeType = <NodeType>(
+      this.configuration.getConfig("defaultNodeType")
     );
-    this.configuration.setConfig("defaultNodeShape", nodeShape);
-    this.renderSettings.defaultNodeType = nodeShape;
-    this.renderer.settings.defaultNodeType = nodeShape;
+    this.configuration.setConfig("defaultNodeType", nodeType);
+    this.renderSettings.defaultNodeType = nodeType;
+    this.renderer.settings.defaultNodeType = nodeType;
 
     this.renderer.process();
     this.renderer.refresh();
 
     if (this.isHistoryEnabled && addToHistory) {
       this.history?.addAction(
-        { nodeShape: oldNodeShape },
-        ActionType.UPDATE_NODE_SHAPE,
-        { nodeShape: nodeShape }
+        { nodeType: oldNodeType },
+        ActionType.UPDATE_NODE_TYPE,
+        { nodeType: nodeType }
       );
     }
   }
@@ -561,9 +562,9 @@ class WebGraph {
         this.mergeEdgesIntoGraph(latestAction.oldData.edges);
         break;
 
-      case ActionType.UPDATE_NODE_SHAPE:
-        if (!latestAction.oldData.nodeShape) return false;
-        this.setAndApplyNodeShape(latestAction.oldData.nodeShape, false);
+      case ActionType.UPDATE_NODE_TYPE:
+        if (!latestAction.oldData.nodeType) return false;
+        this.setAndApplyNodeType(latestAction.oldData.nodeType, false);
         break;
 
       case ActionType.UPDATE_EDGES:
@@ -645,12 +646,9 @@ class WebGraph {
         );
         break;
 
-      case ActionType.UPDATE_NODE_SHAPE:
-        if (!latestRevertedAction.newData.nodeShape) return false;
-        this.setAndApplyNodeShape(
-          latestRevertedAction.newData.nodeShape,
-          false
-        );
+      case ActionType.UPDATE_NODE_TYPE:
+        if (!latestRevertedAction.newData.nodeType) return false;
+        this.setAndApplyNodeType(latestRevertedAction.newData.nodeType, false);
         break;
 
       case ActionType.UPDATE_EDGES:
@@ -846,8 +844,8 @@ class WebGraph {
    * @remarks - Regarding {@link IHoverCallback}:
    * The number given in the 'callback' field of a {@link IHoverCallback} represents
    * the nodes callback:
-   * A node with type 0 would get the callback mapped to 0
-   * A node with type 1 would get the callback mapped to 1
+   * A node with category 0 would get the callback mapped to 0
+   * A node with category 1 would get the callback mapped to 1
    * ...
    *
    * @internal
@@ -869,7 +867,8 @@ class WebGraph {
     ) => {
       if (!this.graphData.hasNode(data.key)) return;
 
-      data.shape = this.graphData.getNodeAttribute(data.key, "shape");
+      // set the type for the hover canvas to know which form to draw
+      data.type = this.graphData.getNodeAttribute(data.key, "type");
 
       // if no hover callbacks are provided, use the sigma.js library default
       if (!hoverCallbacks || !hoverContainer) {
@@ -879,12 +878,12 @@ class WebGraph {
 
       if (this.isNodeDragged) return;
 
-      // retrieve node type, if none was given use 0
-      const nodeType = this.graphData.getNodeAttribute(data.key, "type");
-      const type = nodeType ? nodeType : 0;
+      // retrieve node category, if none was given use 0
+      const category =
+        this.graphData.getNodeAttribute(data.key, "category") ?? 0;
 
       // retrieve nodes hover callback
-      const hoverCallback = hoverCallbacks.callback[type];
+      const hoverCallback = hoverCallbacks.callback[category];
 
       // retrieve score
       const nodeScore = this.graphData.getNodeAttribute(data.key, "score");
@@ -1017,8 +1016,8 @@ class WebGraph {
    * @internal
    */
   private overwriteNodePrograms(): void {
-    this.renderSettings.defaultNodeType = <NodeShape>(
-      this.configuration.getConfig("defaultNodeShape")
+    this.renderSettings.defaultNodeType = <NodeType>(
+      this.configuration.getConfig("defaultNodeType")
     );
 
     this.renderSettings.nodeProgramClasses = {
@@ -1053,9 +1052,9 @@ class WebGraph {
    *
    * @remarks - Regarding {@link IContextMenu}:
    * The number given in the 'entries' field of a {@link IContextMenu} represents the  node
-   * type the array of {@link IContextMenuItem}s belongs to:
-   * A node with type 0 would get the Array<IContextMenuItem> mapped to 0
-   * A node with type 1 would get the Array<IContextMenuItem> mapped to 1
+   * category the array of {@link IContextMenuItem}s belongs to:
+   * A node with category 0 would get the Array<IContextMenuItem> mapped to 0
+   * A node with category 1 would get the Array<IContextMenuItem> mapped to 1
    * ...
    *
    * @internal
@@ -1087,12 +1086,11 @@ class WebGraph {
 
       event.preventDefault();
 
-      // retrieve node type, if none was given use 0
-      const nodeType = this.graphData.getNodeAttribute(node, "type");
-      const type = nodeType ? nodeType : 0;
+      // retrieve node category, if none was given use 0
+      const category = this.graphData.getNodeAttribute(node, "category") ?? 0;
 
       // retrieve nodes corresponding context menu
-      const contextMenu = allContextMenus.entries[type];
+      const contextMenu = allContextMenus.entries[category];
       if (!contextMenu) return;
 
       // generate context menus content

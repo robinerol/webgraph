@@ -2,7 +2,7 @@ import {
   AppMode,
   ILayoutConfiguration,
   Layout,
-  NodeShape,
+  NodeType,
 } from "../../Configuration";
 import { SerializedNode, SerializedEdge } from "graphology-types";
 
@@ -18,7 +18,7 @@ enum ActionType {
   // Nodes
   DROP_NODE = "drop_node",
   UPDATE_OR_ADD_NODE = "update_or_add_node",
-  UPDATE_NODE_SHAPE = "update_node_shape",
+  UPDATE_NODE_TYPE = "update_node_type",
 
   // Edges
   UPDATE_EDGES = "update_edges",
@@ -37,7 +37,7 @@ enum ActionType {
 interface IActionPayload {
   appMode?: AppMode;
   nodes?: Array<SerializedNode>;
-  nodeShape?: NodeShape;
+  nodeType?: NodeType;
   edges?: Set<SerializedEdge>;
   toggleEdgeRendering?: boolean;
   layout?: Layout;

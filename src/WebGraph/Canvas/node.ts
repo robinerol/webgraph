@@ -1,6 +1,6 @@
 import { PartialButFor } from "sigma/types/utils";
 import { NodeAttributes } from "sigma/types/types";
-import { GraphConfiguration, NodeShape } from "../../Configuration";
+import { GraphConfiguration, NodeType } from "../../Configuration";
 
 const PI_TIMES_2 = Math.PI * 2;
 
@@ -16,22 +16,22 @@ function drawNode(
   data: PartialButFor<NodeAttributes, "x" | "y" | "size" | "color">,
   config: GraphConfiguration
 ): void {
-  let shape: NodeShape = data.shape;
+  let shape: NodeType = data.shape;
   if (!shape) {
-    shape = <NodeShape>config.getConfig("defaultNodeShape");
+    shape = <NodeType>config.getConfig("defaultNodeType");
   }
 
   switch (shape) {
-    case NodeShape.CIRCLE:
+    case NodeType.CIRCLE:
       drawCircle(context, data);
       break;
-    case NodeShape.RING:
+    case NodeType.RING:
       drawRing(context, data);
       break;
-    case NodeShape.RECTANGLE:
+    case NodeType.RECTANGLE:
       drawRectangle(context, data);
       break;
-    case NodeShape.TRIANGLE:
+    case NodeType.TRIANGLE:
       drawTriangle(context, data);
       break;
   }

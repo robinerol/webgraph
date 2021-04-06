@@ -6,7 +6,7 @@ import {
   Layout,
   DEFAULT_FORCEATLAS2_ITERATIONS,
   AppMode,
-  NodeShape,
+  NodeType,
 } from "../src/index";
 import Graph, { MultiGraph } from "graphology";
 
@@ -51,7 +51,7 @@ function drawGraph(graphDataJSON: any[]) {
     graph.addNode(result.id, {
       label: result.content.year,
       size: Utils.getNodeSizeForValue(result.score, 25),
-      type: Math.round(Math.random()),
+      category: Math.round(Math.random()),
       color: COLOR_PALETTE[Math.round(Math.random() * 5)],
       score: result.score,
     });
@@ -137,6 +137,22 @@ function drawGraph(graphDataJSON: any[]) {
               callback: (key: string) => webGraph?.dropNode(key),
               icon: "https://test.test/test.jpg",
             },
+            {
+              label: "type triangle",
+              callback: (key: string) =>
+                webGraph?.mergeNodes([
+                  { key: key, attributes: { type: NodeType.TRIANGLE } },
+                ]),
+              icon: "https://test.test/test.jpg",
+            },
+            {
+              label: "type rectangle",
+              callback: (key: string) =>
+                webGraph?.mergeNodes([
+                  { key: key, attributes: { type: NodeType.RECTANGLE } },
+                ]),
+              icon: "https://test.test/test.jpg",
+            },
           ],
           1: [
             {
@@ -164,7 +180,7 @@ function drawGraph(graphDataJSON: any[]) {
         },
       },
       suppressContextMenu: false,
-      defaultNodeShape: NodeShape.RING,
+      defaultNodeType: NodeType.RING,
       highlightSubGraphOnHover: true,
       enableHistory: true,
     },
@@ -189,6 +205,7 @@ function drawExampleGraph() {
     y: 1,
     color: "#D1495B",
     size: 10,
+    type: NodeType.RECTANGLE,
   });
 
   graph.addNode("Node 2", {
@@ -197,6 +214,7 @@ function drawExampleGraph() {
     y: 0,
     color: "#EDAE49",
     size: 10,
+    type: NodeType.TRIANGLE,
   });
 
   graph.addNode("Node 3", {
@@ -338,38 +356,38 @@ document.getElementById("edgeHide")?.addEventListener("click", (e) => {
 });
 
 /**---------------------------------
- * Settings Menu - Node Shape
+ * Settings Menu - Defualt Node Type
  *--------------------------------*/
-document.getElementById("shapeRing")?.addEventListener("click", (e) => {
+document.getElementById("typeRing")?.addEventListener("click", (e) => {
   e.preventDefault();
 
   if (!webGraph || !webGraph.isRenderingActive) return;
 
-  webGraph.setAndApplyNodeShape(NodeShape.RING);
+  webGraph.setAndApplyNodeType(NodeType.RING);
 });
 
-document.getElementById("shapeCircle")?.addEventListener("click", (e) => {
+document.getElementById("typeCircle")?.addEventListener("click", (e) => {
   e.preventDefault();
 
   if (!webGraph || !webGraph.isRenderingActive) return;
 
-  webGraph.setAndApplyNodeShape(NodeShape.CIRCLE);
+  webGraph.setAndApplyNodeType(NodeType.CIRCLE);
 });
 
-document.getElementById("shapeRectangle")?.addEventListener("click", (e) => {
+document.getElementById("typeRectangle")?.addEventListener("click", (e) => {
   e.preventDefault();
 
   if (!webGraph || !webGraph.isRenderingActive) return;
 
-  webGraph.setAndApplyNodeShape(NodeShape.RECTANGLE);
+  webGraph.setAndApplyNodeType(NodeType.RECTANGLE);
 });
 
-document.getElementById("shapeTriangle")?.addEventListener("click", (e) => {
+document.getElementById("typeTriangle")?.addEventListener("click", (e) => {
   e.preventDefault();
 
   if (!webGraph || !webGraph.isRenderingActive) return;
 
-  webGraph.setAndApplyNodeShape(NodeShape.TRIANGLE);
+  webGraph.setAndApplyNodeType(NodeType.TRIANGLE);
 });
 
 /**---------------------------------

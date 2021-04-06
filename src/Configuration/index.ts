@@ -2,7 +2,7 @@ import { Layout, ILayoutConfiguration } from "./layouts";
 import { AppMode } from "./appmode";
 import { IContextMenu } from "./contextmenu";
 import { IHoverCallback } from "./hovercallback";
-import { NodeShape } from "./nodeshape";
+import { NodeType } from "./nodetype";
 
 /**
  * Interface for the graphs configurations.
@@ -18,7 +18,7 @@ interface IGraphConfiguration {
   hoverCallbacks?: IHoverCallback;
   highlightSubGraphOnHover?: boolean;
   subGraphHighlightColor?: string;
-  defaultNodeShape?: NodeShape;
+  defaultNodeType?: NodeType;
   enableHistory?: boolean;
 }
 
@@ -36,7 +36,7 @@ const defaultGraphConfiguration: IGraphConfiguration = {
   suppressContextMenu: false,
   highlightSubGraphOnHover: true,
   subGraphHighlightColor: "#e57a2d",
-  defaultNodeShape: NodeShape.RING,
+  defaultNodeType: NodeType.RING,
   enableHistory: false,
 };
 
@@ -95,7 +95,7 @@ class GraphConfiguration {
     | boolean
     | IHoverCallback
     | string
-    | NodeShape
+    | NodeType
     | undefined {
     return this.graphConfigurations[fieldName];
   }
@@ -120,7 +120,7 @@ class GraphConfiguration {
     | boolean
     | IHoverCallback
     | string
-    | NodeShape
+    | NodeType
     | undefined {
     return (this.graphConfigurations[fieldName] = value);
   }
@@ -130,5 +130,5 @@ export * from "./layouts";
 export * from "./appmode";
 export * from "./contextmenu";
 export * from "./hovercallback";
-export * from "./nodeshape";
+export * from "./nodetype";
 export { IGraphConfiguration, GraphConfiguration };

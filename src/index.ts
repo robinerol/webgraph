@@ -3,6 +3,6 @@ export * from "./Utils";
 export {
   AppMode,
   Layout,
-  NodeShape,
+  NodeType,
   DEFAULT_FORCEATLAS2_ITERATIONS,
 } from "./Configuration";

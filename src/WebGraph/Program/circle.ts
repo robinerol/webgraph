@@ -18,7 +18,6 @@ const POINTS = 1,
 class NodeCircleProgram extends AbstractNodeProgram {
   constructor(gl: WebGLRenderingContext) {
     super(gl, vertexShaderSource, fragmentShaderSource, POINTS, ATTRIBUTES);
-    this.bind();
   }
 
   process(data: NodeAttributes, offset: number): void {
@@ -44,6 +43,8 @@ class NodeCircleProgram extends AbstractNodeProgram {
   }
 
   render(params: RenderNodeParams): void {
+    this.bind();
+
     const gl = this.gl;
 
     const program = this.program;
