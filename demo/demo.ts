@@ -46,13 +46,30 @@ function drawGraph(graphDataJSON: any[]) {
     "#BBBDF6",
   ];
 
+  let minScore = 10000;
+  let maxScore = 0;
+  let minYear = 10000;
+  let maxYear = 0;
+
+  graphDataJSON.forEach((node) => {
+    if (node.score < minScore) minScore = node.score;
+    if (node.score > maxScore) maxScore = node.score;
+    if (node.content.year < minYear) minYear = node.content.year;
+    if (node.content.year > maxYear) maxYear = node.content.year;
+  });
+
   // create nodes
   graphDataJSON.forEach((result) => {
     graph.addNode(result.id, {
-      label: result.content.year,
-      size: Utils.getNodeSizeForValue(result.score, 25),
+      label: "XYZ, " + result.content.year,
+      size: Utils.getNodeSizeForValue(result.score, minScore, maxScore),
       category: Math.round(Math.random()),
-      color: COLOR_PALETTE[Math.round(Math.random() * 5)],
+      color: Utils.getNodeColorForValue(
+        result.content.year,
+        minYear,
+        maxYear,
+        COLOR_PALETTE
+      ),
       score: result.score,
     });
   });
@@ -83,6 +100,9 @@ function drawGraph(graphDataJSON: any[]) {
         forceAtlas2LayoutOptions: {
           iterations: DEFAULT_FORCEATLAS2_ITERATIONS,
           preAppliedLayout: Layout.CIRCLEPACK,
+          settings: {
+            edgeWeightInfluence: 1,
+          },
         },
       },
       appMode: AppMode.DYNAMIC,

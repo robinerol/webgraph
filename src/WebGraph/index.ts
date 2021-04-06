@@ -69,8 +69,8 @@ class WebGraph {
    *
    * @param container - The container where to hook the graph into
    * @param graphData - The graph to be rendered
-   * @param [graphConfiguration] - Configurations to be applied. @see {@link IGraphConfiguration} for all available configs.
-   * @param [renderSettings] - Render settings to be applied and directly passed to the sigma.js WebGLRenderer. @see {@link https://github.com/jacomyal/sigma.js/blob/v2/src/renderers/webgl/settings.ts} for all available configs.
+   * @param [graphConfiguration] - Configurations to be applied. @see {@link IGraphConfiguration} for all available configs. @defaultValue `{}`
+   * @param [renderSettings] - Render settings to be applied and directly passed to the sigma.js WebGLRenderer. @see {@link https://github.com/jacomyal/sigma.js/blob/v2/src/renderers/webgl/settings.ts} for all available configs. @defaultValue `{}`
    *
    * @example
    * An example where just the basic infos are provided
@@ -213,7 +213,7 @@ class WebGraph {
    * of edges.
    *
    * @param edges - An array holding the new Graphology.SerializedEdge (s)
-   * @param [addToHistory] - True by default. Whether the action should be added to the history or not.
+   * @param [addToHistory] - True by default. Whether the action should be added to the history or not. @defaultValue `true`
    *
    * @public
    */
@@ -252,7 +252,7 @@ class WebGraph {
    * Changes whether edges are rendered or not.
    *
    * @param renderEdges - if true: renders edges, if false: removes edges
-   * @param [addToHistory] - True by default. Whether the action should be added to the history or not.
+   * @param [addToHistory] - True by default. Whether the action should be added to the history or not. @defaultValue `true`
    *
    * @public
    */
@@ -297,7 +297,7 @@ class WebGraph {
    * the attributes of the existing and the new node will be merged.
    *
    * @param nodes - An array holding all SerializedNodes to merge into the graph
-   * @param [addToHistory] - True by default. Whether the action should be added to the history or not.
+   * @param [addToHistory] - True by default. Whether the action should be added to the history or not. @defaultValue `true`
    *
    * @public
    */
@@ -345,7 +345,7 @@ class WebGraph {
    *
    * @param layout - The {@link Layout} to be set and applied
    * @param layoutConfiguration - The {@link ILayoutConfiguration} of the layout
-   * @param [addToHistory] - True by default. Whether the action should be added to the history or not.
+   * @param [addToHistory] - True by default. Whether the action should be added to the history or not. @defaultValue `true`
    *
    * @public
    */
@@ -380,7 +380,7 @@ class WebGraph {
    * Sets and applies the requested nodeType as default node type.
    *
    * @param nodeType - The {@link NodeType} to be set and applied
-   * @param [addToHistory] - True by default. Whether the action should be added to the history or not.
+   * @param [addToHistory] - True by default. Whether the action should be added to the history or not. @defaultValue `true`
    *
    * @public
    */
@@ -410,7 +410,7 @@ class WebGraph {
    * Drops a node from the graph.
    *
    * @param nodeKey - The key of the node to drop
-   * @param [addToHistory] - True by default. Whether the action should be added to the history or not.
+   * @param [addToHistory] - True by default. Whether the action should be added to the history or not. @defaultValue `true`
    *
    * @returns true if the operation was successfull, false if not
    *
@@ -494,7 +494,7 @@ class WebGraph {
   /**
    * Exports the graph as a Graphology.SerializedGraph object.
    *
-   * @param [excludeEdges] - whether the edges of the graph should be included (default: false) or excluded (true)
+   * @param [excludeEdges] - whether the edges of the graph should be included (false) or excluded (true), @defaultValue `false`
    *
    * @returns the graph as SerializedGraph object
    *
