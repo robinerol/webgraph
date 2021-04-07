@@ -1,6 +1,3 @@
-// This shader is heavily copied from/based on:
-// https://github.com/jacomyal/sigma.js/blob/v2/src/renderers/webgl/shaders/node.fast.vert.glsl
-
 attribute vec2 a_position;
 attribute float a_size;
 attribute vec4 a_color;

@@ -7,8 +7,6 @@ float sign(vec2 p1, vec2 p2, vec2 p3) {
 }
 
 void main(void) {
-  vec4 no_color = vec4(0.0);
-
   vec2 v1 = vec2(0.0, 1.0);
   vec2 v2 = vec2(0.5, 0.0);
   vec2 v3 = vec2(1.0, 1.0);
@@ -19,5 +17,5 @@ void main(void) {
 
   float alpha = step(2.9, d1 + d2 + d3);
 
-  gl_FragColor = mix(no_color, vec4(v_color.xyz, 1.0), alpha);
+  gl_FragColor = mix(vec4(0.0), v_color, alpha);
 }

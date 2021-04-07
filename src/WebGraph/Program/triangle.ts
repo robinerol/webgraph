@@ -9,7 +9,7 @@ import { RenderNodeParams } from "sigma/types/renderers/webgl/programs/common/no
 import { AbstractNodeProgram } from "sigma/src/renderers/webgl/programs/common/node";
 import { NodeAttributes } from "sigma/types/types";
 import { floatColor } from "sigma/src/renderers/webgl/utils";
-import vertexShaderSource from "../Shader/node.triangle.vert.glsl";
+import vertexShaderSource from "../Shader/node.vert.glsl";
 import fragmentShaderSource from "../Shader/node.triangle.frag.glsl";
 
 const POINTS = 1,
