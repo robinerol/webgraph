@@ -1,5 +1,11 @@
+import { Camera } from "sigma";
+import { NodeAttributes } from "sigma/types/types";
+import { NodeKey } from "graphology-types";
+
 /**
- * Various utils.
+ * Various public utils.
+ *
+ * @public
  */
 class Utils {
   /**
@@ -84,4 +90,129 @@ class Utils {
   };
 }
 
-export { Utils };
+/**
+ * Internal utils.
+ *
+ * @internal
+ */
+class InternalUtils {
+  /**
+   * Selects which labels to render based on the size of the node and the zoom
+   * level of the camera. Labels are being rendered in three zoom levels.
+   *
+   * @param params - Parameters:
+   * - @param cache - Cache storing nodes' data.
+   * - @param camera - The renderer's camera.
+   * - @param displayedLabels - Currently displayed labels.
+   * - @param visibleNodes - Nodes visible for this render.
+   *
+   * @returns - The selected labels.
+   */
+  static labelSelector(params: {
+    cache: { [key: string]: NodeAttributes };
+    camera: Camera;
+    displayedLabels: Set<NodeKey>;
+    visibleNodes: NodeKey[];
+  }): NodeKey[] {
+    const cameraState = params.camera.getState(),
+      previousCameraState = params.camera.getPreviousState();
+
+    const previousCamera = new Camera();
+    previousCamera.setState(previousCameraState);
+
+    // Camera hasn't moved?
+    const still =
+      cameraState.x === previousCameraState.x &&
+      cameraState.y === previousCameraState.y &&
+      cameraState.ratio === previousCameraState.ratio;
+
+    // State
+    const zooming = cameraState.ratio < previousCameraState.ratio,
+      panning =
+        cameraState.x !== previousCameraState.x ||
+        cameraState.y !== previousCameraState.y,
+      unzooming = cameraState.ratio > previousCameraState.ratio,
+      unzoomedPanning = !zooming && !unzooming && cameraState.ratio >= 1,
+      zoomedPanning =
+        panning && params.displayedLabels.size && !zooming && !unzooming;
+
+    // if panning, return displayed labels
+    if (panning || zoomedPanning) Array.from(params.displayedLabels);
+
+    // Trick to discretize unzooming
+    if (unzooming && Math.trunc(cameraState.ratio * 100) % 5 !== 0)
+      return Array.from(params.displayedLabels);
+
+    // If panning while unzoomed, we shouldn't change label selection
+    if ((unzoomedPanning || still) && params.displayedLabels.size !== 0)
+      return Array.from(params.displayedLabels);
+
+    // When unzoomed & zooming
+    if (zooming && cameraState.ratio >= 1)
+      return Array.from(params.displayedLabels);
+
+    // when zoomed out more than ratio 10, display no labels
+    if (cameraState.ratio >= 15) return [];
+
+    const worthyNodes: Array<NodeKey> = new Array<NodeKey>();
+    const nodes: Record<number, Array<NodeKey>> = {};
+    const nodeSizes: Array<number> = new Array<number>();
+
+    // sort the nodes by their size
+    params.visibleNodes.forEach((node) => {
+      const nodeData = params.cache[node];
+
+      if (nodes[nodeData.size]) {
+        nodes[nodeData.size].push(node);
+      } else {
+        nodes[nodeData.size] = [node];
+      }
+    });
+
+    // retrieve all different sizes of nodes
+    for (const nodeSize in nodes) {
+      nodeSizes.push(Number.parseInt(nodeSize));
+    }
+
+    // sort node sizes in descending order
+    nodeSizes.sort((a, b) => b - a);
+
+    // if zoomed out, just render the most important labels aka the labels of the largest nodes
+    if (cameraState.ratio >= 1.0) {
+      worthyNodes.push(...nodes[nodeSizes[0]]);
+      return worthyNodes;
+    }
+
+    // sort all nodes by size into 3 levels
+    const interval = nodeSizes.length / 3;
+    let i = 0;
+
+    // level 1
+    if (cameraState.ratio < 1.0) {
+      while (i < interval) {
+        worthyNodes.push(...nodes[nodeSizes[i]]);
+        i++;
+      }
+    }
+
+    // level 2
+    if (cameraState.ratio < 0.5) {
+      while (i < interval * 2) {
+        worthyNodes.push(...nodes[nodeSizes[i]]);
+        i++;
+      }
+    }
+
+    // level 3
+    if (cameraState.ratio < 0.25) {
+      while (i < interval * 3) {
+        worthyNodes.push(...nodes[nodeSizes[i]]);
+        i++;
+      }
+    }
+
+    return worthyNodes;
+  }
+}
+
+export { Utils, InternalUtils };

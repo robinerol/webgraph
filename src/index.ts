@@ -1,5 +1,5 @@
 export * from "./WebGraph";
-export * from "./Utils";
+export { Utils } from "./Utils";
 export {
   AppMode,
   Layout,

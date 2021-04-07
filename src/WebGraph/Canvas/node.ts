@@ -16,12 +16,10 @@ function drawNode(
   data: PartialButFor<NodeAttributes, "x" | "y" | "size" | "color">,
   config: GraphConfiguration
 ): void {
-  let shape: NodeType = data.shape;
-  if (!shape) {
-    shape = <NodeType>config.getConfig("defaultNodeType");
-  }
+  const type: NodeType =
+    <NodeType>data.type ?? <NodeType>config.getConfig("defaultNodeType");
 
-  switch (shape) {
+  switch (type) {
     case NodeType.CIRCLE:
       drawCircle(context, data);
       break;

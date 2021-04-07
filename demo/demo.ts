@@ -206,6 +206,7 @@ function drawGraph(graphDataJSON: any[]) {
     },
     {
       renderLabels: true,
+      labelFontColor: "#8e8e8e",
     }
   );
 

@@ -21,7 +21,7 @@ function drawLabel(
   const font = settings.labelFont;
   const weight = settings.labelWeight;
 
-  context.fillStyle = "#000";
+  context.fillStyle = settings.labelFontColor;
   context.font = `${weight} ${size}px ${font}`;
 
   context.fillText(data.label, data.x + data.size + 3, data.y + size / 3);

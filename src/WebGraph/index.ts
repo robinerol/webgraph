@@ -41,6 +41,8 @@ import {
 import { animateNodes } from "sigma/src/animate";
 import { cubicInOut } from "sigma/src/easings";
 import { ActionType, HistoryManager } from "./History";
+import drawLabel from "./Canvas/label";
+import { InternalUtils } from "../Utils";
 
 /**
  * The WebGraph class represents the main endpoint of the module.
@@ -828,6 +830,9 @@ class WebGraph {
     // override the hover renderer
     this.overwriteHoverRenderer();
 
+    // override the label renderer
+    this.overwriteLabelRenderer();
+
     // create reducers for highlighting sub graphs on hover if turned on
     this.overwriteReducers();
 
@@ -949,6 +954,17 @@ class WebGraph {
     hoverContainer?.addEventListener("mouseleave", () =>
       this.hideHoverContainer()
     );
+  }
+
+  /**
+   * Overwrites the label renderer and the selector for which labels to render.
+   *
+   * @internal
+   */
+  private overwriteLabelRenderer(): void {
+    this.renderSettings.labelRenderer = drawLabel;
+
+    this.renderSettings.labelSelector = InternalUtils.labelSelector;
   }
 
   /**
