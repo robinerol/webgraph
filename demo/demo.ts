@@ -85,6 +85,7 @@ function drawGraph(graphDataJSON: any[]) {
     graph.addEdge(sourceNode, targetNode, {
       weight: Math.random(),
       color: "#ccc",
+      important: Math.random() > 0.7,
     });
   }
 
@@ -246,7 +247,11 @@ function drawExampleGraph() {
     size: 10,
   });
 
-  graph.addEdge("Node 1", "Node 2", { weight: 0.5, color: "#ccc" });
+  graph.addEdge("Node 1", "Node 2", {
+    weight: 0.5,
+    color: "#ccc",
+    important: true,
+  });
   graph.addEdge("Node 1", "Node 3", { weight: 1.0, color: "#ccc" });
 
   if (webGraph?.isRenderingActive) webGraph.destroy();
@@ -365,7 +370,7 @@ document.getElementById("edgeShow")?.addEventListener("click", (e) => {
 
   if (!webGraph || !webGraph.isRenderingActive) return;
 
-  webGraph.toggleEdgeRendering(true);
+  webGraph.toggleEdgeRendering(false);
 });
 
 document.getElementById("edgeHide")?.addEventListener("click", (e) => {
@@ -373,7 +378,26 @@ document.getElementById("edgeHide")?.addEventListener("click", (e) => {
 
   if (!webGraph || !webGraph.isRenderingActive) return;
 
-  webGraph.toggleEdgeRendering(false);
+  webGraph.toggleEdgeRendering(true);
+});
+
+/**---------------------------------
+ * Settings Menu - Important Edges
+ *--------------------------------*/
+document.getElementById("impEdgeShow")?.addEventListener("click", (e) => {
+  e.preventDefault();
+
+  if (!webGraph || !webGraph.isRenderingActive) return;
+
+  webGraph.toggleJustImportantEdgeRendering(true);
+});
+
+document.getElementById("impEdgeHide")?.addEventListener("click", (e) => {
+  e.preventDefault();
+
+  if (!webGraph || !webGraph.isRenderingActive) return;
+
+  webGraph.toggleJustImportantEdgeRendering(false);
 });
 
 /**---------------------------------

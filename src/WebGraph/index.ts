@@ -52,7 +52,6 @@ import { InternalUtils } from "../Utils";
 class WebGraph {
   private container: HTMLElement;
   private graphData: Graph;
-  private edges: Set<SerializedEdge> = new Set<SerializedEdge>();
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   private renderSettings: Record<string, any>;
   private configuration: GraphConfiguration;
@@ -211,6 +210,62 @@ class WebGraph {
   }
 
   /**
+   * Merges edges into the graph.
+   *
+   * @param edges - A Set of SerializedEdge to merge into the graph
+   * @param [addToHistory] - True by default. Whether the action should be added to the history or not. @defaultValue `true`
+   *
+   * @public
+   */
+  public mergeEdges(edges: Set<SerializedEdge>, addToHistory = true): void {
+    if (edges.size <= 0) return;
+
+    const existingEdges = new Set<SerializedEdge>();
+
+    edges.forEach((edge) => {
+      const key: EdgeKey | undefined = edge.key;
+
+      if (
+        this.isHistoryEnabled &&
+        addToHistory &&
+        this.graphData.hasEdge(edge.source, edge.target)
+      ) {
+        existingEdges.add({
+          key: key,
+          attributes: key
+            ? Object.assign({}, this.graphData.getEdgeAttributes(key))
+            : undefined,
+          source: edge.source,
+          target: edge.target,
+        });
+      }
+
+      if (key) {
+        this.graphData.mergeEdgeWithKey(
+          key,
+          edge.source,
+          edge.target,
+          edge.attributes
+        );
+      } else {
+        this.graphData.mergeEdge(edge.source, edge.target, edge.attributes);
+      }
+    });
+
+    if (this.isHistoryEnabled && addToHistory) {
+      this.history?.addAction(
+        {
+          edges: existingEdges,
+        },
+        ActionType.UPDATE_OR_ADD_EDGE,
+        {
+          edges: edges,
+        }
+      );
+    }
+  }
+
+  /**
    * Removes all existing edges and replaces them with the given array
    * of edges.
    *
@@ -219,9 +274,7 @@ class WebGraph {
    *
    * @public
    */
-  public updateEdges(edges: Set<SerializedEdge>, addToHistory = true): void {
-    if (!edges) return;
-
+  public replaceEdges(edges: Set<SerializedEdge>, addToHistory = true): void {
     if (this.isHistoryEnabled && addToHistory) {
       const existingEdges = new Set<SerializedEdge>();
 
@@ -238,7 +291,7 @@ class WebGraph {
         {
           edges: existingEdges,
         },
-        ActionType.UPDATE_EDGES,
+        ActionType.REPLACE_EDGES,
         {
           edges: edges,
         }
@@ -246,52 +299,60 @@ class WebGraph {
     }
 
     this.graphData.clearEdges();
-    this.edges = edges;
-    this.mergeEdgesIntoGraph(this.edges);
+    this.mergeEdges(edges, false);
   }
 
   /**
    * Changes whether edges are rendered or not.
    *
-   * @param renderEdges - if true: renders edges, if false: removes edges
+   * @param hideEdges - if true: hides edges, if false: renders edges
    * @param [addToHistory] - True by default. Whether the action should be added to the history or not. @defaultValue `true`
    *
    * @public
    */
-  public toggleEdgeRendering(renderEdges: boolean, addToHistory = true): void {
+  public toggleEdgeRendering(hideEdges: boolean, addToHistory = true): void {
+    const oldValue = this.renderer?.toggleEdgeRendering(hideEdges);
+
     if (this.isHistoryEnabled && addToHistory) {
       this.history?.addAction(
         {
-          toggleEdgeRendering: this.graphData.edges().length > 0,
+          toggleEdgeRendering: oldValue,
         },
         ActionType.TOGGLE_EDGE_RENDERING,
         {
-          toggleEdgeRendering: renderEdges,
+          toggleEdgeRendering: hideEdges,
         }
       );
     }
+  }
 
-    if (!renderEdges) {
-      if (this.graphData.edges().length <= 0) return;
+  /**
+   * Changes whether just edges are rendered or all.
+   *
+   * @param renderJustImportant - if true: render just important edges, if false: renders all edges
+   * @param [addToHistory] - True by default. Whether the action should be added to the history or not. @defaultValue `true`
+   *
+   * @public
+   */
+  public toggleJustImportantEdgeRendering(
+    renderJustImportant: boolean,
+    addToHistory = true
+  ): void {
+    const oldValue = this.renderer?.renderJustImportantEdges(
+      renderJustImportant
+    );
 
-      if (this.edges.size <= 0) {
-        this.graphData.forEachEdge((edge, attributes, source, target) => {
-          this.edges.add({
-            key: edge,
-            source: source,
-            target: target,
-            attributes: attributes,
-          });
-        });
-      }
-
-      this.graphData.clearEdges();
-
-      return;
+    if (this.isHistoryEnabled && addToHistory) {
+      this.history?.addAction(
+        {
+          toggleEdgeRendering: oldValue,
+        },
+        ActionType.TOGGLE_IMPORTANT_EDGE_RENDERING,
+        {
+          toggleEdgeRendering: renderJustImportant,
+        }
+      );
     }
-
-    if (this.graphData.edges().length > 0) return;
-    this.mergeEdgesIntoGraph(this.edges);
   }
 
   /**
@@ -444,16 +505,6 @@ class WebGraph {
       }
     });
 
-    // in case edges are currently hidden, remove all connected edges
-    // from the temporary edge buffer
-    if (this.edges.size > 0) {
-      this.edges.forEach((edge) => {
-        if (edge.source === nodeKey || edge.target === nodeKey) {
-          this.edges.delete(edge);
-        }
-      });
-    }
-
     // hide the hover container
     this.hideHoverContainer();
 
@@ -505,8 +556,6 @@ class WebGraph {
   public exportGraph(excludeEdges = false): SerializedGraph {
     if (excludeEdges) {
       this.graphData.clearEdges();
-    } else {
-      this.mergeEdgesIntoGraph(this.edges);
     }
 
     return this.graphData.export();
@@ -561,7 +610,7 @@ class WebGraph {
           return false;
         }
         this.mergeNodes(latestAction.oldData.nodes, false);
-        this.mergeEdgesIntoGraph(latestAction.oldData.edges);
+        this.mergeEdges(latestAction.oldData.edges, false);
         break;
 
       case ActionType.UPDATE_NODE_TYPE:
@@ -569,9 +618,19 @@ class WebGraph {
         this.setAndApplyNodeType(latestAction.oldData.nodeType, false);
         break;
 
-      case ActionType.UPDATE_EDGES:
+      case ActionType.REPLACE_EDGES:
         if (!latestAction.oldData.edges) return false;
-        this.updateEdges(latestAction.oldData.edges, false);
+        this.replaceEdges(latestAction.oldData.edges, false);
+        break;
+
+      case ActionType.UPDATE_OR_ADD_EDGE:
+        if (!latestAction.oldData.edges) {
+          return false;
+        }
+        this.replaceEdges(
+          JSON.parse(JSON.stringify(latestAction.oldData.edges)),
+          false
+        );
         break;
 
       case ActionType.TOGGLE_EDGE_RENDERING:
@@ -579,6 +638,16 @@ class WebGraph {
           return false;
         }
         this.toggleEdgeRendering(
+          latestAction.oldData.toggleEdgeRendering,
+          false
+        );
+        break;
+
+      case ActionType.TOGGLE_IMPORTANT_EDGE_RENDERING:
+        if (latestAction.oldData.toggleEdgeRendering === undefined) {
+          return false;
+        }
+        this.toggleJustImportantEdgeRendering(
           latestAction.oldData.toggleEdgeRendering,
           false
         );
@@ -653,9 +722,14 @@ class WebGraph {
         this.setAndApplyNodeType(latestRevertedAction.newData.nodeType, false);
         break;
 
-      case ActionType.UPDATE_EDGES:
+      case ActionType.REPLACE_EDGES:
         if (!latestRevertedAction.newData.edges) return false;
-        this.updateEdges(latestRevertedAction.newData.edges, false);
+        this.replaceEdges(latestRevertedAction.newData.edges, false);
+        break;
+
+      case ActionType.UPDATE_OR_ADD_EDGE:
+        if (!latestRevertedAction.newData.edges) return false;
+        this.mergeEdges(latestRevertedAction.newData.edges, false);
         break;
 
       case ActionType.TOGGLE_EDGE_RENDERING:
@@ -663,6 +737,16 @@ class WebGraph {
           return false;
         }
         this.toggleEdgeRendering(
+          latestRevertedAction.newData.toggleEdgeRendering,
+          false
+        );
+        break;
+
+      case ActionType.TOGGLE_IMPORTANT_EDGE_RENDERING:
+        if (latestRevertedAction.newData.toggleEdgeRendering === undefined) {
+          return false;
+        }
+        this.toggleJustImportantEdgeRendering(
           latestRevertedAction.newData.toggleEdgeRendering,
           false
         );
@@ -1007,7 +1091,7 @@ class WebGraph {
 
     const nodeReducer = (node: NodeKey, data: NodeAttributes) => {
       if (this.highlightedNodes.has(node)) {
-        return { ...data, color: hcolor, zIndex: 1 };
+        return { ...data, color: hcolor, z: 1 };
       }
 
       return data;
@@ -1015,7 +1099,7 @@ class WebGraph {
 
     const edgeReducer = (edge: EdgeKey, data: EdgeAttributes) => {
       if (this.highlightedEdges.has(edge)) {
-        return { ...data, color: hcolor, zIndex: 1 };
+        return { ...data, color: hcolor, z: 1 };
       }
 
       return data;
@@ -1260,13 +1344,13 @@ class WebGraph {
       // reset the zIndex
       if (this.graphData.hasNode(node)) {
         // check that hovered node is still part of the graph
-        this.graphData.setNodeAttribute(node, "zIndex", 0);
+        this.graphData.setNodeAttribute(node, "z", 0);
       }
       this.highlightedNodes.forEach((node) => {
-        this.graphData.setNodeAttribute(node, "zIndex", 0);
+        this.graphData.setNodeAttribute(node, "z", 0);
       });
       this.highlightedEdges.forEach((edge) => {
-        this.graphData.setEdgeAttribute(edge, "zIndex", 0);
+        this.graphData.setEdgeAttribute(edge, "z", 0);
       });
 
       // clear the lists
@@ -1278,34 +1362,6 @@ class WebGraph {
       // if hoverContainerVisible is true, get the hover container and hide it
       this.hideHoverContainer();
     });
-  }
-
-  /**
-   * Merges edges into the graph.
-   *
-   * @param edges - A Set of SerializedEdge to merge into the graph
-   *
-   * @internal
-   */
-  private mergeEdgesIntoGraph(edges: Set<SerializedEdge>): void {
-    if (edges.size <= 0) return;
-
-    edges.forEach((edge) => {
-      const key: EdgeKey | undefined = edge.key;
-
-      if (key) {
-        this.graphData.addEdgeWithKey(
-          key,
-          edge.source,
-          edge.target,
-          edge.attributes
-        );
-      } else {
-        this.graphData.addEdge(edge.source, edge.target, edge.attributes);
-      }
-    });
-
-    edges = new Set<SerializedEdge>();
   }
 }
 

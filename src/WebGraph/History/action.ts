@@ -21,8 +21,10 @@ enum ActionType {
   UPDATE_NODE_TYPE = "update_node_type",
 
   // Edges
-  UPDATE_EDGES = "update_edges",
+  REPLACE_EDGES = "replace_edges",
+  UPDATE_OR_ADD_EDGE = "update_or_add_edge",
   TOGGLE_EDGE_RENDERING = "toggle_edge_rendering",
+  TOGGLE_IMPORTANT_EDGE_RENDERING = "toggle_important_edge_rendering",
 
   // Layout
   SET_LAYOUT = "set_layout",
