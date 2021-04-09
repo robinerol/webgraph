@@ -37,6 +37,7 @@ import {
   NodeCircleProgram,
   NodeRectangleProgram,
   NodeTriangleProgram,
+  NodeBackdropProgram,
 } from "./Program";
 import { animateNodes } from "sigma/src/animate";
 import { cubicInOut } from "sigma/src/easings";
@@ -1139,6 +1140,10 @@ class WebGraph {
       rectangle: NodeRectangleProgram,
       triangle: NodeTriangleProgram,
     };
+
+    if (this.renderSettings.renderNodeBackdrop) {
+      this.renderSettings.nodeBackdropProgram = NodeBackdropProgram;
+    }
   }
 
   /**

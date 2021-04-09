@@ -72,6 +72,10 @@ function drawGraph(graphDataJSON: any[]) {
       ),
       score: result.score,
     });
+
+    if (Math.random() < 0.75) {
+      graph.setNodeAttribute(result.id, "cluster", Math.round(Math.random()));
+    }
   });
 
   // create random edges
@@ -201,13 +205,15 @@ function drawGraph(graphDataJSON: any[]) {
         },
       },
       suppressContextMenu: false,
-      defaultNodeType: NodeType.RING,
+      defaultNodeType: NodeType.CIRCLE,
       highlightSubGraphOnHover: true,
       enableHistory: true,
     },
     {
       renderLabels: true,
       labelFontColor: "#8e8e8e",
+      renderNodeBackdrop: true,
+      clusterColors: { 0: "#d1fce9", 1: "#d1dcfc" },
     }
   );
 
