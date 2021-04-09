@@ -15,7 +15,7 @@ import circlePackLayout, {
   CirclePackLayoutOptions,
 } from "graphology-layout/circlepack";
 import forceatlas2Layout from "graphology-layout-forceatlas2";
-import { WebGLRenderer } from "sigma";
+import { Camera, WebGLRenderer } from "sigma";
 import { PartialButFor } from "sigma/types/utils";
 import { WebGLSettings } from "sigma/types/renderers/webgl/settings";
 import { NodeAttributes, EdgeAttributes } from "sigma/types/types";
@@ -769,6 +769,19 @@ class WebGraph {
 
     this.history?.markLatestRevertedActionAsNotReverted();
     return true;
+  }
+
+  /**
+   * Gets the camera.
+   *
+   * @throws Error - If the renderer is not defined.
+   *
+   * @returns - The camera object of the renderer.
+   */
+  public get camera(): Camera {
+    if (!this.renderer) throw new Error();
+
+    return this.renderer.getCamera();
   }
 
   /**---------------------------------------------------------------------------

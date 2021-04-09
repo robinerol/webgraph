@@ -453,3 +453,30 @@ document.getElementById("redo")?.addEventListener("click", (e) => {
 
   webGraph.redo();
 });
+
+/**---------------------------------
+ * Settings Menu - Camera
+ *--------------------------------*/
+document.getElementById("zoomIn")?.addEventListener("click", (e) => {
+  e.preventDefault();
+
+  if (!webGraph || !webGraph.isRenderingActive) return;
+
+  webGraph.camera.animatedUnzoom(0.75);
+});
+
+document.getElementById("zoomOut")?.addEventListener("click", (e) => {
+  e.preventDefault();
+
+  if (!webGraph || !webGraph.isRenderingActive) return;
+
+  webGraph.camera.animatedZoom(0.75);
+});
+
+document.getElementById("zoomReset")?.addEventListener("click", (e) => {
+  e.preventDefault();
+
+  if (!webGraph || !webGraph.isRenderingActive) return;
+
+  webGraph.camera.animatedReset({});
+});

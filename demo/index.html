@@ -50,6 +50,13 @@
         <button class="flex-row-child" id="undo">Undo</button>
         <button class="flex-row-child" id="redo">Redo</button>
       </div>
+      <hr />
+      <label>Camera</label>
+      <div class="flex-row">
+        <button class="flex-row-child" id="zoomIn">In</button>
+        <button class="flex-row-child" id="zoomOut">Out</button>
+      </div>
+      <button id="zoomReset">Reset</button>
     </form>
 
     <div id="webGraph"></div>
@@ -79,12 +86,15 @@
         position: absolute;
         top: 0;
         left: 0;
+        bottom: 0;
         z-index: 1001;
 
         width: 150px;
         padding: 5px;
 
         background-color: rgba(150, 150, 150, 0.333);
+
+        overflow-y: auto;
       }
 
       .flex-row {
