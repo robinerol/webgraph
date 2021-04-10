@@ -2,7 +2,7 @@ let path = require("path");
 let glob = require("glob");
 
 const shaders = glob.sync(
-  path.join(__dirname, "src", "WebGraph", "Shader", "*.glsl")
+  path.join(__dirname, "src", "WebGraph", "WebGL", "Shader", "*.glsl")
 );
 
 const entry = {};
@@ -15,7 +15,7 @@ module.exports = {
   mode: "production",
   entry,
   output: {
-    path: path.join(__dirname, "lib", "WebGraph", "Shader"),
+    path: path.join(__dirname, "lib", "WebGraph", "WebGL", "Shader"),
     filename: "[name].glsl.js",
   },
   module: {

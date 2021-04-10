@@ -15,7 +15,7 @@
     "prepare": "npm run transpile && npm run replace:shader && npm run shaders",
     "prepublishOnly": "npm run lint && npm run prettier:check && npm run test",
     "transpile": "tsc -p ./tsconfig.transpile.json",
-    "replace:shader": "replace '\\.glsl' '.glsl.js' lib/WebGraph/Program -r",
+    "replace:shader": "replace '\\.glsl' '.glsl.js' lib/WebGraph/WebGL/Program -r",
     "shaders": "webpack --config ./webpack.shaders.config.js"
   },
   "repository": {
