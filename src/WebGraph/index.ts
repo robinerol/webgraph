@@ -38,7 +38,7 @@ import {
   NodeRectangleProgram,
   NodeTriangleProgram,
   NodeBackdropProgram,
-} from "./Program";
+} from "./WebGL";
 import { animateNodes } from "sigma/src/animate";
 import { cubicInOut } from "sigma/src/easings";
 import { ActionType, HistoryManager } from "./History";
