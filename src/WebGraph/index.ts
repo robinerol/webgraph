@@ -1215,9 +1215,13 @@ class WebGraph {
       const contextMenuContent = document.createElement("ol");
       contextMenu.forEach((ci) => {
         const item: HTMLElement = document.createElement("li");
+        const label: HTMLElement = document.createElement("span");
+        const icon: HTMLElement = document.createElement("img");
 
-        item.innerHTML = ci.label;
+        // set label
+        label.innerHTML = ci.label;
 
+        // set click listener
         item.addEventListener("click", () => {
           ci.callback(node);
 
@@ -1225,6 +1229,18 @@ class WebGraph {
           cmcontainer.className = cssHide;
           isContextMenuOpen = false;
         });
+
+        // set icon
+        if (ci.icon) {
+          icon.setAttribute("src", ci.icon);
+          icon.setAttribute(
+            "style",
+            "display: inline-block; height: 1em; overflow: hidden; background-repeat: no-repeat;"
+          );
+          item.appendChild(icon);
+        }
+
+        item.appendChild(label);
 
         contextMenuContent.append(item);
       });

@@ -160,7 +160,6 @@ function drawGraph(graphDataJSON: any[]) {
             {
               label: "drop node",
               callback: (key: string) => webGraph?.dropNode(key),
-              icon: "https://test.test/test.jpg",
             },
             {
               label: "type triangle",
@@ -168,7 +167,6 @@ function drawGraph(graphDataJSON: any[]) {
                 webGraph?.mergeNodes([
                   { key: key, attributes: { type: NodeType.TRIANGLE } },
                 ]),
-              icon: "https://test.test/test.jpg",
             },
             {
               label: "type rectangle",
@@ -176,14 +174,12 @@ function drawGraph(graphDataJSON: any[]) {
                 webGraph?.mergeNodes([
                   { key: key, attributes: { type: NodeType.RECTANGLE } },
                 ]),
-              icon: "https://test.test/test.jpg",
             },
           ],
           1: [
             {
               label: "drop node",
               callback: (key: string) => webGraph?.dropNode(key),
-              icon: "https://test.test/test.jpg",
             },
             {
               label: "hide node",
@@ -191,7 +187,6 @@ function drawGraph(graphDataJSON: any[]) {
                 webGraph?.mergeNodes([
                   { key: key, attributes: { hidden: true } },
                 ]),
-              icon: "https://test.test/test.jpg",
             },
             {
               label: "show node",
@@ -199,7 +194,6 @@ function drawGraph(graphDataJSON: any[]) {
                 webGraph?.mergeNodes([
                   { key: key, attributes: { hidden: false } },
                 ]),
-              icon: "https://test.test/test.jpg",
             },
           ],
         },
