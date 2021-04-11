@@ -3,10 +3,7 @@ import { AppMode } from "./appmode";
 import { IContextMenu } from "./contextmenu";
 import { IHoverCallback } from "./hovercallback";
 import { NodeType } from "./nodetype";
-import {
-  WebGLSettings,
-  WEBGL_RENDERER_DEFAULT_SETTINGS,
-} from "sigma/src/renderers/webgl/settings";
+import { WebGLSettings } from "sigma/types/renderers/webgl/settings";
 
 /**
  * Interface for the graphs configurations.
@@ -33,7 +30,7 @@ interface IGraphConfiguration {
  * {@label defaultGraphConfiguration}
  */
 const DEFAULT_GRAPH_CONFIGURATION: IGraphConfiguration = {
-  sigmaSettings: WEBGL_RENDERER_DEFAULT_SETTINGS,
+  sigmaSettings: {},
   layout: Layout.PREDEFINED,
   layoutConfiguration: {
     predefinedLayoutOptions: {},

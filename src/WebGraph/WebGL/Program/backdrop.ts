@@ -6,9 +6,8 @@
  */
 
 import { RenderNodeParams } from "sigma/types/renderers/webgl/programs/common/node";
-import { AbstractNodeProgram } from "sigma/src/renderers/webgl/programs/common/node";
+import { AbstractNodeProgram, floatColor } from "sigma";
 import { NodeAttributes } from "sigma/types/types";
-import { floatColor } from "sigma/src/renderers/webgl/utils";
 import vertexShaderSource from "../Shader/node.backdrop.vert.glsl";
 import fragmentShaderSource from "../Shader/node.backdrop.frag.glsl";
 

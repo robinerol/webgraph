@@ -15,7 +15,7 @@ import circlePackLayout, {
   CirclePackLayoutOptions,
 } from "graphology-layout/circlepack";
 import forceatlas2Layout from "graphology-layout-forceatlas2";
-import { Camera, WebGLRenderer } from "sigma";
+import { Camera, WebGLRenderer, animateNodes, easings } from "sigma";
 import { PartialButFor } from "sigma/types/utils";
 import { WebGLSettings } from "sigma/types/renderers/webgl/settings";
 import { NodeAttributes, EdgeAttributes } from "sigma/types/types";
@@ -37,8 +37,6 @@ import {
   NodeTriangleProgram,
   NodeBackdropProgram,
 } from "./WebGL";
-import { animateNodes } from "sigma/src/animate";
-import { cubicInOut } from "sigma/src/easings";
 import { ActionType, HistoryManager } from "./History";
 import drawLabel from "./Canvas/label";
 import { InternalUtils } from "../Utils";
@@ -912,7 +910,7 @@ class WebGraph {
     animateNodes(
       this.graphData,
       newLayout,
-      { duration: 1000, easing: cubicInOut },
+      { duration: 1000, easing: easings["cubicInOut"] },
       () => {
         /** do nothing */
       }
