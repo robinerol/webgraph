@@ -96,120 +96,116 @@ function drawGraph(graphDataJSON: any[]) {
   if (webGraph?.isRenderingActive) webGraph.destroy();
 
   // initialize and render graph
-  webGraph = new WebGraph(
-    webGraphContainer,
-    graph,
-    {
-      layout: Layout.FORCEATLAS2,
-      layoutConfiguration: {
-        forceAtlas2LayoutOptions: {
-          iterations: DEFAULT_FORCEATLAS2_ITERATIONS,
-          preAppliedLayout: Layout.CIRCLEPACK,
-          settings: {
-            edgeWeightInfluence: 1,
-          },
+  webGraph = new WebGraph(webGraphContainer, graph, {
+    layout: Layout.FORCEATLAS2,
+    layoutConfiguration: {
+      forceAtlas2LayoutOptions: {
+        iterations: DEFAULT_FORCEATLAS2_ITERATIONS,
+        preAppliedLayout: Layout.CIRCLEPACK,
+        settings: {
+          edgeWeightInfluence: 1,
         },
       },
-      appMode: AppMode.DYNAMIC,
-      hoverCallbacks: {
-        container: webGraphHoverContainer,
-        cssShow: "show-hover",
-        cssHide: "hide",
-        xoffset: -75,
-        yoffset: 20,
-        callback: {
-          0: async (key: string, score?: number) => {
-            const dataJson: any = await fetch(
-              "http://localhost:9002/node?q=" + key
-            )
-              .then((response) => response.json())
-              .then((json) => json);
-
-            if (!dataJson) return { header: "error" };
-
-            return {
-              preheader: dataJson.year,
-              header: dataJson.originalTitle,
-              content: dataJson.publisher,
-              footer: "Score: " + score,
-            };
-          },
-          1: async (key: string) => {
-            const dataJson: any = await fetch(
-              "http://localhost:9002/node?q=" + key
-            )
-              .then((response) => response.json())
-              .then((json) => json);
-
-            if (!dataJson) return { header: "error" };
-
-            return {
-              preheader: dataJson.year,
-              header: dataJson.originalTitle,
-              content: dataJson.publisher,
-            };
-          },
-        },
-      },
-      contextMenus: {
-        container: webGraphContextMenuContainer,
-        cssHide: "hide",
-        cssShow: "show",
-        entries: {
-          0: [
-            {
-              label: "drop node",
-              callback: (key: string) => webGraph?.dropNode(key),
-            },
-            {
-              label: "type triangle",
-              callback: (key: string) =>
-                webGraph?.mergeNodes([
-                  { key: key, attributes: { type: NodeType.TRIANGLE } },
-                ]),
-            },
-            {
-              label: "type rectangle",
-              callback: (key: string) =>
-                webGraph?.mergeNodes([
-                  { key: key, attributes: { type: NodeType.RECTANGLE } },
-                ]),
-            },
-          ],
-          1: [
-            {
-              label: "drop node",
-              callback: (key: string) => webGraph?.dropNode(key),
-            },
-            {
-              label: "hide node",
-              callback: (key: string) =>
-                webGraph?.mergeNodes([
-                  { key: key, attributes: { hidden: true } },
-                ]),
-            },
-            {
-              label: "show node",
-              callback: (key: string) =>
-                webGraph?.mergeNodes([
-                  { key: key, attributes: { hidden: false } },
-                ]),
-            },
-          ],
-        },
-      },
-      suppressContextMenu: false,
-      defaultNodeType: NodeType.CIRCLE,
-      highlightSubGraphOnHover: true,
-      enableHistory: true,
     },
-    {
+    appMode: AppMode.DYNAMIC,
+    hoverCallbacks: {
+      container: webGraphHoverContainer,
+      cssShow: "show-hover",
+      cssHide: "hide",
+      xoffset: -75,
+      yoffset: 20,
+      callback: {
+        0: async (key: string, score?: number) => {
+          const dataJson: any = await fetch(
+            "http://localhost:9002/node?q=" + key
+          )
+            .then((response) => response.json())
+            .then((json) => json);
+
+          if (!dataJson) return { header: "error" };
+
+          return {
+            preheader: dataJson.year,
+            header: dataJson.originalTitle,
+            content: dataJson.publisher,
+            footer: "Score: " + score,
+          };
+        },
+        1: async (key: string) => {
+          const dataJson: any = await fetch(
+            "http://localhost:9002/node?q=" + key
+          )
+            .then((response) => response.json())
+            .then((json) => json);
+
+          if (!dataJson) return { header: "error" };
+
+          return {
+            preheader: dataJson.year,
+            header: dataJson.originalTitle,
+            content: dataJson.publisher,
+          };
+        },
+      },
+    },
+    contextMenus: {
+      container: webGraphContextMenuContainer,
+      cssHide: "hide",
+      cssShow: "show",
+      entries: {
+        0: [
+          {
+            label: "drop node",
+            callback: (key: string) => webGraph?.dropNode(key),
+          },
+          {
+            label: "type triangle",
+            callback: (key: string) =>
+              webGraph?.mergeNodes([
+                { key: key, attributes: { type: NodeType.TRIANGLE } },
+              ]),
+          },
+          {
+            label: "type rectangle",
+            callback: (key: string) =>
+              webGraph?.mergeNodes([
+                { key: key, attributes: { type: NodeType.RECTANGLE } },
+              ]),
+          },
+        ],
+        1: [
+          {
+            label: "drop node",
+            callback: (key: string) => webGraph?.dropNode(key),
+          },
+          {
+            label: "hide node",
+            callback: (key: string) =>
+              webGraph?.mergeNodes([
+                { key: key, attributes: { hidden: true } },
+              ]),
+          },
+          {
+            label: "show node",
+            callback: (key: string) =>
+              webGraph?.mergeNodes([
+                { key: key, attributes: { hidden: false } },
+              ]),
+          },
+        ],
+      },
+    },
+    suppressContextMenu: false,
+    defaultNodeType: NodeType.CIRCLE,
+    highlightSubGraphOnHover: true,
+    enableHistory: true,
+    sigmaSettings: {
       renderLabels: true,
       labelFontColor: "#8e8e8e",
       renderNodeBackdrop: true,
       clusterColors: { 0: "#d1fce9", 1: "#d1dcfc" },
-    }
-  );
+    },
+  });
 
   webGraph.render();
 }
@@ -408,7 +404,7 @@ document.getElementById("typeRing")?.addEventListener("click", (e) => {
 
   if (!webGraph || !webGraph.isRenderingActive) return;
 
-  webGraph.setAndApplyNodeType(NodeType.RING);
+  webGraph.setAndApplyDefaultNodeType(NodeType.RING);
 });
 
 document.getElementById("typeCircle")?.addEventListener("click", (e) => {
@@ -416,7 +412,7 @@ document.getElementById("typeCircle")?.addEventListener("click", (e) => {
 
   if (!webGraph || !webGraph.isRenderingActive) return;
 
-  webGraph.setAndApplyNodeType(NodeType.CIRCLE);
+  webGraph.setAndApplyDefaultNodeType(NodeType.CIRCLE);
 });
 
 document.getElementById("typeRectangle")?.addEventListener("click", (e) => {
@@ -424,7 +420,7 @@ document.getElementById("typeRectangle")?.addEventListener("click", (e) => {
 
   if (!webGraph || !webGraph.isRenderingActive) return;
 
-  webGraph.setAndApplyNodeType(NodeType.RECTANGLE);
+  webGraph.setAndApplyDefaultNodeType(NodeType.RECTANGLE);
 });
 
 document.getElementById("typeTriangle")?.addEventListener("click", (e) => {
@@ -432,7 +428,7 @@ document.getElementById("typeTriangle")?.addEventListener("click", (e) => {
 
   if (!webGraph || !webGraph.isRenderingActive) return;
 
-  webGraph.setAndApplyNodeType(NodeType.TRIANGLE);
+  webGraph.setAndApplyDefaultNodeType(NodeType.TRIANGLE);
 });
 
 /**---------------------------------

@@ -21,14 +21,12 @@ import { WebGLSettings } from "sigma/types/renderers/webgl/settings";
 import { NodeAttributes, EdgeAttributes } from "sigma/types/types";
 import { AppState } from "./appstate";
 import {
-  GraphConfiguration,
+  DEFAULT_GRAPH_CONFIGURATION,
   IGraphConfiguration,
   Layout,
   ILayoutConfiguration,
   DEFAULT_FORCEATLAS2_LAYOUT_OPTIONS,
   AppMode,
-  IContextMenu,
-  IHoverCallback,
   NodeType,
 } from "../Configuration";
 import drawHover from "./Canvas/hover";
@@ -53,9 +51,7 @@ import { InternalUtils } from "../Utils";
 class WebGraph {
   private container: HTMLElement;
   private graphData: Graph;
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  private renderSettings: Record<string, any>;
-  private configuration: GraphConfiguration;
+  private configuration: IGraphConfiguration;
   private appState: AppState = AppState.INACTIVE;
   private renderer: WebGLRenderer | undefined = undefined;
   private highlightedNodes: Set<NodeKey> = new Set<NodeKey>();
@@ -72,7 +68,6 @@ class WebGraph {
    * @param container - The container where to hook the graph into
    * @param graphData - The graph to be rendered
    * @param [graphConfiguration] - Configurations to be applied. @see {@link IGraphConfiguration} for all available configs. @defaultValue `{}`
-   * @param [renderSettings] - Render settings to be applied and directly passed to the sigma.js WebGLRenderer. @see {@link https://github.com/jacomyal/sigma.js/blob/v2/src/renderers/webgl/settings.ts} for all available configs. @defaultValue `{}`
    *
    * @example
    * An example where just the basic infos are provided
@@ -96,20 +91,18 @@ class WebGraph {
    *            preAppliedLayout: Layout.CIRCULAR,
    *        },
    *    },
-   * }
-   * const renderSettings = {
-   *    renderEdgeLabels: true,
+   *    sigmaSettings: {
+   *        renderEdgeLabels: true,
+   *    }
    * }
    *
-   * const webGraph = new WebGraph(container, graph, graphConfig, renderSettings);
+   * const webGraph = new WebGraph(container, graph, graphConfig);
    * ```
    */
   constructor(
     container: HTMLElement,
     graphData: Graph | SerializedGraph,
-    graphConfiguration: Partial<IGraphConfiguration> = {},
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    renderSettings: Record<string, any> = {}
+    graphConfiguration: Partial<IGraphConfiguration> = {}
   ) {
     this.container = container;
 
@@ -119,8 +112,10 @@ class WebGraph {
       this.graphData = Graph.from(graphData);
     }
 
-    this.configuration = new GraphConfiguration(graphConfiguration);
-    this.renderSettings = renderSettings;
+    this.configuration = {
+      ...DEFAULT_GRAPH_CONFIGURATION,
+      ...graphConfiguration,
+    };
   }
 
   /**
@@ -142,7 +137,7 @@ class WebGraph {
    * @public
    */
   public get appMode(): AppMode {
-    return <AppMode>this.configuration.getConfig("appMode");
+    return this.configuration.appMode;
   }
 
   /**
@@ -155,7 +150,7 @@ class WebGraph {
   public set appMode(appMode: AppMode) {
     const oldAppMode = this.appMode;
 
-    this.configuration.setConfig("appMode", appMode);
+    this.configuration.appMode = appMode;
 
     if (this.isHistoryEnabled) {
       this.history?.addAction(
@@ -188,8 +183,8 @@ class WebGraph {
     this.appState = AppState.ACTIVE;
 
     this.applyLayout(
-      <Layout>this.configuration.getConfig("layout"),
-      <ILayoutConfiguration>this.configuration.getConfig("layoutConfiguration"),
+      this.configuration.layout,
+      this.configuration.layoutConfiguration,
       true
     );
 
@@ -198,14 +193,12 @@ class WebGraph {
     this.renderer = new WebGLRenderer(
       this.graphData,
       this.container,
-      this.renderSettings
+      this.configuration.sigmaSettings
     );
 
     this.initializeEventHandlers();
 
-    this.isHistoryEnabled = <boolean>(
-      this.configuration.getConfig("enableHistory")
-    );
+    this.isHistoryEnabled = this.configuration.enableHistory;
 
     if (this.isHistoryEnabled) this.history = new HistoryManager();
   }
@@ -402,6 +395,14 @@ class WebGraph {
         }
       );
     }
+
+    if (!addToHistory) {
+      nodes.forEach((node) => {
+        this.graphData.forEachEdge(node.key, (edge) => {
+          this.graphData.setEdgeAttribute(edge, "hidden", false);
+        });
+      });
+    }
   }
 
   /**
@@ -421,10 +422,8 @@ class WebGraph {
     if (this.isHistoryEnabled && addToHistory) {
       this.history?.addAction(
         {
-          layout: <Layout>this.configuration.getConfig("layout"),
-          layoutConfig: <ILayoutConfiguration>(
-            this.configuration.getConfig("layoutConfiguration")
-          ),
+          layout: this.configuration.layout,
+          layoutConfig: this.configuration.layoutConfiguration,
         },
         ActionType.SET_LAYOUT,
         {
@@ -434,8 +433,8 @@ class WebGraph {
       );
     }
 
-    this.configuration.setConfig("layout", layout);
-    this.configuration.setConfig("layoutConfiguration", layoutConfiguration);
+    this.configuration.layout = layout;
+    this.configuration.layoutConfiguration = layoutConfiguration;
 
     this.applyLayout(layout, layoutConfiguration, false);
   }
@@ -448,14 +447,15 @@ class WebGraph {
    *
    * @public
    */
-  public setAndApplyNodeType(nodeType: NodeType, addToHistory = true): void {
+  public setAndApplyDefaultNodeType(
+    nodeType: NodeType,
+    addToHistory = true
+  ): void {
     if (!this.renderer) return;
 
-    const oldNodeType = <NodeType>(
-      this.configuration.getConfig("defaultNodeType")
-    );
-    this.configuration.setConfig("defaultNodeType", nodeType);
-    this.renderSettings.defaultNodeType = nodeType;
+    const oldNodeType = this.configuration.defaultNodeType;
+    this.configuration.defaultNodeType = nodeType;
+    this.configuration.sigmaSettings.defaultNodeType = nodeType;
     this.renderer.settings.defaultNodeType = nodeType;
 
     this.renderer.process();
@@ -589,7 +589,7 @@ class WebGraph {
     switch (latestAction.actionType) {
       case ActionType.UPDATE_APP_MODE:
         if (!latestAction.oldData.appMode) return false;
-        this.configuration.setConfig("appMode", latestAction.oldData.appMode);
+        this.configuration.appMode = latestAction.oldData.appMode;
         break;
 
       case ActionType.UPDATE_OR_ADD_NODE:
@@ -616,7 +616,7 @@ class WebGraph {
 
       case ActionType.UPDATE_NODE_TYPE:
         if (!latestAction.oldData.nodeType) return false;
-        this.setAndApplyNodeType(latestAction.oldData.nodeType, false);
+        this.setAndApplyDefaultNodeType(latestAction.oldData.nodeType, false);
         break;
 
       case ActionType.REPLACE_EDGES:
@@ -700,10 +700,7 @@ class WebGraph {
     switch (latestRevertedAction?.actionType) {
       case ActionType.UPDATE_APP_MODE:
         if (!latestRevertedAction.newData.appMode) return false;
-        this.configuration.setConfig(
-          "appMode",
-          latestRevertedAction.newData.appMode
-        );
+        this.configuration.appMode = latestRevertedAction.newData.appMode;
         break;
 
       case ActionType.UPDATE_OR_ADD_NODE:
@@ -720,7 +717,10 @@ class WebGraph {
 
       case ActionType.UPDATE_NODE_TYPE:
         if (!latestRevertedAction.newData.nodeType) return false;
-        this.setAndApplyNodeType(latestRevertedAction.newData.nodeType, false);
+        this.setAndApplyDefaultNodeType(
+          latestRevertedAction.newData.nodeType,
+          false
+        );
         break;
 
       case ActionType.REPLACE_EDGES:
@@ -954,13 +954,11 @@ class WebGraph {
    * @internal
    */
   private overwriteHoverRenderer(): void {
-    const hoverCallbacks: IHoverCallback = <IHoverCallback>(
-      this.configuration.getConfig("hoverCallbacks")
-    );
+    const hoverCallbacks = this.configuration.hoverCallbacks;
 
     const hoverContainer = hoverCallbacks?.container;
 
-    this.renderSettings.hoverRenderer = (
+    this.configuration.sigmaSettings.hoverRenderer = (
       context: CanvasRenderingContext2D,
       data: PartialButFor<
         NodeAttributes,
@@ -1060,9 +1058,10 @@ class WebGraph {
    * @internal
    */
   private overwriteLabelRenderer(): void {
-    this.renderSettings.labelRenderer = drawLabel;
+    this.configuration.sigmaSettings.labelRenderer = drawLabel;
 
-    this.renderSettings.labelSelector = InternalUtils.labelSelector;
+    this.configuration.sigmaSettings.labelSelector =
+      InternalUtils.labelSelector;
   }
 
   /**
@@ -1078,9 +1077,7 @@ class WebGraph {
     // if not right clicked, but still hovering over the node, return
     if (!rightClickNode && this.hoveredNode) return;
 
-    const hoverCallbacks: IHoverCallback = <IHoverCallback>(
-      this.configuration.getConfig("hoverCallbacks")
-    );
+    const hoverCallbacks = this.configuration.hoverCallbacks;
 
     if (!hoverCallbacks) return;
 
@@ -1095,13 +1092,9 @@ class WebGraph {
    * @internal
    */
   private overwriteReducers(): void {
-    if (!(<boolean>this.configuration.getConfig("highlightSubGraphOnHover"))) {
-      return;
-    }
+    if (!this.configuration.highlightSubGraphOnHover) return;
 
-    const hcolor = <string>(
-      this.configuration.getConfig("subGraphHighlightColor")
-    );
+    const hcolor = this.configuration.subGraphHighlightColor;
 
     const nodeReducer = (node: NodeKey, data: NodeAttributes) => {
       if (this.highlightedNodes.has(node)) {
@@ -1119,9 +1112,9 @@ class WebGraph {
       return data;
     };
 
-    this.renderSettings.nodeReducer = nodeReducer;
-    this.renderSettings.edgeReducer = edgeReducer;
-    this.renderSettings.zIndex = true;
+    this.configuration.sigmaSettings.nodeReducer = nodeReducer;
+    this.configuration.sigmaSettings.edgeReducer = edgeReducer;
+    this.configuration.sigmaSettings.zIndex = true;
   }
 
   /**
@@ -1130,19 +1123,17 @@ class WebGraph {
    * @internal
    */
   private overwriteNodePrograms(): void {
-    this.renderSettings.defaultNodeType = <NodeType>(
-      this.configuration.getConfig("defaultNodeType")
-    );
+    this.configuration.sigmaSettings.defaultNodeType = this.configuration.defaultNodeType;
 
-    this.renderSettings.nodeProgramClasses = {
+    this.configuration.sigmaSettings.nodeProgramClasses = {
       ring: NodeRingProgram,
       circle: NodeCircleProgram,
       rectangle: NodeRectangleProgram,
       triangle: NodeTriangleProgram,
     };
 
-    if (this.renderSettings.renderNodeBackdrop) {
-      this.renderSettings.nodeBackdropProgram = NodeBackdropProgram;
+    if (this.configuration.sigmaSettings.renderNodeBackdrop) {
+      this.configuration.sigmaSettings.nodeBackdropProgram = NodeBackdropProgram;
     }
   }
 
@@ -1181,9 +1172,8 @@ class WebGraph {
     if (!this.renderer) return;
 
     // load context menus from the active configuration
-    const allContextMenus = <IContextMenu>(
-      this.configuration.getConfig("contextMenus")
-    );
+    const allContextMenus = this.configuration.contextMenus;
+
     if (!allContextMenus) return;
 
     const cmcontainer = allContextMenus.container;
@@ -1272,9 +1262,7 @@ class WebGraph {
 
     // handles whether the default context menu is suppressed or not
     this.container.addEventListener("contextmenu", (event) => {
-      const suppressContextMenu = <boolean>(
-        this.configuration.getConfig("suppressContextMenu")
-      );
+      const suppressContextMenu = this.configuration.suppressContextMenu;
 
       if (!suppressContextMenu) return;
 
@@ -1349,7 +1337,7 @@ class WebGraph {
    */
   private initializeHoverHighlightingListeners(): void {
     if (!this.renderer) return;
-    if (!(<boolean>this.configuration.getConfig("highlightSubGraphOnHover"))) {
+    if (!this.configuration.highlightSubGraphOnHover) {
       // if highlighting the subgraph is disabled just add that the hover container
       // will be hidden when leaving a node
       this.renderer.on("leaveNode", () => {

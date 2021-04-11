@@ -3,6 +3,10 @@ import { AppMode } from "./appmode";
 import { IContextMenu } from "./contextmenu";
 import { IHoverCallback } from "./hovercallback";
 import { NodeType } from "./nodetype";
+import {
+  WebGLSettings,
+  WEBGL_RENDERER_DEFAULT_SETTINGS,
+} from "sigma/src/renderers/webgl/settings";
 
 /**
  * Interface for the graphs configurations.
@@ -10,16 +14,17 @@ import { NodeType } from "./nodetype";
  * {@label IGraphConfiguration}
  */
 interface IGraphConfiguration {
+  sigmaSettings: Partial<WebGLSettings>;
   layout: Layout;
   layoutConfiguration: ILayoutConfiguration;
   appMode: AppMode;
   contextMenus?: IContextMenu;
-  suppressContextMenu?: boolean;
+  suppressContextMenu: boolean;
   hoverCallbacks?: IHoverCallback;
-  highlightSubGraphOnHover?: boolean;
-  subGraphHighlightColor?: string;
-  defaultNodeType?: NodeType;
-  enableHistory?: boolean;
+  highlightSubGraphOnHover: boolean;
+  subGraphHighlightColor: string;
+  defaultNodeType: NodeType;
+  enableHistory: boolean;
 }
 
 /**
@@ -27,108 +32,23 @@ interface IGraphConfiguration {
  *
  * {@label defaultGraphConfiguration}
  */
-const defaultGraphConfiguration: IGraphConfiguration = {
+const DEFAULT_GRAPH_CONFIGURATION: IGraphConfiguration = {
+  sigmaSettings: WEBGL_RENDERER_DEFAULT_SETTINGS,
   layout: Layout.PREDEFINED,
   layoutConfiguration: {
     predefinedLayoutOptions: {},
   },
   appMode: AppMode.STATIC,
-  suppressContextMenu: false,
+  suppressContextMenu: true,
   highlightSubGraphOnHover: true,
   subGraphHighlightColor: "#e57a2d",
   defaultNodeType: NodeType.RING,
   enableHistory: false,
 };
 
-/**
- * The GraphConfiguration class is used within the {@link WebGraph} holding the
- * {@link IGraphConfiguration} of the application.
- *
- * {@label GraphConfiguration}
- */
-class GraphConfiguration {
-  private graphConfigurations: IGraphConfiguration = defaultGraphConfiguration;
-
-  /**
-   * Creates an instance of GraphConfiguration by overriting the {@link defaultGraphConfiguration}
-   * with the configurations provided by the [providedGraphConfigurations] parameter.
-   *
-   * @param providedGraphConfigurations - The configurations to apply
-   *
-   * @example
-   * An example where a GraphConfiguration is created with an empty {@link IGraphConfiguration}
-   * ```
-   * // all configurations stay as defined in {@link defaultGraphConfiguration}
-   * new GraphConfiguration({});
-   * ```
-   *
-   * @example
-   * An example where a GraphConfiguration is created with a partial {@link IGraphConfiguration}
-   * ```
-   * // all configurations stay as defined in {@link defaultGraphConfiguration} but the
-   * // layout is set to be {@link Layout.RANDOM}
-   * new GraphConfiguration({ layout: Layout.RANDOM });
-   * ```
-   */
-  constructor(providedGraphConfigurations: Partial<IGraphConfiguration>) {
-    this.graphConfigurations = {
-      ...this.graphConfigurations,
-      ...providedGraphConfigurations,
-    };
-  }
-
-  /**
-   * Gets the corresponding field of the {@link IGraphConfiguration}.
-   *
-   * @template T - Type of the {@link IGraphConfiguration}
-   *
-   * @param fieldName - The field name of the {@link IGraphConfiguration} that should be returned
-   * @returns The value of the requested field of the applications {@link IGraphConfiguration}
-   */
-  public getConfig<T extends keyof IGraphConfiguration>(
-    fieldName: T
-  ):
-    | Layout
-    | ILayoutConfiguration
-    | AppMode
-    | IContextMenu
-    | boolean
-    | IHoverCallback
-    | string
-    | NodeType
-    | undefined {
-    return this.graphConfigurations[fieldName];
-  }
-
-  /**
-   * Sets the corresponding field of the {@link IGraphConfiguration}.
-   *
-   * @template T - Type of the {@link IGraphConfiguration}
-   *
-   * @param fieldName - The field name of the {@link IGraphConfiguration} that should be set
-   * @param value - The new value to set
-   * @returns The new value of the requested field of the applications {@link IGraphConfiguration}
-   */
-  public setConfig<T extends keyof IGraphConfiguration>(
-    fieldName: T,
-    value: IGraphConfiguration[T]
-  ):
-    | Layout
-    | ILayoutConfiguration
-    | AppMode
-    | IContextMenu
-    | boolean
-    | IHoverCallback
-    | string
-    | NodeType
-    | undefined {
-    return (this.graphConfigurations[fieldName] = value);
-  }
-}
-
 export * from "./layouts";
 export * from "./appmode";
 export * from "./contextmenu";
 export * from "./hovercallback";
 export * from "./nodetype";
-export { IGraphConfiguration, GraphConfiguration };
+export { IGraphConfiguration, DEFAULT_GRAPH_CONFIGURATION };

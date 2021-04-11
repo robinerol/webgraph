@@ -3,7 +3,7 @@ import { WebGLSettings } from "sigma/types/renderers/webgl/settings";
 import { NodeAttributes } from "sigma/types/types";
 import drawNode from "./node";
 import drawLabel from "./label";
-import { GraphConfiguration } from "../../Configuration";
+import { IGraphConfiguration } from "../../Configuration";
 
 /**
  * Draws hover
@@ -19,7 +19,7 @@ function drawHover(
   context: CanvasRenderingContext2D,
   data: PartialButFor<NodeAttributes, "x" | "y" | "size" | "label" | "color">,
   settings: WebGLSettings,
-  config: GraphConfiguration
+  config: IGraphConfiguration
 ): void {
   const size = settings.labelSize;
   const font = settings.labelFont;
