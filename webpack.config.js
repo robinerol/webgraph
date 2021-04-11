@@ -18,7 +18,7 @@ module.exports = {
       },
       {
         test: /\.glsl$/,
-        loader: "ts-shader-loader",
+        loader: "raw-loader",
       },
     ],
   },

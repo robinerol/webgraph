@@ -17,12 +17,13 @@ module.exports = {
   output: {
     path: path.join(__dirname, "lib", "WebGraph", "WebGL", "Shader"),
     filename: "[name].glsl.js",
+    libraryTarget: "commonjs2",
   },
   module: {
     rules: [
       {
         test: /\.glsl$/,
-        loader: "ts-shader-loader",
+        loader: "raw-loader",
         exclude: /node_modules/,
       },
     ],
