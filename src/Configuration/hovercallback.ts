@@ -1,6 +1,13 @@
 /**
  * Interface holding the callback for when a node is hovered.
  *
+ * @param container - The container the hover data will be mounted into
+ * @param cssShow - The css class to make the container visible
+ * @param cssHide - The css class to hide the container
+ * @param xoffset - The x offset to the mouse position to display the container (can be negative)
+ * @param yoffset - The y offset to the mouse position to display the container (can be negative)
+ * @param callback - A record mapping the 'category' of hover callback to a callback returning a promise of {@label IHoverContent}
+ *
  * @example
  * An example usage.
  * ```
@@ -50,6 +57,11 @@ interface IHoverCallback {
 /**
  * Interface representing the content of a box that is being displayed
  * on a hover over a node.
+ *
+ * @param [preheader] - The line above the header
+ * @param [header] - The headline of the hover
+ * @param [content] - The main content of the hover
+ * @param [footer] - The line beneath the main content
  *
  * {@label IHoverContent}
  */

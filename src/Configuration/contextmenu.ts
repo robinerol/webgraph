@@ -2,6 +2,13 @@
  * Interface for the context menu holding all the context menu
  * items. {@see IContextMenuItem}
  *
+ * @param container - The container the context menu will be mounted into
+ * @param cssShow - The css class to make the container visible
+ * @param cssHide - The css class to hide the container
+ * @param xoffset - The x offset to the mouse position to display the container (can be negative)
+ * @param yoffset - The y offset to the mouse position to display the container (can be negative)
+ * @param entries - A record mapping the 'category' of menu to an array of {@label IContextMenuItem}
+ * 
  * @example
  * An example usage.
  * ```
@@ -40,6 +47,10 @@ interface IContextMenu {
 
 /**
  * Interface for the items of a context menu. {@see IContextMenu}
+ *
+ * @param label - The label of the menu item
+ * @param callback - The callback to be executed one the menu item is clicked
+ * @param [icon] - the icon to be displayed on the left side of the label
  *
  * @example
  * An example usage.

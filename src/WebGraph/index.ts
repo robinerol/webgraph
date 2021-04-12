@@ -1130,7 +1130,10 @@ class WebGraph {
       triangle: NodeTriangleProgram,
     };
 
-    if (this.configuration.sigmaSettings.renderNodeBackdrop) {
+    if (
+      this.configuration.sigmaSettings.renderNodeBackdrop &&
+      !this.configuration.sigmaSettings.nodeBackdropProgram
+    ) {
       this.configuration.sigmaSettings.nodeBackdropProgram = NodeBackdropProgram;
     }
   }
