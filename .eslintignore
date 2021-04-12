@@ -12,3 +12,6 @@ tests/coverage
 # webpack
 webpack.config.js
 webpack.shaders.config.js
+
+# ide
+.vscode

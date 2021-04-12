@@ -11,3 +11,6 @@ tests/coverage
 
 # other
 .DS_Store
+
+# ide
+.vscode

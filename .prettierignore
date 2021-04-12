@@ -8,3 +8,6 @@ demo/demo.js
 
 # tests
 tests/coverage
+
+# ide
+.vscode
