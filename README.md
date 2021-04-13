@@ -340,7 +340,7 @@ For the context menu to work, a container needs to be passed to the WebGraph to 
 This container can be freely styled. Then retrieve the container in your script code and pass it to the WebGraph with the other necessary [parameters](https://github.com/robinerol/webgraph/blob/f27997b49ab51c3fc92924f8790a1d094d8232e2/src/Configuration/contextmenu.ts#L32). The context menu will be mounted into the container like follows:
 
 ```HTML
-<div>
+<div id="webGraphCM" class="hide">
   <!-- Here begins the mounted part -->
   <ol>
     <li onclick="IContextMenuItem.callback">
@@ -375,7 +375,7 @@ For the context menu to work, a container needs to be passed to the WebGraph to 
 This container can be freely styled. Then retrieve the container in your script code and pass it to the WebGraph with the other necessary [parameters](https://github.com/robinerol/webgraph/blob/f27997b49ab51c3fc92924f8790a1d094d8232e2/src/Configuration/hovercallback.ts#L38). The <a href="https://github.com/robinerol/webgraph/blob/f27997b49ab51c3fc92924f8790a1d094d8232e2/src/Configuration/hovercallback.ts#L56">IHoverContent</a> will be mounted into the container like follows:
 
 ```HTML
-<div>
+<div id="webGraphHC" class="hide">
   <!-- Here begins the mounted part -->
   <span id="preheader">IHoverContent.preheader</span>
   <span id="header">IHoverContent.header</span>
