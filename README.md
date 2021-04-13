@@ -157,6 +157,12 @@ Here is a list of all available configurations. None of the configurations is ma
       <td><code>false</code></td>
     </tr>
     <tr>
+      <td><code>labelSelector</code></td>
+      <td><a href="https://github.com/robinerol/webgraph/blob/e3bb09eb18bba2dfd6d05464bf5e06ef170e25ff/src/Configuration/labelselector.ts#L6">LabelSelector</a></td>
+      <td>Configure which nodes labels are rendered.</td>
+      <td><code>LabelSelector.LEVELS</code></td>
+    </tr>
+    <tr>
       <td><code>sigmaSettings</code></td>
       <td><a href="https://github.com/robinerol/sigma.js/blob/75ce5e94353f9791aa84176165f801c97b420bee/src/renderers/webgl/settings.ts#L40">Partial&lt;WebGLSettings&gt;</a></td>
       <td>The settings directly passed into the Sigma.js graph renderer. See the <a name="sigma-settings">Sigma Settings</a> sections for more details.</td>
