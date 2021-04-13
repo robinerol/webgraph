@@ -941,6 +941,8 @@ class WebGraph {
    * If no {@link IHoverCallback} is present, the sigma.js default hoverRenderer
    * will be used. Otherwise a nodes corresponding {@link IHoverCallback} will be
    * executed and the resulting {@link IHoverContent} applied to the given container.
+   * There's nothing like a default value for the category attribute, if it is not
+   * present. If the category attribute is missing, the node will not have a hover.
    *
    * @remarks - Regarding {@link IHoverCallback}:
    * The number given in the 'callback' field of a {@link IHoverCallback} represents
@@ -977,9 +979,10 @@ class WebGraph {
 
       if (this.isNodeDragged) return;
 
-      // retrieve node category, if none was given use 0
-      const category =
-        this.graphData.getNodeAttribute(data.key, "category") ?? 0;
+      // retrieve node category
+      const category = this.graphData.getNodeAttribute(data.key, "category");
+      // if no category is present, return
+      if (category === undefined) return;
 
       // retrieve nodes hover callback
       const hoverCallback = hoverCallbacks.callback[category];
@@ -1158,7 +1161,9 @@ class WebGraph {
    * Initializes the context menu listeners. Loads all context menus as well as the
    * "suppressContextMenu" value from the {@link ILayoutConfiguration} and initializes
    * the listeners. When no {@link IContextMenu} is available, there will be no context
-   * menu on a right click on a node.
+   * menu on a right click on a node. There's nothing like a default value for the
+   * category attribute, if it is not present. If the category attribute is missing,
+   * the node will not have a context menu.
    *
    * @remarks - Regarding {@link IContextMenu}:
    * The number given in the 'entries' field of a {@link IContextMenu} represents the  node
@@ -1195,8 +1200,10 @@ class WebGraph {
 
       event.preventDefault();
 
-      // retrieve node category, if none was given use 0
-      const category = this.graphData.getNodeAttribute(node, "category") ?? 0;
+      // retrieve node category
+      const category = this.graphData.getNodeAttribute(node, "category");
+      // if not present, return
+      if (category === undefined) return;
 
       // retrieve nodes corresponding context menu
       const contextMenu = allContextMenus.entries[category];

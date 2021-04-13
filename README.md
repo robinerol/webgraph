@@ -340,6 +340,8 @@ This container can be freely styled. Then retrieve the container in your script 
 </div>
 ```
 
+There is no default value for the category attribute of nodes, if it's not present. If a node doesn't have a category, it won't have a context menu.
+
 ### 👁‍🗨 Hover Callbacks
 
 Hover callbacks work similar to context menus, but are used to display data on hover over a node. If no [IHoverCallback](https://github.com/robinerol/webgraph/blob/f27997b49ab51c3fc92924f8790a1d094d8232e2/src/Configuration/hovercallback.ts#L38) is present, nothing will happen on hover. To reduce redundant code, many nodes share one type of hover callbacks. Callbacks are mapped to nodes using the <code>category</code> attribute. To pass hover callbacks to the WebGraph use the <code>hoverCallbacks</code> configuration, pass one or more hover callbacks using the <code>callback</code> field and set the <code>category</code> attribute on nodes.
@@ -370,6 +372,8 @@ This container can be freely styled. Then retrieve the container in your script 
   <!-- Here ends the mounted part -->
 </div>
 ```
+
+There is no default value for the category attribute of nodes, if it's not present. If a node doesn't have a category, it won't execute a callback on hover.
 
 ### ⚙️ Sigma Settings
 
