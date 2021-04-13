@@ -474,7 +474,7 @@ class WebGraph {
    * @param nodeKey - The key of the node to drop
    * @param [addToHistory] - True by default. Whether the action should be added to the history or not. @defaultValue `true`
    *
-   * @returns true if the operation was successfull, false if not
+   * @returns true if the operation was successful, false if not
    *
    * @public
    */
@@ -564,13 +564,13 @@ class WebGraph {
    * This method performs an undo operation on the latest action
    * of the history.
    *
-   * @remarks - Regardting the {@link IGraphConfiguration}
+   * @remarks - Regarding the {@link IGraphConfiguration}
    * The history feature is just available if it was enabled in the
    * {@link IGraphConfiguration} using the "enableHistory" boolean.
    *
    * @throws Error - If the History is disabled.
    *
-   * @returns true if the operation was successfull, false if not
+   * @returns true if the operation was successful, false if not
    *
    * @public
    */
@@ -675,13 +675,13 @@ class WebGraph {
    * This method performs a redo operation on the latest reverted action
    * of the history.
    *
-   * @remarks - Regardting the {@link IGraphConfiguration}
+   * @remarks - Regarding the {@link IGraphConfiguration}
    * The history feature is just available if it was enabled in the
    * {@link IGraphConfiguration} using the "enableHistory" boolean.
    *
    * @throws Error - If the History is disabled.
    *
-   * @returns true if the operation was successfull, false if not
+   * @returns true if the operation was successful, false if not
    *
    * @public
    */
@@ -822,7 +822,6 @@ class WebGraph {
           this.graphData,
           layoutConfig.randomLayoutOptions
         );
-        //random.assign(this.graphData, layoutConfig.randomLayoutOptions);
         break;
 
       case Layout.CIRCULAR:
@@ -830,7 +829,6 @@ class WebGraph {
           this.graphData,
           layoutConfig.circularLayoutOptions
         );
-        //circular.assign(this.graphData, layoutConfig.circularLayoutOptions);
         break;
 
       case Layout.CIRCLEPACK:
@@ -838,7 +836,6 @@ class WebGraph {
           this.graphData,
           layoutConfig.circlePackLayoutOptions
         );
-        //circlepack.assign(this.graphData, layoutConfig.circlePackLayoutOptions);
         break;
 
       case Layout.FORCEATLAS2: {
@@ -954,6 +951,12 @@ class WebGraph {
    * @internal
    */
   private overwriteHoverRenderer(): void {
+    // if 'disableHover' is set to true, overwrite the hoverRenderer with an empty function
+    if (this.configuration.disableHover) {
+      this.configuration.sigmaSettings.hoverRenderer = (_) => _;
+      return;
+    }
+
     const hoverCallbacks = this.configuration.hoverCallbacks;
 
     const hoverContainer = hoverCallbacks?.container;
@@ -996,13 +999,13 @@ class WebGraph {
           // reset hoverContainer
           hoverContainer.innerHTML = "";
 
-          let preheader, header, content, footer;
+          let preHeader, header, content, footer;
 
           if (result.preheader) {
-            preheader = document.createElement("span");
-            preheader.setAttribute("id", "preheader");
-            preheader.innerHTML = result.preheader;
-            hoverContainer.append(preheader);
+            preHeader = document.createElement("span");
+            preHeader.setAttribute("id", "preheader");
+            preHeader.innerHTML = result.preheader;
+            hoverContainer.append(preHeader);
           }
 
           if (result.header) {

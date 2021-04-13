@@ -121,6 +121,12 @@ Here is a list of all available configurations. None of the configurations is ma
       <td><code>true</code></td>
     </tr>
     <tr>
+      <td><code>disableHover</code></td>
+      <td>boolean</td>
+      <td>If set to true, nothing will happen on a hover over a node. Please beware, that the <code>highlightSubGraphOnHover</code> configuration is completely independent from this configuration and will work, even if <code>disableHover</code> is set to true.</td>
+      <td><code>false</code></td>
+    </tr>
+    <tr>
       <td><code>hoverCallbacks</code></td>
       <td><a href="https://github.com/robinerol/webgraph/blob/f27997b49ab51c3fc92924f8790a1d094d8232e2/src/Configuration/hovercallback.ts#L38">IHoverCallback</a></td>
       <td>Used to apply a custom hover container to a node. For further details see the <a name="Hover-Callback">Hover Callbacks</a> section.</td>

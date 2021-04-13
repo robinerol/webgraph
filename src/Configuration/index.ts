@@ -17,6 +17,7 @@ interface IGraphConfiguration {
   appMode: AppMode;
   contextMenus?: IContextMenu;
   suppressContextMenu: boolean;
+  disableHover: boolean;
   hoverCallbacks?: IHoverCallback;
   highlightSubGraphOnHover: boolean;
   subGraphHighlightColor: string;
@@ -37,6 +38,7 @@ const DEFAULT_GRAPH_CONFIGURATION: IGraphConfiguration = {
   },
   appMode: AppMode.STATIC,
   suppressContextMenu: true,
+  disableHover: false,
   highlightSubGraphOnHover: true,
   subGraphHighlightColor: "#e57a2d",
   defaultNodeType: NodeType.RING,
