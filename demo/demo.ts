@@ -161,7 +161,7 @@ function drawGraph(graphDataJSON: any[]) {
         0: [
           {
             label: "drop node",
-            callback: (key: string) => webGraph?.dropNode(key),
+            callback: (key: string) => webGraph?.dropNodes([key]),
           },
           {
             label: "type triangle",
@@ -181,7 +181,7 @@ function drawGraph(graphDataJSON: any[]) {
         1: [
           {
             label: "drop node",
-            callback: (key: string) => webGraph?.dropNode(key),
+            callback: (key: string) => webGraph?.dropNodes([key]),
           },
           {
             label: "hide node",
@@ -362,6 +362,14 @@ document.getElementById("layoutForceAtlas2")?.addEventListener("click", (e) => {
       },
     },
   });
+});
+
+document.getElementById("layoutReapply")?.addEventListener("click", (e) => {
+  e.preventDefault();
+
+  if (!webGraph || !webGraph.isRenderingActive) return;
+
+  webGraph.reapplyLayout();
 });
 
 /**---------------------------------

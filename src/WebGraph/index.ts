@@ -439,6 +439,30 @@ class WebGraph {
   }
 
   /**
+   * Applies the currently set layout again. Used for clustering algorithms.
+   * If the currently active {@link Layout} is {@link FORCEATLAS2}, the
+   * preAppliedLayout and preAppliedLayoutOptions will be overwritten
+   * with undefined.
+   *
+   * @public
+   */
+  public reapplyLayout(): void {
+    if (
+      this.configuration.layout === Layout.FORCEATLAS2 &&
+      this.configuration.layoutConfiguration.forceAtlas2LayoutOptions
+    ) {
+      this.configuration.layoutConfiguration.forceAtlas2LayoutOptions.preAppliedLayout = undefined;
+      this.configuration.layoutConfiguration.forceAtlas2LayoutOptions.preAppliedLayoutOptions = undefined;
+    }
+
+    this.applyLayout(
+      this.configuration.layout,
+      this.configuration.layoutConfiguration,
+      false
+    );
+  }
+
+  /**
    * Sets and applies the requested nodeType as default node type.
    *
    * @param nodeType - The {@link NodeType} to be set and applied
@@ -470,54 +494,71 @@ class WebGraph {
   }
 
   /**
-   * Drops a node from the graph.
+   * Drops nodes from the graph.
    *
-   * @param nodeKey - The key of the node to drop
+   * @param nodes - The keys of the nodes (or the whole node) to drop in an array
    * @param [addToHistory] - True by default. Whether the action should be added to the history or not. @defaultValue `true`
    *
    * @returns true if the operation was successful, false if not
    *
    * @public
    */
-  public dropNode(nodeKey: string, addToHistory = true): boolean {
-    if (!this.graphData.hasNode(nodeKey)) return false;
-
-    // remove node from highlightedNodes set
-    if (this.highlightedNodes.has(nodeKey))
-      this.highlightedNodes.delete(nodeKey);
-
-    // remove all to the node connected edges that are currently being highlighted
-    // from the highlightedEdges set
-    const edges = this.graphData.edges(nodeKey);
+  public dropNodes(
+    nodes: Array<NodeKey | SerializedNode>,
+    addToHistory = true
+  ): void {
     const edgeSetForHistory: Set<SerializedEdge> = new Set<SerializedEdge>();
-    edges.forEach((edge) => {
-      if (this.highlightedEdges.has(edge)) {
-        this.highlightedEdges.delete(edge);
-      }
+    const nodeArrayForHistory: Array<SerializedNode> = new Array<SerializedNode>();
 
+    nodes.forEach((node) => {
+      const key: string =
+        typeof node === "number" || typeof node === "string"
+          ? node.toString()
+          : (<SerializedNode>node).key.toString();
+
+      if (!this.graphData.hasNode(key)) return;
+
+      // remove node from highlightedNodes set
+      if (this.highlightedNodes.has(key)) this.highlightedNodes.delete(key);
+
+      // remove all to the node connected edges that are currently being highlighted
+      // from the highlightedEdges set
+      const edges = this.graphData.edges(key);
+      edges.forEach((edge) => {
+        if (this.highlightedEdges.has(edge)) {
+          this.highlightedEdges.delete(edge);
+        }
+
+        if (this.isHistoryEnabled && addToHistory) {
+          edgeSetForHistory.add({
+            key: edge,
+            source: this.graphData.source(edge),
+            target: this.graphData.target(edge),
+            attributes: this.graphData.getEdgeAttributes(edge),
+          });
+        }
+      });
+
+      // hide the hover container
+      this.hideHoverContainer();
+
+      // add to history set
       if (this.isHistoryEnabled && addToHistory) {
-        edgeSetForHistory.add({
-          key: edge,
-          source: this.graphData.source(edge),
-          target: this.graphData.target(edge),
-          attributes: this.graphData.getEdgeAttributes(edge),
+        nodeArrayForHistory.push({
+          key: node.toString(),
+          attributes: this.graphData.getNodeAttributes(key),
         });
       }
-    });
 
-    // hide the hover container
-    this.hideHoverContainer();
+      // drop the node
+      this.graphData.dropNode(key);
+    });
 
     // add to history
     if (this.isHistoryEnabled && addToHistory) {
       this.history?.addAction(
         {
-          nodes: [
-            {
-              key: nodeKey,
-              attributes: this.graphData.getNodeAttributes(nodeKey),
-            },
-          ],
+          nodes: nodeArrayForHistory,
           edges: edgeSetForHistory,
         },
         ActionType.DROP_NODE,
@@ -525,10 +566,8 @@ class WebGraph {
       );
     }
 
-    // drop the node and refresh
-    this.graphData.dropNode(nodeKey);
+    // refresh
     this.renderer?.refresh();
-    return true;
   }
 
   /**
@@ -595,9 +634,8 @@ class WebGraph {
         if (!latestAction.oldData.nodes || !latestAction.newData.nodes) {
           return false;
         }
-        latestAction.newData.nodes.forEach((node) =>
-          this.dropNode(node.key, false)
-        );
+        this.dropNodes(latestAction.newData.nodes, false);
+
         this.mergeNodes(
           // https://stackoverflow.com/a/24273055 since Object.assign doesn't work...
           JSON.parse(JSON.stringify(latestAction.oldData.nodes)),
@@ -709,9 +747,7 @@ class WebGraph {
 
       case ActionType.DROP_NODE:
         if (!latestRevertedAction.oldData.nodes) return false;
-        latestRevertedAction.oldData.nodes.forEach((node) =>
-          this.dropNode(node.key, false)
-        );
+        this.dropNodes(latestRevertedAction.oldData.nodes, false);
         break;
 
       case ActionType.UPDATE_NODE_TYPE:
