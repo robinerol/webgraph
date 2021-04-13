@@ -28,6 +28,7 @@ import {
   DEFAULT_FORCEATLAS2_LAYOUT_OPTIONS,
   AppMode,
   NodeType,
+  LabelSelector,
 } from "../Configuration";
 import drawHover from "./Canvas/hover";
 import {
@@ -1064,8 +1065,24 @@ class WebGraph {
   private overwriteLabelRenderer(): void {
     this.configuration.sigmaSettings.labelRenderer = drawLabel;
 
-    this.configuration.sigmaSettings.labelSelector =
-      InternalUtils.labelSelector;
+    switch (this.configuration.labelSelector) {
+      case LabelSelector.ALL:
+        this.configuration.sigmaSettings.labelSelector =
+          InternalUtils.labelSelectorAll;
+        break;
+      case LabelSelector.LEVELS:
+        this.configuration.sigmaSettings.labelSelector =
+          InternalUtils.labelSelectorLevels;
+        break;
+      case LabelSelector.IMPORTANT:
+        this.configuration.sigmaSettings.labelSelector =
+          InternalUtils.labelSelectorImportant;
+        break;
+      case LabelSelector.SIGMA:
+      default:
+        // do nothing, default in the settings is sigma
+        break;
+    }
   }
 
   /**

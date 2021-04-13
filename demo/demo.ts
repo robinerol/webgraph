@@ -7,6 +7,7 @@ import {
   DEFAULT_FORCEATLAS2_ITERATIONS,
   AppMode,
   NodeType,
+  LabelSelector,
 } from "../src/index";
 import Graph, { MultiGraph } from "graphology";
 
@@ -62,7 +63,7 @@ function drawGraph(graphDataJSON: any[]) {
   graphDataJSON.forEach((result) => {
     graph.addNode(result.id, {
       label: "XYZ, " + result.content.year,
-      size: Utils.getNodeSizeForValue(result.score, minScore, maxScore),
+      size: Utils.getNodeSizeForValue(result.score, minScore, maxScore, 4),
       category: Math.round(Math.random()),
       color: Utils.getNodeColorForValue(
         result.content.year,
@@ -75,6 +76,10 @@ function drawGraph(graphDataJSON: any[]) {
 
     if (Math.random() < 0.75) {
       graph.setNodeAttribute(result.id, "cluster", Math.round(Math.random()));
+    }
+
+    if (Math.random() < 0.3) {
+      graph.setNodeAttribute(result.id, "important", Math.round(Math.random()));
     }
   });
 
@@ -199,6 +204,7 @@ function drawGraph(graphDataJSON: any[]) {
     defaultNodeType: NodeType.CIRCLE,
     highlightSubGraphOnHover: true,
     enableHistory: true,
+    labelSelector: LabelSelector.LEVELS,
     sigmaSettings: {
       renderLabels: true,
       labelFontColor: "#8e8e8e",

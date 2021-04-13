@@ -4,6 +4,7 @@ import { IContextMenu } from "./contextmenu";
 import { IHoverCallback } from "./hovercallback";
 import { NodeType } from "./nodetype";
 import { WebGLSettings } from "sigma/types/renderers/webgl/settings";
+import { LabelSelector } from "./labelselector";
 
 /**
  * Interface for the graphs configurations.
@@ -23,6 +24,7 @@ interface IGraphConfiguration {
   subGraphHighlightColor: string;
   defaultNodeType: NodeType;
   enableHistory: boolean;
+  labelSelector: LabelSelector;
 }
 
 /**
@@ -43,6 +45,7 @@ const DEFAULT_GRAPH_CONFIGURATION: IGraphConfiguration = {
   subGraphHighlightColor: "#e57a2d",
   defaultNodeType: NodeType.RING,
   enableHistory: false,
+  labelSelector: LabelSelector.LEVELS,
 };
 
 export * from "./layouts";
@@ -50,4 +53,5 @@ export * from "./appmode";
 export * from "./contextmenu";
 export * from "./hovercallback";
 export * from "./nodetype";
+export * from "./labelselector";
 export { IGraphConfiguration, DEFAULT_GRAPH_CONFIGURATION };

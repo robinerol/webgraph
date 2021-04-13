@@ -4,5 +4,6 @@ export {
   AppMode,
   Layout,
   NodeType,
+  LabelSelector,
   DEFAULT_FORCEATLAS2_ITERATIONS,
 } from "./Configuration";

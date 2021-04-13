@@ -97,18 +97,54 @@ class Utils {
  */
 class InternalUtils {
   /**
-   * Selects which labels to render based on the size of the node and the zoom
-   * level of the camera. Labels are being rendered in three zoom levels.
+   * Selects all visible nodes to have a visible label.
    *
-   * @param params - Parameters:
-   * - @param cache - Cache storing nodes' data.
-   * - @param camera - The renderer's camera.
-   * - @param displayedLabels - Currently displayed labels.
-   * - @param visibleNodes - Nodes visible for this render.
+   * @param params - Currently visible nodes.
    *
    * @returns - The selected labels.
    */
-  static labelSelector(params: {
+  static labelSelectorAll(params: { visibleNodes: NodeKey[] }): NodeKey[] {
+    return params.visibleNodes;
+  }
+
+  /**
+   * Selects all nodes with the attribute important set true.
+   *
+   * @param params - Parameters:
+   * - @param cache - Cache storing nodes' data.
+   * - @param visibleNodes - Nodes inside the viewport.
+   *
+   * @returns selector important
+   */
+  static labelSelectorImportant(params: {
+    cache: { [key: string]: NodeAttributes };
+    visibleNodes: NodeKey[];
+  }): NodeKey[] {
+    const importantNodes = Array<NodeKey>();
+
+    for (let i = 0, l = params.visibleNodes.length; i < l; i++) {
+      const node = params.visibleNodes[i],
+        nodeData = params.cache[node];
+
+      if (nodeData.important) importantNodes.push(node);
+    }
+
+    return importantNodes;
+  }
+
+  /**
+   * Selects which labels to render based on the size of the node and the zoom
+   * level of the camera. Labels are being rendered in four zoom levels.
+   *
+   * @param params - Parameters:
+   * - @param cache - Cache storing nodes' data.
+   * - @param camera - The renderers camera.
+   * - @param displayedLabels - Currently displayed labels.
+   * - @param visibleNodes - Nodes inside the viewport.
+   *
+   * @returns - The selected labels.
+   */
+  static labelSelectorLevels(params: {
     cache: { [key: string]: NodeAttributes };
     camera: Camera;
     displayedLabels: Set<NodeKey>;
@@ -171,7 +207,7 @@ class InternalUtils {
 
     // retrieve all different sizes of nodes
     for (const nodeSize in nodes) {
-      nodeSizes.push(Number.parseInt(nodeSize));
+      nodeSizes.push(Number.parseFloat(nodeSize));
     }
 
     // sort node sizes in descending order
@@ -183,8 +219,8 @@ class InternalUtils {
       return worthyNodes;
     }
 
-    // sort all nodes by size into 3 levels
-    const interval = nodeSizes.length / 3;
+    // sort all nodes by size into 4 levels
+    const interval = nodeSizes.length / 4;
     let i = 0;
 
     // level 1
@@ -196,7 +232,7 @@ class InternalUtils {
     }
 
     // level 2
-    if (cameraState.ratio < 0.5) {
+    if (cameraState.ratio < 0.75) {
       while (i < interval * 2) {
         worthyNodes.push(...nodes[nodeSizes[i]]);
         i++;
@@ -204,8 +240,16 @@ class InternalUtils {
     }
 
     // level 3
-    if (cameraState.ratio < 0.25) {
+    if (cameraState.ratio < 0.5) {
       while (i < interval * 3) {
+        worthyNodes.push(...nodes[nodeSizes[i]]);
+        i++;
+      }
+    }
+
+    // level 4
+    if (cameraState.ratio < 0.25) {
+      while (i < interval * 4) {
         worthyNodes.push(...nodes[nodeSizes[i]]);
         i++;
       }
