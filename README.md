@@ -161,7 +161,7 @@ Here is a list of all available configurations. None of the configurations is ma
     </tr>
     <tr>
       <td><code>importantNeighborsColor</code></td>
-      <td>boolean</td>
+      <td>string</td>
       <td>If <code>includeImportantNeighbors</code> is enabled: Sets a different color to important neighbor nodes and their connecting edges. If not set, the default color set with <code>subGraphHighlightColor</code> will be used.</td>
       <td><code>undefined</code></td>
     </tr>
