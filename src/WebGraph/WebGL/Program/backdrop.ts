@@ -20,6 +20,9 @@ class NodeBackdropProgram extends AbstractNodeProgram {
   }
 
   process(data: NodeAttributes, offset: number): void {
+    if (data.color === undefined)
+      throw new Error("Attempted to render clusters, but no color was given.");
+
     const color = floatColor(data.color);
 
     let i = offset * POINTS * ATTRIBUTES;

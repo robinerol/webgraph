@@ -73,6 +73,10 @@ npm run serve
 
 and open [localhost:9001](http://localhost:9001) using your favorite browser.
 
+### 🥔 WebGraph Server
+
+To use the example to its full extent, either use your own server and data or go for the super minimal WebGraph Dev Server which can be found [here](https://github.com/robinerol/webgraph-server).
+
 ## 🛠 Configuration
 
 ### 🧾 Overview
@@ -87,7 +91,6 @@ Here is a list of all available configurations. None of the configurations is ma
       <th>Description</th>
       <th>Default value</th>
     </tr>
-    <tr></tr>
   </thead>
   <tbody>
     <tr>
@@ -183,7 +186,6 @@ A list of all attributes impacting the rendered graph. Custom attributes can be 
       <th>Used for</th>
       <th>Mandatory</th>
     </tr>
-    <tr></tr>
   </thead>
   <tbody>
     <tr>
@@ -267,7 +269,6 @@ A list of all attributes impacting the rendered graph. Custom attributes can be 
       <th>Used for</th>
       <th>Mandatory</th>
     </tr>
-    <tr></tr>
   </thead>
   <tbody>
     <tr>
@@ -399,7 +400,6 @@ Since WebGraph is using [modified version](https://github.com/robinerol/sigma.js
       <th>Description</th>
       <th>Default value</th>
     </tr>
-    <tr></tr>
   </thead>
   <tbody>
     <tr>

@@ -55,48 +55,40 @@ function drawGraph(graphDataJSON: any[]) {
   graphDataJSON.forEach((node) => {
     if (node.score < minScore) minScore = node.score;
     if (node.score > maxScore) maxScore = node.score;
-    if (node.content.year < minYear) minYear = node.content.year;
-    if (node.content.year > maxYear) maxYear = node.content.year;
+    if (node.year < minYear) minYear = node.year;
+    if (node.year > maxYear) maxYear = node.year;
   });
 
   // create nodes
   graphDataJSON.forEach((result) => {
     graph.addNode(result.id, {
-      label: "XYZ, " + result.content.year,
+      label: result.author + ", " + result.year,
       size: Utils.getNodeSizeForValue(result.score, minScore, maxScore, 4),
-      category: Math.round(Math.random()),
+      category: result.category,
       color: Utils.getNodeColorForValue(
-        result.content.year,
+        result.year,
         minYear,
         maxYear,
         COLOR_PALETTE
       ),
       score: result.score,
+      important: result.important,
+      cluster: result.cluster,
     });
-
-    if (Math.random() < 0.75) {
-      graph.setNodeAttribute(result.id, "cluster", Math.round(Math.random()));
-    }
-
-    if (Math.random() < 0.3) {
-      graph.setNodeAttribute(result.id, "important", Math.round(Math.random()));
-    }
   });
 
-  // create random edges
-  const nodes = graph.nodes();
-  for (let i = 0; i < nodes.length; i++) {
-    const sourceNode = nodes[Math.round(Math.random() * nodes.length - 1)];
-    const targetNode = nodes[Math.round(Math.random() * nodes.length - 1)];
-
-    if (!sourceNode || !targetNode) continue;
-
-    graph.addEdge(sourceNode, targetNode, {
-      weight: Math.random(),
-      color: "#ccc",
-      important: Math.random() > 0.7,
-    });
-  }
+  // add edges after all nodes have been added
+  graphDataJSON.forEach((result) => {
+    if (result.cluster !== undefined) {
+      result.refs.forEach((ref: string) => {
+        graph.addEdge(result.id, ref, {
+          weight: 0.1,
+          color: "#ccc",
+          important: Math.random() > 0.7,
+        });
+      });
+    }
+  });
 
   if (webGraph?.isRenderingActive) webGraph.destroy();
 
@@ -108,7 +100,8 @@ function drawGraph(graphDataJSON: any[]) {
         iterations: DEFAULT_FORCEATLAS2_ITERATIONS,
         preAppliedLayout: Layout.CIRCLEPACK,
         settings: {
-          edgeWeightInfluence: 1,
+          edgeWeightInfluence: 2.0,
+          barnesHutOptimize: true,
         },
       },
     },
@@ -131,8 +124,8 @@ function drawGraph(graphDataJSON: any[]) {
 
           return {
             preheader: dataJson.year,
-            header: dataJson.originalTitle,
-            content: dataJson.publisher,
+            header: dataJson.title,
+            content: dataJson.abstract,
             footer: "Score: " + score,
           };
         },
@@ -147,8 +140,8 @@ function drawGraph(graphDataJSON: any[]) {
 
           return {
             preheader: dataJson.year,
-            header: dataJson.originalTitle,
-            content: dataJson.publisher,
+            header: dataJson.title,
+            content: dataJson.abstract,
           };
         },
       },
@@ -209,7 +202,7 @@ function drawGraph(graphDataJSON: any[]) {
       renderLabels: true,
       labelFontColor: "#8e8e8e",
       renderNodeBackdrop: true,
-      clusterColors: { 0: "#d1fce9", 1: "#d1dcfc" },
+      clusterColors: { 0: "#d1fce9", 1: "#d1dcfc", 2: "#fcd4cc", 3: "#fafcbd" },
     },
   });
 
@@ -358,7 +351,7 @@ document.getElementById("layoutForceAtlas2")?.addEventListener("click", (e) => {
     forceAtlas2LayoutOptions: {
       iterations: DEFAULT_FORCEATLAS2_ITERATIONS,
       settings: {
-        edgeWeightInfluence: 1,
+        edgeWeightInfluence: 2.0,
       },
     },
   });
@@ -411,7 +404,7 @@ document.getElementById("impEdgeHide")?.addEventListener("click", (e) => {
 });
 
 /**---------------------------------
- * Settings Menu - Defualt Node Type
+ * Settings Menu - Default Node Type
  *--------------------------------*/
 document.getElementById("typeRing")?.addEventListener("click", (e) => {
   e.preventDefault();
