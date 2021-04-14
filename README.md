@@ -145,7 +145,25 @@ Here is a list of all available configurations. None of the configurations is ma
       <td><code>subGraphHighlightColor</code></td>
       <td>string</td>
       <td>The color used to highlight the subgraph that is being highlighted on a hover.</td>
-      <td><code>#e57a2d</code></td>
+      <td><code>#fc9044</code></td>
+    </tr>
+    <tr>
+      <td><code>includeImportantNeighbors</code></td>
+      <td>boolean</td>
+      <td>If <code>highlightSubGraphOnHover</code> is enabled: Whether neighbors of neighbors should be highlighted too, if they have the attribute <code>important</code> set to <code>true</code>.</td>
+      <td><code>false</code></td>
+    </tr>
+    <tr>
+      <td><code>importantNeighborsBidirectional</code></td>
+      <td>boolean</td>
+      <td>If <code>includeImportantNeighbors</code> is enabled: Whether edges of important neighbors should be included even if they are incoming. If <code>false</code> only source(neighbor)->target(neighbors neighbor) edges will be included. If <code>true</code> also target->source edges will be included. </td>
+      <td><code>false</code></td>
+    </tr>
+    <tr>
+      <td><code>importantNeighborsColor</code></td>
+      <td>boolean</td>
+      <td>If <code>includeImportantNeighbors</code> is enabled: Sets a different color to important neighbor nodes and their connecting edges. If not set, the default color set with <code>subGraphHighlightColor</code> will be used.</td>
+      <td><code>undefined</code></td>
     </tr>
     <tr>
       <td><code>defaultNodeType</code></td>

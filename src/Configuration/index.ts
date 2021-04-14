@@ -22,6 +22,9 @@ interface IGraphConfiguration {
   hoverCallbacks?: IHoverCallback;
   highlightSubGraphOnHover: boolean;
   subGraphHighlightColor: string;
+  includeImportantNeighbors: boolean;
+  importantNeighborsBidirectional: boolean;
+  importantNeighborsColor?: string;
   defaultNodeType: NodeType;
   enableHistory: boolean;
   labelSelector: LabelSelector;
@@ -42,7 +45,9 @@ const DEFAULT_GRAPH_CONFIGURATION: IGraphConfiguration = {
   suppressContextMenu: true,
   disableHover: false,
   highlightSubGraphOnHover: true,
-  subGraphHighlightColor: "#e57a2d",
+  subGraphHighlightColor: "#fc9044",
+  includeImportantNeighbors: false,
+  importantNeighborsBidirectional: false,
   defaultNodeType: NodeType.RING,
   enableHistory: false,
   labelSelector: LabelSelector.LEVELS,

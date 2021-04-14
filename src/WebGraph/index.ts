@@ -5,6 +5,7 @@ import {
   SerializedEdge,
   EdgeKey,
   NodeKey,
+  Attributes,
 } from "graphology-types";
 import { circular, circlepack, random } from "graphology-layout";
 import randomLayout, { RandomLayoutOptions } from "graphology-layout/random";
@@ -1151,11 +1152,23 @@ class WebGraph {
   private overwriteReducers(): void {
     if (!this.configuration.highlightSubGraphOnHover) return;
 
-    const hcolor = this.configuration.subGraphHighlightColor;
+    const highlightColor = this.configuration.subGraphHighlightColor;
+    const neighborsNeighborsColor = this.configuration.importantNeighborsColor;
 
     const nodeReducer = (node: NodeKey, data: NodeAttributes) => {
       if (this.highlightedNodes.has(node)) {
-        return { ...data, color: hcolor, z: 1 };
+        // if neighbor of neighbor and different color is set
+        if (
+          neighborsNeighborsColor &&
+          this.hoveredNode &&
+          this.hoveredNode !== node &&
+          !this.graphData.neighbors(this.hoveredNode, node)
+        ) {
+          return { ...data, color: neighborsNeighborsColor, z: 1 };
+        }
+
+        // default
+        return { ...data, color: highlightColor, z: 1 };
       }
 
       return data;
@@ -1163,7 +1176,18 @@ class WebGraph {
 
     const edgeReducer = (edge: EdgeKey, data: EdgeAttributes) => {
       if (this.highlightedEdges.has(edge)) {
-        return { ...data, color: hcolor, z: 1 };
+        // if neighbor of neighbor and different color is set
+        if (
+          neighborsNeighborsColor &&
+          this.hoveredNode &&
+          this.graphData.source(edge) !== this.hoveredNode &&
+          this.graphData.target(edge) !== this.hoveredNode
+        ) {
+          return { ...data, color: neighborsNeighborsColor, z: 1 };
+        }
+
+        // default
+        return { ...data, color: highlightColor, z: 1 };
       }
 
       return data;
@@ -1316,6 +1340,9 @@ class WebGraph {
     });
 
     this.container.addEventListener("click", () => {
+      // hide hover if open
+      this.hideHoverContainer();
+
       if (!isContextMenuOpen) return;
       if (!cmcontainer) return;
 
@@ -1416,10 +1443,46 @@ class WebGraph {
 
       // add nodes
       this.highlightedNodes = new Set(this.graphData.neighbors(node));
-      this.highlightedNodes.add(node);
 
       // add edges
       this.highlightedEdges = new Set(this.graphData.edges(node));
+
+      // add neighbors of neighbors that have the attribute important set to true
+      if (this.configuration.includeImportantNeighbors) {
+        const neighborSet: Record<NodeKey, Array<NodeKey>> = {};
+        this.highlightedNodes.forEach((node) =>
+          this.graphData.forEachNeighbor(
+            node,
+            (neighbor: NodeKey, attributes: Attributes) => {
+              if (attributes.important === true) {
+                neighborSet[node]
+                  ? neighborSet[node].push(neighbor)
+                  : (neighborSet[node] = [neighbor]);
+              }
+            }
+          )
+        );
+
+        Object.keys(neighborSet).forEach((neighbor: NodeKey) => {
+          const importantNeighbors: Array<NodeKey> = neighborSet[neighbor];
+
+          importantNeighbors.forEach((importantNeighbor) => {
+            this.highlightedNodes.add(importantNeighbor);
+
+            const edgesOut = this.graphData.edges(neighbor, importantNeighbor);
+            edgesOut.forEach((edge) => this.highlightedEdges.add(edge));
+
+            // include both directions if enabled
+            if (this.configuration.importantNeighborsBidirectional) {
+              const edgesIn = this.graphData.edges(importantNeighbor, neighbor);
+              edgesIn.forEach((edge) => this.highlightedEdges.add(edge));
+            }
+          });
+        });
+      }
+
+      // add the hovered node
+      this.highlightedNodes.add(node);
 
       this.renderer?.refresh();
     });

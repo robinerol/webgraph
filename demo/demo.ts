@@ -196,6 +196,9 @@ function drawGraph(graphDataJSON: any[]) {
     suppressContextMenu: false,
     defaultNodeType: NodeType.CIRCLE,
     highlightSubGraphOnHover: true,
+    includeImportantNeighbors: true,
+    importantNeighborsBidirectional: true,
+    importantNeighborsColor: "#fcabb2",
     enableHistory: true,
     labelSelector: LabelSelector.LEVELS,
     sigmaSettings: {
