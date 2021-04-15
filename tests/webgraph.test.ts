@@ -48,7 +48,7 @@ jest.mock("sigma", () => {
 
 describe("test public methods of the WebGraph class", () => {
   describe("constructor", () => {
-    it("empty config object should create the same as no configuration", () => {
+    it("should create the same config as no configuration", () => {
       const container1 = document.createElement("div");
       const container2 = document.createElement("div");
 
@@ -58,7 +58,7 @@ describe("test public methods of the WebGraph class", () => {
       expect(webGraph1).toStrictEqual(webGraph2);
     });
 
-    it("configuration should be the default configuration", () => {
+    it("should be the default configuration", () => {
       const container = document.createElement("div");
 
       const webGraph = new WebGraph(container, new Graph());
@@ -66,7 +66,7 @@ describe("test public methods of the WebGraph class", () => {
       expect(webGraph["configuration"]).toEqual(DEFAULT_GRAPH_CONFIGURATION);
     });
 
-    it("configurations should be correctly applied", () => {
+    it("should apply configurations correctly", () => {
       const container = document.createElement("div");
 
       const layout = Layout.RANDOM;
@@ -107,16 +107,16 @@ describe("test public methods of the WebGraph class", () => {
       webGraph = new WebGraph(container, new Graph());
     });
 
-    it("rendering should be inactive", () => {
+    it("should be inactive", () => {
       expect(webGraph.isRenderingActive).toBeFalsy();
     });
 
-    it("rendering should be active", () => {
+    it("should be active", () => {
       webGraph.render();
       expect(webGraph.isRenderingActive).toBeTruthy();
     });
 
-    it("appMode should be default", () => {
+    it("should be default AppMode", () => {
       expect(webGraph.appMode).toEqual(DEFAULT_GRAPH_CONFIGURATION.appMode);
     });
   });
@@ -133,7 +133,7 @@ describe("test public methods of the WebGraph class", () => {
       expect(() => webGraph.render()).toThrow();
     });
 
-    it("internal methods should be called on render", () => {
+    it("should call internal methods on render", () => {
       const container = document.createElement("div");
 
       const webGraph = new WebGraph(container, new Graph(), {
@@ -227,37 +227,37 @@ describe("test public methods of the WebGraph class", () => {
       webGraph.render();
     });
 
-    it("merge edges", () => {
+    it("should merge edges", () => {
       //TODO
       expect(true).toBeTruthy();
     });
 
-    it("add edges", () => {
+    it("should add edges", () => {
       //TODO
       expect(true).toBeTruthy();
     });
 
-    it("overwrite edge attributes", () => {
+    it("should overwrite edge attributes", () => {
       //TODO
       expect(true).toBeTruthy();
     });
 
-    it("merge nodes", () => {
+    it("should merge nodes", () => {
       //TODO
       expect(true).toBeTruthy();
     });
 
-    it("drop nodes", () => {
+    it("should drop nodes", () => {
       //TODO
       expect(true).toBeTruthy();
     });
 
-    it("add nodes", () => {
+    it("should add nodes", () => {
       //TODO
       expect(true).toBeTruthy();
     });
 
-    it("overwrite node attributes", () => {
+    it("should overwrite node attributes", () => {
       //TODO
       expect(true).toBeTruthy();
     });
@@ -291,12 +291,12 @@ describe("test public methods of the WebGraph class", () => {
   });
 
   describe("history", () => {
-    it("history should be enabled", () => {
+    it("should enable history", () => {
       //TODO
       expect(true).toBeTruthy();
     });
 
-    it("history should be disabled", () => {
+    it("should disabled history", () => {
       //TODO
       expect(true).toBeTruthy();
     });

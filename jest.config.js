@@ -6,4 +6,5 @@ module.exports = {
   moduleNameMapper: {
     "^.+\\.(glsl)$": "<rootDir>/config/glsl.mock.js",
   },
+  verbose: true,
 };
