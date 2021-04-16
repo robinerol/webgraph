@@ -38,7 +38,7 @@ enum Layout {
 
   /**
    * Doesn't affect the arrangement of the nodes. To be used if there should no further layout
-   * processing be applied to the nodes. Beware that the x and y filed of your nodes might be empty.
+   * processing be applied to the nodes. Beware that the x and y attributes of your nodes might be empty.
    *
    * {@label PREDEFINED}
    */

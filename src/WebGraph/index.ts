@@ -177,7 +177,7 @@ class WebGraph {
    *
    * @public
    */
-  public render(): void {
+  public async render(): Promise<boolean> {
     if (this.isRenderingActive) throw new Error("Already rendering.");
 
     this.appState = AppState.ACTIVE;
@@ -201,6 +201,8 @@ class WebGraph {
     this.isHistoryEnabled = this.configuration.enableHistory;
 
     if (this.isHistoryEnabled) this.history = new HistoryManager();
+
+    return true;
   }
 
   /**
@@ -816,7 +818,9 @@ class WebGraph {
    * @returns - The camera object of the renderer.
    */
   public get camera(): Camera {
-    if (!this.renderer) throw new Error();
+    if (!this.renderer || !this.isRenderingActive) {
+      throw new Error("Can't retrieve camera when rendering is inactive.");
+    }
 
     return this.renderer.getCamera();
   }
