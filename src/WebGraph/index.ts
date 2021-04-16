@@ -423,10 +423,21 @@ class WebGraph {
     addToHistory = true
   ): void {
     if (this.isHistoryEnabled && addToHistory) {
+      const oldLayout = this.configuration.layout;
+      const layoutMapping: { [key: string]: { x: number; y: number } } = {};
+
+      if (oldLayout === Layout.FORCEATLAS2 || layout === Layout.FORCEATLAS2) {
+        this.graphData.nodes().forEach((node) => {
+          const attr = this.graphData.getNodeAttributes(node);
+          layoutMapping[node] = { x: attr.x, y: attr.y };
+        });
+      }
+
       this.history?.addAction(
         {
-          layout: this.configuration.layout,
+          layout: oldLayout,
           layoutConfig: this.configuration.layoutConfiguration,
+          layoutMapping: layoutMapping,
         },
         ActionType.SET_LAYOUT,
         {
@@ -700,10 +711,17 @@ class WebGraph {
       case ActionType.SET_LAYOUT:
         if (
           !latestAction.oldData.layout ||
-          !latestAction.oldData.layoutConfig
+          !latestAction.oldData.layoutConfig ||
+          !latestAction.oldData.layoutMapping
         ) {
           return false;
         }
+
+        if (latestAction.oldData.layout === Layout.FORCEATLAS2) {
+          this.animateGraph(this.graphData, latestAction.oldData.layoutMapping);
+          break;
+        }
+
         this.setAndApplyLayout(
           latestAction.oldData.layout,
           latestAction.oldData.layoutConfig,
@@ -1016,9 +1034,24 @@ class WebGraph {
 
     if (!newLayout || layout === Layout.PREDEFINED) return;
 
+    this.animateGraph(this.graphData, newLayout);
+  }
+
+  /**
+   * Animates the graph to the given mappings.
+   *
+   * @param graph - The graph to animate
+   * @param mapping - The mappings to apply to the graph
+   *
+   * @internal
+   */
+  private animateGraph(
+    graph: Graph,
+    mapping: { [key: string]: { x: number; y: number } }
+  ): void {
     animateNodes(
-      this.graphData,
-      newLayout,
+      graph,
+      mapping,
       { duration: 1000, easing: easings["cubicInOut"] },
       () => {
         /** do nothing */

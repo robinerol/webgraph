@@ -44,6 +44,7 @@ interface IActionPayload {
   toggleEdgeRendering?: boolean;
   layout?: Layout;
   layoutConfig?: ILayoutConfiguration;
+  layoutMapping?: { [key: string]: { x: number; y: number } };
 }
 
 /**

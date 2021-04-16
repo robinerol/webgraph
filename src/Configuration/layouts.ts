@@ -82,7 +82,7 @@ interface IExtendedForceAtlas2LayoutOptions extends ForceAtlas2LayoutOptions {
  *
  * {@label DEFAULT_FORCEATLAS2_ITERATIONS}
  */
-const DEFAULT_FORCEATLAS2_ITERATIONS = 500;
+const DEFAULT_FORCEATLAS2_ITERATIONS = 50;
 
 /**
  * Represents the default layout options used when applying the {@link Layout.FORCEATLAS2} layout.

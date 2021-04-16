@@ -14,6 +14,10 @@
       />
       <input id="searchInput" type="text" placeholder="Query" />
       <button id="searchButton">Load data!</button>
+      <div class="flex-row">
+        <span class="flex-row-child status">Status: </span>
+        <span class="flex-row-child status" id="status">Idle</span>
+      </div>
       <hr />
       <label>AppMode</label>
       <div class="flex-row">
@@ -120,6 +124,10 @@
 
       hr {
         width: 100%;
+      }
+
+      .status {
+        font-size: smaller;
       }
 
       .show {

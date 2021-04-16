@@ -18,6 +18,7 @@ let webGraph: WebGraph | undefined = undefined;
 const webGraphContainer = document.getElementById("webGraph");
 const webGraphContextMenuContainer = document.getElementById("webGraphCM");
 const webGraphHoverContainer = document.getElementById("webGraphHC");
+const status = document.getElementById("status");
 
 async function drawGraph(graphDataJSON: any[]) {
   if (!webGraphContainer) {
@@ -211,6 +212,10 @@ async function drawGraph(graphDataJSON: any[]) {
   });
 
   webGraph.render();
+
+  if (status) {
+    status.innerHTML = "Idle";
+  }
 }
 
 function drawExampleGraph() {
@@ -258,11 +263,18 @@ function drawExampleGraph() {
   webGraph = new WebGraph(webGraphContainer, graph);
 
   webGraph.render();
+
+  if (status) {
+    status.innerHTML = "Idle";
+  }
 }
 
 window.onload = () => {
   if (webGraphContainer === null) return;
 
+  if (status) {
+    status.innerHTML = "Working...";
+  }
   // render default graph example
   drawExampleGraph();
 };
@@ -286,6 +298,10 @@ document.getElementById("searchButton")?.addEventListener("click", (e) => {
     (<HTMLInputElement>searchEndpointElement).value +
     encodeURIComponent((<HTMLInputElement>searchInputElement).value);
 
+  if (status) {
+    status.innerHTML = "Working...";
+  }
+
   fetchGraphData(url);
 });
 
@@ -297,6 +313,9 @@ async function fetchGraphData(url: string) {
     .catch((e) => {
       console.error(e);
       drawExampleGraph();
+      if (status) {
+        status.innerHTML = "Idle";
+      }
     });
 }
 

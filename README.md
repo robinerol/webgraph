@@ -106,6 +106,12 @@ Here is a list of all available configurations. None of the configurations is ma
       <td><code>{predefinedLayoutOptions: {}}</code></td>
     </tr>
     <tr>
+      <td><code>useForceAtlas2WebWorker</code></td>
+      <td>number</td>
+      <td>Initializes a <a href="https://developer.mozilla.org/en-US/docs/Web/API/Web_Workers_API">web worker</a> to be used for the <a href="https://github.com/graphology/graphology-layout-forceatlas2#webworker">ForceAtlas2 layout</a>. If no value is given here, the ForceAtlas2 will run synchronous with the in the <code>layoutConfiguration</code> defined iterations. <b>Warning:</b> With many nodes/edges/iterations running the algorithm synchronous might block the UI! Using the web worker will execute the algorithm live in the browser. The number passed using this configuration is the amount of time the web worker should be executed in milliseconds. By default, the web worker is disabled due to <a href="https://caniuse.com/webworkers">compatibility reasons</a>.</td>
+      <td><code>undefined</code></td>
+    </tr>
+    <tr>
       <td><code>appMode</code></td>
       <td><a href="https://github.com/robinerol/webgraph/blob/f27997b49ab51c3fc92924f8790a1d094d8232e2/src/Configuration/appmode.ts#L6">AppMode</a></td>
       <td>Sets the mode of the WebGraph to <code>DYNAMIC</code> (nodes can be dragged) or <code>STATIC</code> (nodes are static).</td>
