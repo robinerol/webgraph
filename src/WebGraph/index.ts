@@ -42,6 +42,7 @@ import {
 import { ActionType, HistoryManager } from "./History";
 import drawLabel from "./Canvas/label";
 import { InternalUtils } from "../Utils";
+import FA2Layout from "graphology-layout-forceatlas2/worker";
 
 /**
  * The WebGraph class represents the main endpoint of the module.
@@ -61,6 +62,7 @@ class WebGraph {
   private isNodeDragged = false;
   private isHistoryEnabled = false;
   private history: HistoryManager | undefined = undefined;
+  private forceAtlas2WebWorker: FA2Layout | undefined = undefined;
 
   /**
    * Creates an instance of web graph.
@@ -185,7 +187,8 @@ class WebGraph {
     this.applyLayout(
       this.configuration.layout,
       this.configuration.layoutConfiguration,
-      true
+      true,
+      this.configuration.useForceAtlas2WebWorker !== undefined
     );
 
     this.overwriteRenderSettings();
@@ -436,7 +439,7 @@ class WebGraph {
     this.configuration.layout = layout;
     this.configuration.layoutConfiguration = layoutConfiguration;
 
-    this.applyLayout(layout, layoutConfiguration, false);
+    this.applyLayout(layout, layoutConfiguration, false, false);
   }
 
   /**
@@ -459,6 +462,7 @@ class WebGraph {
     this.applyLayout(
       this.configuration.layout,
       this.configuration.layoutConfiguration,
+      false,
       false
     );
   }
@@ -581,6 +585,7 @@ class WebGraph {
     this.renderer?.getMouseCaptor().removeAllListeners();
     this.renderer?.clear();
     this.renderer?.kill();
+    this.forceAtlas2WebWorker?.kill();
     this.appState = AppState.INACTIVE;
   }
 
@@ -809,7 +814,7 @@ class WebGraph {
   }
 
   /**
-   * Gets the camera.
+   * Gets the camera. All interactions with the camera are not tracked by the history.
    *
    * @throws Error - If the renderer is not defined.
    *
@@ -821,6 +826,30 @@ class WebGraph {
     }
 
     return this.renderer.getCamera();
+  }
+
+  /**
+   * Gets the ForceAtlas2 web worker. Please be aware that all interactions with the web worker
+   * are not tracked by the history.
+   *
+   * @throws Error - If the renderer is not defined or the 'useForceAtlas2WebWorker' is not enabled
+   *
+   * @returns - The ForceAtlas2 Web Worker object or undefined if not used
+   */
+  public get ForceAtlas2WebWorker(): FA2Layout | undefined {
+    if (!this.renderer || !this.isRenderingActive) {
+      throw new Error(
+        "Can't retrieve ForceAtlas2 web worker when rendering is inactive."
+      );
+    }
+
+    if (!this.configuration.useForceAtlas2WebWorker) {
+      throw new Error(
+        "ForceAtlas2 web worker was not enabled. Use the 'useForceAtlas2WebWorker' configuration to enable it."
+      );
+    }
+
+    return this.forceAtlas2WebWorker;
   }
 
   /**---------------------------------------------------------------------------
@@ -842,16 +871,59 @@ class WebGraph {
    * @param layout - The {@link Layout} to apply to the graph
    * @param layoutConfig - The corresponding {@link ILayoutConfiguration} to the given layout
    * @param initialLayout - true: If this is the first layout to apply, apply random layout for incoming animation | false: nothing happens
+   * @param useWorker - Whether to use the ForceAtlas2 worker or not
    *
    * @internal
    */
   private applyLayout(
     layout: Layout,
     layoutConfig: ILayoutConfiguration,
-    initialLayout: boolean
+    initialLayout: boolean,
+    useWorker: boolean
   ): void {
     if (initialLayout && layout !== Layout.PREDEFINED) {
       random.assign(this.graphData);
+    }
+
+    if (
+      useWorker &&
+      layout === Layout.FORCEATLAS2 &&
+      this.configuration.useForceAtlas2WebWorker
+    ) {
+      const forceAtlas2LayoutOptions = layoutConfig.forceAtlas2LayoutOptions;
+
+      this.forceAtlas2WebWorker = new FA2Layout(this.graphData, {
+        settings: forceAtlas2LayoutOptions?.settings,
+      });
+
+      // if custom layout options are available
+      if (forceAtlas2LayoutOptions) {
+        const preAppliedLayout: Layout | undefined =
+          forceAtlas2LayoutOptions.preAppliedLayout;
+
+        // if another layout should be pre applied to the ForceAtlas2
+        if (preAppliedLayout) {
+          if (preAppliedLayout === Layout.FORCEATLAS2) {
+            throw new Error(
+              "preAppliedLayout for Layout.FORCEATLAS2 can't be Layout.FORCEATLAS2"
+            );
+          }
+
+          this.applyLayout(
+            preAppliedLayout,
+            forceAtlas2LayoutOptions.preAppliedLayoutOptions || {},
+            initialLayout,
+            false
+          );
+        }
+      }
+
+      this.forceAtlas2WebWorker.start();
+
+      setTimeout(() => {
+        this.forceAtlas2WebWorker?.stop();
+      }, this.configuration.useForceAtlas2WebWorker);
+      return;
     }
 
     let newLayout;

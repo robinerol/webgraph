@@ -19,7 +19,7 @@ const webGraphContainer = document.getElementById("webGraph");
 const webGraphContextMenuContainer = document.getElementById("webGraphCM");
 const webGraphHoverContainer = document.getElementById("webGraphHC");
 
-function drawGraph(graphDataJSON: any[]) {
+async function drawGraph(graphDataJSON: any[]) {
   if (!webGraphContainer) {
     throw new Error("No div container with the ID 'webGraph' has been found.");
   }
@@ -95,6 +95,7 @@ function drawGraph(graphDataJSON: any[]) {
   // initialize and render graph
   webGraph = new WebGraph(webGraphContainer, graph, {
     layout: Layout.FORCEATLAS2,
+    useForceAtlas2WebWorker: 1,
     layoutConfiguration: {
       forceAtlas2LayoutOptions: {
         iterations: DEFAULT_FORCEATLAS2_ITERATIONS,
@@ -200,7 +201,7 @@ function drawGraph(graphDataJSON: any[]) {
     importantNeighborsBidirectional: true,
     importantNeighborsColor: "#fcabb2",
     enableHistory: true,
-    labelSelector: LabelSelector.LEVELS,
+    labelSelector: LabelSelector.SIGMA,
     sigmaSettings: {
       renderLabels: true,
       labelFontColor: "#8e8e8e",
@@ -352,7 +353,7 @@ document.getElementById("layoutForceAtlas2")?.addEventListener("click", (e) => {
 
   webGraph.setAndApplyLayout(Layout.FORCEATLAS2, {
     forceAtlas2LayoutOptions: {
-      iterations: DEFAULT_FORCEATLAS2_ITERATIONS,
+      iterations: 25,
       settings: {
         edgeWeightInfluence: 2.0,
       },
@@ -366,6 +367,33 @@ document.getElementById("layoutReapply")?.addEventListener("click", (e) => {
   if (!webGraph || !webGraph.isRenderingActive) return;
 
   webGraph.reapplyLayout();
+});
+
+/**---------------------------------
+ * Settings Menu - ForceAtlas2 Web Worker
+ *--------------------------------*/
+document.getElementById("wwStart")?.addEventListener("click", (e) => {
+  e.preventDefault();
+
+  if (!webGraph || !webGraph.isRenderingActive) return;
+
+  webGraph.ForceAtlas2WebWorker?.start();
+});
+
+document.getElementById("wwStop")?.addEventListener("click", (e) => {
+  e.preventDefault();
+
+  if (!webGraph || !webGraph.isRenderingActive) return;
+
+  webGraph.ForceAtlas2WebWorker?.stop();
+});
+
+document.getElementById("wwReset")?.addEventListener("click", (e) => {
+  e.preventDefault();
+
+  if (!webGraph || !webGraph.isRenderingActive) return;
+
+  webGraph.setAndApplyLayout(Layout.CIRCLEPACK, {});
 });
 
 /**---------------------------------

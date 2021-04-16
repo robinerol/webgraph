@@ -10,7 +10,6 @@ import {
 import { IGraphConfiguration } from "../types/Configuration";
 import { WebGLRenderer } from "sigma";
 import { SerializedEdge, SerializedNode } from "graphology-types";
-//import { ActionType } from "../src/WebGraph/History";
 
 jest.mock("sigma", () => {
   return {
