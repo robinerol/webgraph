@@ -40,7 +40,12 @@ class Utils {
       throw new Error("steps must be a positive number");
     }
 
-    const sizeOffset = (maxNodeSize - minNodeSize) / steps;
+    let divider = steps;
+    if (divider != 1) {
+      divider -= 1;
+    }
+
+    const sizeOffset = (maxNodeSize - minNodeSize) / divider;
 
     const interval = (maxValue - minValue) / steps;
 
