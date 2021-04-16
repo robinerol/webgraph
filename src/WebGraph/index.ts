@@ -177,7 +177,7 @@ class WebGraph {
    *
    * @public
    */
-  public async render(): Promise<boolean> {
+  public render(): void {
     if (this.isRenderingActive) throw new Error("Already rendering.");
 
     this.appState = AppState.ACTIVE;
@@ -201,8 +201,6 @@ class WebGraph {
     this.isHistoryEnabled = this.configuration.enableHistory;
 
     if (this.isHistoryEnabled) this.history = new HistoryManager();
-
-    return true;
   }
 
   /**
