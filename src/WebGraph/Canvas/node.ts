@@ -69,9 +69,7 @@ function drawRectangle(
 ): void {
   context.fillStyle = data.color;
 
-  // multiply the width and height with 1.5 according to the scaling factor
-  // in the shader. see: Shader/node.rectangle.vert.glsl
-  const wh = data.size * 1.5;
+  const wh = data.size * 2.0;
 
   context.beginPath();
   context.rect(data.x - wh / 2, data.y - wh / 2, wh, wh);

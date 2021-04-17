@@ -1,7 +1,7 @@
 import { Layout, ILayoutConfiguration } from "./layouts";
 import { AppMode } from "./appmode";
 import { IContextMenu } from "./contextmenu";
-import { IHoverCallback } from "./hovercallback";
+import { INodeInfoBox } from "./nodeinfobox";
 import { NodeType } from "./nodetype";
 import { WebGLSettings } from "sigma/types/renderers/webgl/settings";
 import { LabelSelector } from "./labelselector";
@@ -19,7 +19,8 @@ interface IGraphConfiguration {
   contextMenus?: IContextMenu;
   suppressContextMenu: boolean;
   disableHover: boolean;
-  hoverCallbacks?: IHoverCallback;
+  nodeInfoBox?: INodeInfoBox;
+  showNodeInfoBoxOnClick: boolean;
   highlightSubGraphOnHover: boolean;
   subGraphHighlightColor: string;
   includeImportantNeighbors: boolean;
@@ -45,6 +46,7 @@ const DEFAULT_GRAPH_CONFIGURATION: IGraphConfiguration = {
   appMode: AppMode.STATIC,
   suppressContextMenu: true,
   disableHover: false,
+  showNodeInfoBoxOnClick: true,
   highlightSubGraphOnHover: true,
   subGraphHighlightColor: "#fc9044",
   includeImportantNeighbors: false,
@@ -58,7 +60,7 @@ const DEFAULT_GRAPH_CONFIGURATION: IGraphConfiguration = {
 export * from "./layouts";
 export * from "./appmode";
 export * from "./contextmenu";
-export * from "./hovercallback";
+export * from "./nodeinfobox";
 export * from "./nodetype";
 export * from "./labelselector";
 export { IGraphConfiguration, DEFAULT_GRAPH_CONFIGURATION };

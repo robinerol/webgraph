@@ -30,6 +30,7 @@ import {
   AppMode,
   NodeType,
   LabelSelector,
+  INodeInfoBox,
 } from "../Configuration";
 import drawHover from "./Canvas/hover";
 import {
@@ -58,7 +59,7 @@ class WebGraph {
   private highlightedNodes: Set<NodeKey> = new Set<NodeKey>();
   private highlightedEdges: Set<EdgeKey> = new Set<EdgeKey>();
   private hoveredNode: NodeKey | undefined = undefined;
-  private isHoverContainerVisible = false;
+  private isNodeInfoBoxContainerVisible = false;
   private isNodeDragged = false;
   private isHistoryEnabled = false;
   private history: HistoryManager | undefined = undefined;
@@ -555,8 +556,8 @@ class WebGraph {
         }
       });
 
-      // hide the hover container
-      this.hideHoverContainer();
+      // hide the node info box container
+      this.hideNodeInfoBoxContainer();
 
       // add to history set
       if (this.isHistoryEnabled && addToHistory) {
@@ -1071,7 +1072,7 @@ class WebGraph {
     // override the label renderer
     this.overwriteLabelRenderer();
 
-    // create reducers for highlighting sub graphs on hover if turned on
+    // create reducers for highlighting sub graphs on hover if enabled
     this.overwriteReducers();
 
     // apply custom node programs
@@ -1079,15 +1080,19 @@ class WebGraph {
   }
 
   /**
-   * Overwrites the hoverRenderer by adding support for custom hover callbacks.
-   * If no {@link IHoverCallback} is present, the sigma.js default hoverRenderer
-   * will be used. Otherwise a nodes corresponding {@link IHoverCallback} will be
-   * executed and the resulting {@link IHoverContent} applied to the given container.
+   * Overwrites the hoverRenderer by adding support for custom node info boxes.
+   * If no {@link INodeInfoBox} is provided, the sigma.js default hoverRenderer
+   * will be used. Otherwise a nodes corresponding {@link INodeInfoBox} will be
+   * executed and the resulting {@link INodeInfoBox} applied to the given container.
    * There's nothing like a default value for the category attribute, if it is not
    * present. If the category attribute is missing, the node will not have a hover.
    *
-   * @remarks - Regarding {@link IHoverCallback}:
-   * The number given in the 'callback' field of a {@link IHoverCallback} represents
+   * If the 'showNodeInfoBoxOnClick' configuration is set to true, the sigma.js
+   * default hoverRenderer will be used and the node info box will be visible on
+   * a click on a node.
+   *
+   * @remarks - Regarding {@link INodeInfoBox}:
+   * The number given in the 'callback' field of a {@link INodeInfoBox} represents
    * the nodes callback:
    * A node with category 0 would get the callback mapped to 0
    * A node with category 1 would get the callback mapped to 1
@@ -1102,9 +1107,8 @@ class WebGraph {
       return;
     }
 
-    const hoverCallbacks = this.configuration.hoverCallbacks;
-
-    const hoverContainer = hoverCallbacks?.container;
+    const nodeInfoBox = this.configuration.nodeInfoBox;
+    const nodeInfoBoxContainer = nodeInfoBox?.container;
 
     this.configuration.sigmaSettings.hoverRenderer = (
       context: CanvasRenderingContext2D,
@@ -1116,89 +1120,134 @@ class WebGraph {
     ) => {
       if (!this.graphData.hasNode(data.key)) return;
 
-      // set the type for the hover canvas to know which form to draw
-      data.type = this.graphData.getNodeAttribute(data.key, "type");
+      const nodeAttributes = this.graphData.getNodeAttributes(data.key);
 
-      // if no hover callbacks are provided, use the sigma.js library default
-      if (!hoverCallbacks || !hoverContainer) {
+      // set the type for the hover canvas to know which form to draw
+      data.type = nodeAttributes.type;
+
+      // if no node info callbacks are provided, use the sigma.js library default
+      // or if nodeInfoBox should appear on click and not on hover
+      if (
+        !nodeInfoBox ||
+        !nodeInfoBoxContainer ||
+        this.configuration.showNodeInfoBoxOnClick
+      ) {
         drawHover(context, data, settings, this.configuration);
         return;
       }
 
       if (this.isNodeDragged) return;
 
-      // retrieve node category
-      const category = this.graphData.getNodeAttribute(data.key, "category");
-      // if no category is present, return
-      if (category === undefined) return;
+      // set the score and category attribute
+      data.score = nodeAttributes.score;
+      data.category = nodeAttributes.category;
 
-      // retrieve nodes hover callback
-      const hoverCallback = hoverCallbacks.callback[category];
-
-      // retrieve score
-      const nodeScore = this.graphData.getNodeAttribute(data.key, "score");
-
-      // execute callback
-      hoverCallback(data.key, nodeScore)
-        .then((result) => {
-          // reset hoverContainer
-          hoverContainer.innerHTML = "";
-
-          let preHeader, header, content, footer;
-
-          if (result.preheader) {
-            preHeader = document.createElement("span");
-            preHeader.setAttribute("id", "preheader");
-            preHeader.innerHTML = result.preheader;
-            hoverContainer.append(preHeader);
-          }
-
-          if (result.header) {
-            header = document.createElement("span");
-            header.setAttribute("id", "header");
-            header.innerHTML = result.header;
-            hoverContainer.append(header);
-          }
-
-          if (result.content) {
-            content = document.createElement("span");
-            content.setAttribute("id", "content");
-            content.innerHTML = result.content;
-            hoverContainer.append(content);
-          }
-
-          if (result.footer) {
-            footer = document.createElement("span");
-            footer.setAttribute("id", "footer");
-            footer.innerHTML = result.footer.toString();
-            hoverContainer.append(footer);
-          }
-
-          // get possible offsets
-          const yoffset = hoverCallbacks.yoffset || 0;
-          const xoffset = hoverCallbacks.xoffset || 0;
-
-          // reposition the hover container and make it visible
-          hoverContainer.style.top = data.y + yoffset + "px";
-          hoverContainer.style.left = data.x + xoffset + "px";
-          hoverContainer.className = hoverCallbacks.cssShow;
-          this.isHoverContainerVisible = true;
-        })
-        .catch((e) => {
-          console.error(e);
-
-          hoverContainer.className = hoverCallbacks.cssHide;
-          this.isHoverContainerVisible = false;
-
-          // fallback to the default sigma.js label if unable to execute callback
-          drawHover(context, data, settings, this.configuration);
-        });
+      this.generateNodeInfoBox(
+        nodeInfoBox,
+        nodeInfoBoxContainer,
+        data,
+        context,
+        settings
+      );
     };
 
     // when leaving the hover container, hide it
-    hoverContainer?.addEventListener("mouseleave", () =>
-      this.hideHoverContainer()
+    nodeInfoBoxContainer?.addEventListener("mouseleave", () =>
+      this.hideNodeInfoBoxContainer()
     );
+  }
+
+  private generateNodeInfoBox(
+    nodeInfoBox: INodeInfoBox,
+    nodeInfoBoxContainer: HTMLElement,
+    data: PartialButFor<NodeAttributes, "x" | "y" | "size" | "label" | "color">,
+    context?: CanvasRenderingContext2D,
+    settings?: WebGLSettings
+  ): void {
+    // if no category is present, return
+    if (data.category === undefined) return;
+
+    // retrieve nodes info callback
+    const nodeInfoCallback = nodeInfoBox.callback[data.category];
+
+    // execute callback
+    nodeInfoCallback(data.key, data.score)
+      .then((result) => {
+        // reset node info box
+        nodeInfoBoxContainer.innerHTML = "";
+
+        let preHeader, header, content, footer;
+
+        if (result.preheader) {
+          preHeader = document.createElement("span");
+          preHeader.setAttribute("id", "preheader");
+          preHeader.innerHTML = result.preheader;
+          nodeInfoBoxContainer.append(preHeader);
+        }
+
+        if (result.header) {
+          header = document.createElement("span");
+          header.setAttribute("id", "header");
+          header.innerHTML = result.header;
+          nodeInfoBoxContainer.append(header);
+        }
+
+        if (result.content) {
+          content = document.createElement("span");
+          content.setAttribute("id", "content");
+          content.innerHTML = result.content;
+          nodeInfoBoxContainer.append(content);
+        }
+
+        if (result.footer) {
+          footer = document.createElement("span");
+          footer.setAttribute("id", "footer");
+          footer.innerHTML = result.footer.toString();
+          nodeInfoBoxContainer.append(footer);
+        }
+
+        // get possible offsets
+        const yoffset = nodeInfoBox.yoffset || 0;
+        const xoffset = nodeInfoBox.xoffset || 0;
+
+        // reposition the hover container and make it visible
+        nodeInfoBoxContainer.style.top = data.y + yoffset + "px";
+        nodeInfoBoxContainer.style.left = data.x + xoffset + "px";
+        nodeInfoBoxContainer.className = nodeInfoBox.cssShow;
+        this.isNodeInfoBoxContainerVisible = true;
+      })
+      .catch((e) => {
+        console.error(e);
+
+        nodeInfoBoxContainer.className = nodeInfoBox.cssHide;
+        this.isNodeInfoBoxContainerVisible = false;
+
+        if (!context || !settings) return;
+
+        // fallback to the default sigma.js label if unable to execute callback
+        drawHover(context, data, settings, this.configuration);
+      });
+  }
+
+  /**
+   * Hides the node info box container.
+   *
+   * @param [rightClickNode] - Whether a node has been right clicked to open the context menu
+   *
+   * @internal
+   */
+  private hideNodeInfoBoxContainer(rightClickNode?: boolean): void {
+    if (!this.isNodeInfoBoxContainerVisible) return;
+    // if right click on node, continue to hide the node
+    // if not right clicked, but still hovering over the node, return
+    if (!rightClickNode && this.hoveredNode) return;
+
+    const nodeInfoBox = this.configuration.nodeInfoBox;
+
+    if (!nodeInfoBox) return;
+
+    nodeInfoBox.container.className = nodeInfoBox.cssHide;
+    this.isNodeInfoBoxContainerVisible = false;
   }
 
   /**
@@ -1227,27 +1276,6 @@ class WebGraph {
         // do nothing, default in the settings is sigma
         break;
     }
-  }
-
-  /**
-   * Hides the hover container.
-   *
-   * @param [rightClickNode] - Whether a node has been right clicked to open the context menu
-   *
-   * @internal
-   */
-  private hideHoverContainer(rightClickNode?: boolean): void {
-    if (!this.isHoverContainerVisible) return;
-    // if right click on node, continue to hide the node
-    // if not right clicked, but still hovering over the node, return
-    if (!rightClickNode && this.hoveredNode) return;
-
-    const hoverCallbacks = this.configuration.hoverCallbacks;
-
-    if (!hoverCallbacks) return;
-
-    hoverCallbacks.container.className = hoverCallbacks.cssHide;
-    this.isHoverContainerVisible = false;
   }
 
   /**
@@ -1337,8 +1365,8 @@ class WebGraph {
     // context menu listeners
     this.initializeContextMenuListeners();
 
-    // drag listeners
-    this.initializeDragListeners();
+    // click and drag listeners
+    this.initializeClickAndDragListeners();
 
     // hover highlight listeners
     this.initializeHoverHighlightingListeners();
@@ -1442,13 +1470,13 @@ class WebGraph {
       cmcontainer.style.left = event.x + xoffset + "px";
       isContextMenuOpen = true;
 
-      // hide the hover container
-      this.hideHoverContainer(true);
+      // hide the node info box container
+      this.hideNodeInfoBoxContainer(true);
     });
 
     this.container.addEventListener("click", () => {
-      // hide hover if open
-      this.hideHoverContainer();
+      // hide node info box container if open
+      this.hideNodeInfoBoxContainer();
 
       if (!isContextMenuOpen) return;
       if (!cmcontainer) return;
@@ -1474,24 +1502,69 @@ class WebGraph {
    *
    * @internal
    */
-  private initializeDragListeners(): void {
+  private initializeClickAndDragListeners(): void {
     if (!this.renderer) return;
 
+    // used for dragging nodes
     const camera = this.renderer.getCamera();
     const mouseCaptor = this.renderer.getMouseCaptor();
     let draggedNode: number | undefined;
 
+    // used for the info box on click
+    const delta = 3;
+    let startX: number;
+    let startY: number;
+    let node: string;
+
     this.renderer.on("downNode", (event) => {
+      // get the position of the click and store the node that has been clicked
+      startX = event.event.x;
+      startY = event.event.y;
+      node = event.node;
+
       if (this.appMode === AppMode.STATIC) return;
 
+      // enabled the dragging
       this.isNodeDragged = true;
       draggedNode = event.node;
       camera.disable();
     });
 
-    mouseCaptor.on("mouseup", () => {
+    mouseCaptor.on("mouseup", (event) => {
+      // calculate the distance of the drag
+      const diffX = Math.abs(event.x - startX);
+      const diffY = Math.abs(event.y - startY);
+
+      // if distance of drag is smaller than delta show
+      // infoBoxContainer on click if enabled
+      if (
+        diffX < delta &&
+        diffY < delta &&
+        this.configuration.showNodeInfoBoxOnClick
+      ) {
+        const nodeInfoBox = this.configuration.nodeInfoBox;
+        const nodeInfoBoxContainer = nodeInfoBox?.container;
+
+        if (nodeInfoBox && nodeInfoBoxContainer && node) {
+          const data = this.graphData.getNodeAttributes(node);
+
+          // make the node info box visible
+          this.generateNodeInfoBox(nodeInfoBox, nodeInfoBoxContainer, {
+            key: node,
+            label: data.label,
+            color: data.color,
+            size: data.size,
+            x: event.x,
+            y: event.y,
+            score: data.score,
+            category: data.category,
+          });
+        }
+      }
+
       if (this.appMode === AppMode.STATIC) return;
 
+      // disabled the node drag
       this.isNodeDragged = false;
       draggedNode = undefined;
       camera.enable();
@@ -1526,20 +1599,20 @@ class WebGraph {
    * This can be turned on or off using the 'highlightSubGraphOnHover'
    * setting in the configuration, which is true by default.
    *
-   * @remarks - Regarding this.hideHoverContainer()
+   * @remarks - Regarding this.hideNodeInfoBoxContainer()
    * Since creating multiple events on "leaveNode" would overwrite existing ones
-   * the hiding of the hover container has to be done here, where the enterNode
-   * and leaveNode events are being created for the highlighting.
+   * the hiding of the node info box container has to be done here, where the enterNode
+   * and leaveNode events are being created for the sub graph highlighting.
    *
    * @internal
    */
   private initializeHoverHighlightingListeners(): void {
     if (!this.renderer) return;
     if (!this.configuration.highlightSubGraphOnHover) {
-      // if highlighting the subgraph is disabled just add that the hover container
+      // if highlighting the subgraph is disabled just add that the node info box container
       // will be hidden when leaving a node
       this.renderer.on("leaveNode", () => {
-        this.hideHoverContainer();
+        this.hideNodeInfoBoxContainer();
       });
 
       return;
@@ -1615,8 +1688,8 @@ class WebGraph {
 
       this.renderer?.refresh();
 
-      // if hoverContainerVisible is true, get the hover container and hide it
-      this.hideHoverContainer();
+      // hide the node info box container if visible
+      this.hideNodeInfoBoxContainer();
     });
   }
 }

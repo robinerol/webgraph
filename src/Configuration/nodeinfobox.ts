@@ -1,25 +1,25 @@
 /**
- * Interface holding the callback for when a node is hovered.
+ * Interface holding the callback loading further details of a node.
  *
- * @param container - The container the hover data will be mounted into
+ * @param container - The container the data will be mounted into
  * @param cssShow - The css class to make the container visible
  * @param cssHide - The css class to hide the container
  * @param xoffset - The x offset to the mouse position to display the container (can be negative)
  * @param yoffset - The y offset to the mouse position to display the container (can be negative)
- * @param callback - A record mapping the 'category' of hover callback to a callback returning a promise of {@label IHoverContent}
+ * @param callback - A record mapping the 'category' of an info box to a callback returning a promise of {@label INodeInfoContent}
  *
  * @example
  * An example usage.
  * ```
  *
- * const webGraphHoverContainer = document.getElementById("webGraphHC");
+ * const webGraphNodeInfoBox = document.getElementById("webGraphNIB");
  *
- * if (!webGraphHoverContainer) {
- *  throw new Error("No div container with the ID 'webGraphHC' has been found.");
+ * if (!webGraphNodeInfoBox) {
+ *  throw new Error("No div container with the ID 'webGraphNIB' has been found.");
  * }
  *
- * const hc: IHoverCallback = {
- *   container: webGraphHoverContainer,
+ * const nib: INodeInfoBox = {
+ *   container: webGraphNodeInfoBox,
  *   cssShow: "show",
  *   cssHide: "hide",
  *   callback: async (key: string) => {
@@ -40,9 +40,9 @@
  * }
  * ```
  *
- * {@label IHoverCallback}
+ * {@label INodeInfoBox}
  */
-interface IHoverCallback {
+interface INodeInfoBox {
   container: HTMLElement;
   cssShow: string;
   cssHide: string;
@@ -50,26 +50,26 @@ interface IHoverCallback {
   yoffset?: number;
   callback: Record<
     number,
-    (key: string, score?: number) => Promise<IHoverContent>
+    (key: string, score?: number) => Promise<INodeInfoContent>
   >;
 }
 
 /**
  * Interface representing the content of a box that is being displayed
- * on a hover over a node.
+ * on a hover/click over/on a node.
  *
  * @param [preheader] - The line above the header
- * @param [header] - The headline of the hover
- * @param [content] - The main content of the hover
+ * @param [header] - The headline of the info box
+ * @param [content] - The main content of the info box
  * @param [footer] - The line beneath the main content
  *
- * {@label IHoverContent}
+ * {@label INodeInfoContent}
  */
-interface IHoverContent {
+interface INodeInfoContent {
   preheader?: string;
   header?: string;
   content?: string;
   footer?: string;
 }
 
-export { IHoverCallback, IHoverContent };
+export { INodeInfoBox, INodeInfoContent };

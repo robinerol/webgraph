@@ -136,10 +136,16 @@ Here is a list of all available configurations. None of the configurations is ma
       <td><code>false</code></td>
     </tr>
     <tr>
-      <td><code>hoverCallbacks</code></td>
+      <td><code>nodeInfoBox</code></td>
       <td><a href="https://github.com/robinerol/webgraph/blob/f27997b49ab51c3fc92924f8790a1d094d8232e2/src/Configuration/hovercallback.ts#L38">IHoverCallback</a></td>
       <td>Used to apply a custom hover container to a node. For further details see the <a name="Hover-Callback">Hover Callbacks</a> section.</td>
       <td><code>undefined</code></td>
+    </tr>
+    <tr>
+      <td><code>showNodeInfoBoxOnClick</code></td>
+      <td>boolean</td>
+      <td>Whether the content of the <code>nodeInfoBox</code> configuration should be displayed on click (<code>true</code>) or on hover(<code>false</code>). If this is <code>true</true> the nodes label will be rendered on hover.</td>
+      <td><code>true</code></td>
     </tr>
     <tr>
       <td><code>highlightSubGraphOnHover</code></td>
@@ -150,7 +156,7 @@ Here is a list of all available configurations. None of the configurations is ma
     <tr>
       <td><code>subGraphHighlightColor</code></td>
       <td>string</td>
-      <td>The color used to highlight the subgraph that is being highlighted on a hover.</td>
+      <td>The color used to highlight the subgraph (nodes and edges) that is being highlighted on a hover.</td>
       <td><code>#fc9044</code></td>
     </tr>
     <tr>
@@ -414,7 +420,7 @@ There is no default value for the category attribute of nodes, if it's not prese
 
 ### ⚙️ Sigma Settings
 
-Since WebGraph is using [modified version](https://github.com/robinerol/sigma.js/tree/v2) of sigma.js v2 as base renderer for the graph, some settings only affect the default sigma.js components but are without effect on extensions like i.e. the hover callbacks. All available settings for sigma.js can be found [here](https://github.com/robinerol/sigma.js/blob/75ce5e94353f9791aa84176165f801c97b420bee/src/renderers/webgl/settings.ts#L40). For further information on these settings refer to the official sigma.js [repository](https://github.com/jacomyal/sigma.js/tree/v2). The table below only holds the settings that have been added to sigma.js in the modified version:
+Since WebGraph is using [modified version](https://github.com/robinerol/sigma.js/tree/v2) of sigma.js v2 as base renderer for the graph, some settings only affect the default sigma.js components but are without effect on extensions like i.e. the node info box. All available settings for sigma.js can be found [here](https://github.com/robinerol/sigma.js/blob/75ce5e94353f9791aa84176165f801c97b420bee/src/renderers/webgl/settings.ts#L40). For further information on these settings refer to the official sigma.js [repository](https://github.com/jacomyal/sigma.js/tree/v2). The table below only holds the settings that have been added to sigma.js in the modified version:
 
 <table>
   <thead>

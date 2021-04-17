@@ -17,7 +17,7 @@ import Graph, { MultiGraph } from "graphology";
 let webGraph: WebGraph | undefined = undefined;
 const webGraphContainer = document.getElementById("webGraph");
 const webGraphContextMenuContainer = document.getElementById("webGraphCM");
-const webGraphHoverContainer = document.getElementById("webGraphHC");
+const webGraphNodeInfoBox = document.getElementById("webGraphNIB");
 const status = document.getElementById("status");
 
 async function drawGraph(graphDataJSON: any[]) {
@@ -31,9 +31,9 @@ async function drawGraph(graphDataJSON: any[]) {
     );
   }
 
-  if (!webGraphHoverContainer) {
+  if (!webGraphNodeInfoBox) {
     throw new Error(
-      "No div container with the ID 'webGraphHC' has been found."
+      "No div container with the ID 'webGraphNIB' has been found."
     );
   }
 
@@ -108,8 +108,8 @@ async function drawGraph(graphDataJSON: any[]) {
       },
     },
     appMode: AppMode.DYNAMIC,
-    hoverCallbacks: {
-      container: webGraphHoverContainer,
+    nodeInfoBox: {
+      container: webGraphNodeInfoBox,
       cssShow: "show-hover",
       cssHide: "hide",
       xoffset: -75,
@@ -197,6 +197,7 @@ async function drawGraph(graphDataJSON: any[]) {
     },
     suppressContextMenu: false,
     defaultNodeType: NodeType.CIRCLE,
+    showNodeInfoBoxOnClick: true,
     highlightSubGraphOnHover: true,
     includeImportantNeighbors: true,
     importantNeighborsBidirectional: true,
