@@ -137,8 +137,8 @@ Here is a list of all available configurations. None of the configurations is ma
     </tr>
     <tr>
       <td><code>nodeInfoBox</code></td>
-      <td><a href="https://github.com/robinerol/webgraph/blob/f27997b49ab51c3fc92924f8790a1d094d8232e2/src/Configuration/hovercallback.ts#L38">IHoverCallback</a></td>
-      <td>Used to apply a custom hover container to a node. For further details see the <a name="Hover-Callback">Hover Callbacks</a> section.</td>
+      <td><a href="https://github.com/robinerol/webgraph/blob/44fd2e55f400f35c0533114d5ab7104897d2ac9f/src/Configuration/nodeinfobox.ts#L45">INodeInfoBox</a></td>
+      <td>Used to apply a info box to a node which can also be used as a custom hover container to a node. For further details see the <a name="Node-Info-Box">Node Info Box</a> section.</td>
       <td><code>undefined</code></td>
     </tr>
     <tr>
@@ -269,13 +269,13 @@ A list of all attributes impacting the rendered graph. Custom attributes can be 
     <tr>
       <td><code>category</code></td>
       <td>number</td>
-      <td><a name="context-menus">Context Menus</a><br/><a name="hover-callbacks">Hover Callbacks</a></td>
+      <td><a name="context-menus">Context Menus</a><br/><a name="node-info-box">Node Info Box</a></td>
       <td>No</td>
     </tr>
     <tr>
       <td><code>score</code></td>
       <td>number</td>
-      <td><a name="hover-callbacks">Hover Callbacks</a></td>
+      <td><a name="node-info-box">Node Info Box</a></td>
       <td>No</td>
     </tr>
     <tr>
@@ -385,38 +385,38 @@ This container can be freely styled. Then retrieve the container in your script 
 
 There is no default value for the category attribute of nodes, if it's not present. If a node doesn't have a category, it won't have a context menu.
 
-### 👁‍🗨 Hover Callbacks
+### 👁‍🗨 Node Info Box
 
-Hover callbacks work similar to context menus, but are used to display data on hover over a node. If no [IHoverCallback](https://github.com/robinerol/webgraph/blob/f27997b49ab51c3fc92924f8790a1d094d8232e2/src/Configuration/hovercallback.ts#L38) is present, nothing will happen on hover. To reduce redundant code, many nodes share one type of hover callbacks. Callbacks are mapped to nodes using the <code>category</code> attribute. To pass hover callbacks to the WebGraph use the <code>hoverCallbacks</code> configuration, pass one or more hover callbacks using the <code>callback</code> field and set the <code>category</code> attribute on nodes.
+Node info boxes work similar to context menus, but are used to display data on hover/click over/on a node (depending on the <code>showNodeInfoBoxOnClick</code> configuration). If no [INodeInfoBox](https://github.com/robinerol/webgraph/blob/44fd2e55f400f35c0533114d5ab7104897d2ac9f/src/Configuration/nodeinfobox.ts#L45) is present, nothing will happen on click, on hover just the nodes label will be rendered. To reduce redundant code, many nodes share one type of node info box. Callbacks of node info boxes are mapped to nodes using the <code>category</code> attribute. To pass callbacks to the WebGraph use the <code>nodeInfoBox</code> configuration, pass one or more callbacks using the <code>callback</code> field and set the <code>category</code> attribute on nodes.
 
-The number given in the <code>callback</code> field of an [IHoverCallback](https://github.com/robinerol/webgraph/blob/f27997b49ab51c3fc92924f8790a1d094d8232e2/src/Configuration/hovercallback.ts#L38) represents the <code>category</code> the node belongs to:
+The number given in the <code>callback</code> field of an [INodeInfoBox](https://github.com/robinerol/webgraph/blob/44fd2e55f400f35c0533114d5ab7104897d2ac9f/src/Configuration/nodeinfobox.ts#L45) represents the <code>category</code> the node belongs to:
 
 - A node with attribute <code>category: 0</code> would get the callback mapped to 0
 - A node with attribute <code>category: 1</code> would get the callback mapped to 1
 - ...
 
-Callbacks are used to load additional data to display on hover for a node to reduce the amount of data that has to be stored locally. Therefore, a callback receives the <a href="https://github.com/graphology/graphology-types/blob/075623d813d7ba2fd967427407cefb708dbccb7e/index.d.ts#L13">NodeKey</a> of the hovered node as well as the <code>score</code> attribute if previously set as inputs. The return value of such a callback must be a <code>Partial&lt;<a href="https://github.com/robinerol/webgraph/blob/f27997b49ab51c3fc92924f8790a1d094d8232e2/src/Configuration/hovercallback.ts#L56">IHoverContent</a>&gt;</code>. The content of this <code>Partial&lt;<a href="https://github.com/robinerol/webgraph/blob/f27997b49ab51c3fc92924f8790a1d094d8232e2/src/Configuration/hovercallback.ts#L56">IHoverContent</a>&gt;</code> will be parsed and mounted into a given container.
+Callbacks are used to load additional data to display on hover/click for a node to reduce the amount of data that has to be stored locally. Therefore, a callback receives the <a href="https://github.com/graphology/graphology-types/blob/075623d813d7ba2fd967427407cefb708dbccb7e/index.d.ts#L13">NodeKey</a> of the hovered/clicked node as well as the <code>score</code> attribute (if previously set) as inputs. The return value of such a callback must be a <code>Partial&lt;<a href="https://github.com/robinerol/webgraph/blob/44fd2e55f400f35c0533114d5ab7104897d2ac9f/src/Configuration/nodeinfobox.ts#L68">INodeInfoContent</a>&gt;</code>. The content of this <code>Partial&lt;<a href="https://github.com/robinerol/webgraph/blob/44fd2e55f400f35c0533114d5ab7104897d2ac9f/src/Configuration/nodeinfobox.ts#L68">INodeInfoContent</a>&gt;</code> will be parsed and mounted into a given container.
 
-For the context menu to work, a container needs to be passed to the WebGraph to mount the <a href="https://github.com/robinerol/webgraph/blob/f27997b49ab51c3fc92924f8790a1d094d8232e2/src/Configuration/hovercallback.ts#L56">IHoverContent</a> in. Create a container for the context menu in your HTML:
+For the context menu to work, a container needs to be passed to the WebGraph to mount the <a href="https://github.com/robinerol/webgraph/blob/44fd2e55f400f35c0533114d5ab7104897d2ac9f/src/Configuration/nodeinfobox.ts#L68">INodeInfoContent</a> in. Create a container for the context menu in your HTML:
 
 ```HTML
-<div id="webGraphHC" class="hide"></div>
+<div id="webGraphNIB" class="hide"></div>
 ```
 
-This container can be freely styled. Then retrieve the container in your script code and pass it to the WebGraph with the other necessary [parameters](https://github.com/robinerol/webgraph/blob/f27997b49ab51c3fc92924f8790a1d094d8232e2/src/Configuration/hovercallback.ts#L38). The <a href="https://github.com/robinerol/webgraph/blob/f27997b49ab51c3fc92924f8790a1d094d8232e2/src/Configuration/hovercallback.ts#L56">IHoverContent</a> will be mounted into the container like follows:
+This container can be freely styled. Then retrieve the container in your script code and pass it to the WebGraph with the other necessary [parameters](https://github.com/robinerol/webgraph/blob/44fd2e55f400f35c0533114d5ab7104897d2ac9f/src/Configuration/nodeinfobox.ts#L45). The <a href="https://github.com/robinerol/webgraph/blob/44fd2e55f400f35c0533114d5ab7104897d2ac9f/src/Configuration/nodeinfobox.ts#L68">INodeInfoContent</a> will be mounted into the container like follows:
 
 ```HTML
-<div id="webGraphHC" class="hide">
+<div id="webGraphNIB" class="hide">
   <!-- Here begins the mounted part -->
-  <span id="preheader">IHoverContent.preheader</span>
-  <span id="header">IHoverContent.header</span>
-  <span id="content">IHoverContent.content</span>
-  <span id="footer">IHoverContent.footer</span>
+  <span id="preheader">INodeInfoContent.preheader</span>
+  <span id="header">INodeInfoContent.header</span>
+  <span id="content">INodeInfoContent.content</span>
+  <span id="footer">INodeInfoContent.footer</span>
   <!-- Here ends the mounted part -->
 </div>
 ```
 
-There is no default value for the category attribute of nodes, if it's not present. If a node doesn't have a category, it won't execute a callback on hover.
+There is no default value for the category attribute of nodes, if it's not present. If a node doesn't have a category, it won't execute a callback on hover/click.
 
 ### ⚙️ Sigma Settings
 
