@@ -138,13 +138,13 @@ Here is a list of all available configurations. None of the configurations is ma
     <tr>
       <td><code>nodeInfoBox</code></td>
       <td><a href="https://github.com/robinerol/webgraph/blob/44fd2e55f400f35c0533114d5ab7104897d2ac9f/src/Configuration/nodeinfobox.ts#L45">INodeInfoBox</a></td>
-      <td>Used to apply a info box to a node which can also be used as a custom hover container to a node. For further details see the <a name="Node-Info-Box">Node Info Box</a> section.</td>
+      <td>Used to apply an info box to a node which can also be used as a custom hover container to a node. For further details see the <a name="Node-Info-Box">Node Info Box</a> section.</td>
       <td><code>undefined</code></td>
     </tr>
     <tr>
       <td><code>showNodeInfoBoxOnClick</code></td>
       <td>boolean</td>
-      <td>Whether the content of the <code>nodeInfoBox</code> configuration should be displayed on click (<code>true</code>) or on hover(<code>false</code>). If this is <code>true</true> the nodes label will be rendered on hover.</td>
+      <td>Whether the content of the <code>nodeInfoBox</code> configuration should be displayed on click (<code>true</code>) or on hover(<code>false</code>). If this is set to<code>true</code>, a nodes label will be rendered on hover.</td>
       <td><code>true</code></td>
     </tr>
     <tr>
@@ -282,6 +282,12 @@ A list of all attributes impacting the rendered graph. Custom attributes can be 
       <td><code>cluster</code></td>
       <td>number</td>
       <td>Cluster backdrop<br/>See: <a name="sigma-settings">Sigma Settings</a></td>
+      <td>No</td>
+    </tr>
+    <tr>
+      <td><code>important</code></td>
+      <td>boolean</td>
+      <td>Visibility<br/>Indirect highlighting</td>
       <td>No</td>
     </tr>
   </tbody>
