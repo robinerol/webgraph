@@ -20,6 +20,10 @@ class NodeTriangleProgram extends AbstractNodeProgram {
   }
 
   process(data: NodeAttributes, offset: number): void {
+    if (data.color === undefined) {
+      data.color = "#000";
+    }
+
     const color = floatColor(data.color);
 
     let i = offset * POINTS * ATTRIBUTES;
