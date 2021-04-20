@@ -205,6 +205,8 @@ class WebGraph {
     this.isHistoryEnabled = this.configuration.enableHistory;
 
     if (this.isHistoryEnabled) this.history = new HistoryManager();
+
+    this.renderer.addListener("", (event) => console.log(event));
   }
 
   /**
@@ -1521,8 +1523,10 @@ class WebGraph {
       startX = event.event.x;
       startY = event.event.y;
       node = event.node;
+      console.log(event);
 
-      if (this.appMode === AppMode.STATIC) return;
+      if (this.appMode === AppMode.STATIC || event.event.original.button === 2)
+        return;
 
       // enabled the dragging
       this.isNodeDragged = true;
@@ -1534,10 +1538,12 @@ class WebGraph {
       // calculate the distance of the drag
       const diffX = Math.abs(event.x - startX);
       const diffY = Math.abs(event.y - startY);
+      console.log(event);
 
       // if distance of drag is smaller than delta show
       // infoBoxContainer on click if enabled
       if (
+        (event.original.button === 0 || event.original.button === 1) &&
         diffX < delta &&
         diffY < delta &&
         this.configuration.showNodeInfoBoxOnClick
