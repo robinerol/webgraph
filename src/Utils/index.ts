@@ -63,6 +63,9 @@ class Utils {
    * @param maxValue - The maximum value of any node in the node-set this function is applied to
    * @param colors - An array of colors as hex strings
    *
+   * @throws Error - if min value is larger than max value
+   * @throws Error - if value is smaller or equal to 0
+   *
    * @returns - A color value as hex string out of the colors input
    *
    * @example
@@ -86,10 +89,16 @@ class Utils {
     maxValue: number,
     colors: Array<string>
   ): string => {
-    const intervalSize = (maxValue - minValue) / colors.length;
+    if (value < 0) throw new Error("Value must be greater or equal to 0");
+    if (minValue > maxValue)
+      throw new Error("Min value can't be larger than max value");
+
+    let intervalSize = (maxValue - minValue) / colors.length;
+
+    if (intervalSize === 0) intervalSize = 1;
 
     let index = Math.floor((value - minValue) / intervalSize);
-    index = index >= colors.length ? index - 1 : index;
+    index = index >= colors.length ? colors.length - 1 : index;
 
     return colors[index];
   };
