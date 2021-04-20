@@ -64,6 +64,7 @@ class WebGraph {
   private isHistoryEnabled = false;
   private history: HistoryManager | undefined = undefined;
   private forceAtlas2WebWorker: FA2Layout | undefined = undefined;
+  private isForceAtlas2WebWorkerActive = false;
 
   /**
    * Creates an instance of web graph.
@@ -213,10 +214,13 @@ class WebGraph {
    * @param edges - A Set of SerializedEdge to merge into the graph
    * @param [addToHistory] - True by default. Whether the action should be added to the history or not. @defaultValue `true`
    *
+   * @returns - true if successful
+   *
    * @public
    */
-  public mergeEdges(edges: Set<SerializedEdge>, addToHistory = true): void {
-    if (edges.size <= 0) return;
+  public mergeEdges(edges: Set<SerializedEdge>, addToHistory = true): boolean {
+    if (edges.size <= 0) return false;
+    if (this.isForceAtlas2WebWorkerActive) return false;
 
     const existingEdges = new Set<SerializedEdge>();
 
@@ -261,6 +265,8 @@ class WebGraph {
         }
       );
     }
+
+    return true;
   }
 
   /**
@@ -270,9 +276,16 @@ class WebGraph {
    * @param edges - An array holding the new Graphology.SerializedEdge (s)
    * @param [addToHistory] - True by default. Whether the action should be added to the history or not. @defaultValue `true`
    *
+   * @returns - true if successful
+   *
    * @public
    */
-  public replaceEdges(edges: Set<SerializedEdge>, addToHistory = true): void {
+  public replaceEdges(
+    edges: Set<SerializedEdge>,
+    addToHistory = true
+  ): boolean {
+    if (this.isForceAtlas2WebWorkerActive) return false;
+
     if (this.isHistoryEnabled && addToHistory) {
       const existingEdges = new Set<SerializedEdge>();
 
@@ -298,6 +311,7 @@ class WebGraph {
 
     this.graphData.clearEdges();
     this.mergeEdges(edges, false);
+    return true;
   }
 
   /**
@@ -360,10 +374,16 @@ class WebGraph {
    * @param nodes - An array holding all SerializedNodes to merge into the graph
    * @param [addToHistory] - True by default. Whether the action should be added to the history or not. @defaultValue `true`
    *
+   * @returns - true if successful
+   *
    * @public
    */
-  public mergeNodes(nodes: Array<SerializedNode>, addToHistory = true): void {
-    if (nodes.length <= 0) return;
+  public mergeNodes(
+    nodes: Array<SerializedNode>,
+    addToHistory = true
+  ): boolean {
+    if (nodes.length <= 0) return false;
+    if (this.isForceAtlas2WebWorkerActive) return false;
 
     const existingNodes = new Array<SerializedNode>();
 
@@ -407,6 +427,8 @@ class WebGraph {
         });
       });
     }
+
+    return true;
   }
 
   /**
@@ -416,13 +438,17 @@ class WebGraph {
    * @param layoutConfiguration - The {@link ILayoutConfiguration} of the layout
    * @param [addToHistory] - True by default. Whether the action should be added to the history or not. @defaultValue `true`
    *
+   * @returns - true if successful
+   *
    * @public
    */
   public setAndApplyLayout(
     layout: Layout,
     layoutConfiguration: ILayoutConfiguration,
     addToHistory = true
-  ): void {
+  ): boolean {
+    if (this.isForceAtlas2WebWorkerActive) return false;
+
     if (this.isHistoryEnabled && addToHistory) {
       const oldLayout = this.configuration.layout;
       const layoutMapping: { [key: string]: { x: number; y: number } } = {};
@@ -452,6 +478,8 @@ class WebGraph {
     this.configuration.layoutConfiguration = layoutConfiguration;
 
     this.applyLayout(layout, layoutConfiguration, false, false);
+
+    return true;
   }
 
   /**
@@ -460,9 +488,13 @@ class WebGraph {
    * preAppliedLayout and preAppliedLayoutOptions will be overwritten
    * with undefined.
    *
+   * @returns - true if successful
+   *
    * @public
    */
-  public reapplyLayout(): void {
+  public reapplyLayout(): boolean {
+    if (this.isForceAtlas2WebWorkerActive) return false;
+
     if (
       this.configuration.layout === Layout.FORCEATLAS2 &&
       this.configuration.layoutConfiguration.forceAtlas2LayoutOptions
@@ -477,6 +509,8 @@ class WebGraph {
       false,
       false
     );
+
+    return true;
   }
 
   /**
@@ -523,7 +557,9 @@ class WebGraph {
   public dropNodes(
     nodes: Array<NodeKey | SerializedNode>,
     addToHistory = true
-  ): void {
+  ): boolean {
+    if (this.isForceAtlas2WebWorkerActive) return false;
+
     const edgeSetForHistory: Set<SerializedEdge> = new Set<SerializedEdge>();
     const nodeArrayForHistory: Array<SerializedNode> = new Array<SerializedNode>();
 
@@ -585,6 +621,8 @@ class WebGraph {
 
     // refresh
     this.renderer?.refresh();
+
+    return true;
   }
 
   /**
@@ -597,7 +635,9 @@ class WebGraph {
     this.renderer?.getMouseCaptor().removeAllListeners();
     this.renderer?.clear();
     this.renderer?.kill();
+    this.forceAtlas2WebWorker?.stop();
     this.forceAtlas2WebWorker?.kill();
+    this.isForceAtlas2WebWorkerActive = false;
     this.appState = AppState.INACTIVE;
   }
 
@@ -848,14 +888,14 @@ class WebGraph {
   }
 
   /**
-   * Gets the ForceAtlas2 web worker. Please be aware that all interactions with the web worker
+   * Starts the ForceAtlas2 web worker. Please be aware that all interactions with the web worker
    * are not tracked by the history.
    *
    * @throws Error - If the renderer is not defined or the 'useForceAtlas2WebWorker' is not enabled
    *
-   * @returns - The ForceAtlas2 Web Worker object or undefined if not used
+   * @returns - True if successful
    */
-  public get ForceAtlas2WebWorker(): FA2Layout | undefined {
+  public startForceAtlas2WebWorker(): boolean {
     if (!this.renderer || !this.isRenderingActive) {
       throw new Error(
         "Can't retrieve ForceAtlas2 web worker when rendering is inactive."
@@ -868,7 +908,41 @@ class WebGraph {
       );
     }
 
-    return this.forceAtlas2WebWorker;
+    if (!this.forceAtlas2WebWorker) return false;
+
+    this.forceAtlas2WebWorker.start();
+    this.isForceAtlas2WebWorkerActive = true;
+
+    return true;
+  }
+
+  /**
+   * Stops the ForceAtlas2 web worker. Please be aware that all interactions with the web worker
+   * are not tracked by the history.
+   *
+   * @throws Error - If the renderer is not defined or the 'useForceAtlas2WebWorker' is not enabled
+   *
+   * @returns - True if successful
+   */
+  public stopForceAtlas2WebWorker(): boolean {
+    if (!this.renderer || !this.isRenderingActive) {
+      throw new Error(
+        "Can't retrieve ForceAtlas2 web worker when rendering is inactive."
+      );
+    }
+
+    if (!this.configuration.useForceAtlas2WebWorker) {
+      throw new Error(
+        "ForceAtlas2 web worker was not enabled. Use the 'useForceAtlas2WebWorker' configuration to enable it."
+      );
+    }
+
+    if (!this.forceAtlas2WebWorker) return false;
+
+    this.forceAtlas2WebWorker.stop();
+    this.isForceAtlas2WebWorkerActive = false;
+
+    return true;
   }
 
   /**---------------------------------------------------------------------------
@@ -944,9 +1018,11 @@ class WebGraph {
       }
 
       this.forceAtlas2WebWorker.start();
+      this.isForceAtlas2WebWorkerActive = true;
 
       setTimeout(() => {
         this.forceAtlas2WebWorker?.stop();
+        this.isForceAtlas2WebWorkerActive = false;
       }, this.configuration.useForceAtlas2WebWorker);
       return;
     }
@@ -1072,7 +1148,7 @@ class WebGraph {
    * @internal
    */
   private overwriteRenderSettings(): void {
-    // override the hover renderer
+    // override the hover renderers
     this.overwriteHoverRenderer();
 
     // override the label renderer

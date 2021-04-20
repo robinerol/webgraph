@@ -397,7 +397,7 @@ document.getElementById("wwStart")?.addEventListener("click", (e) => {
 
   if (!webGraph || !webGraph.isRenderingActive) return;
 
-  webGraph.ForceAtlas2WebWorker?.start();
+  webGraph.startForceAtlas2WebWorker();
 });
 
 document.getElementById("wwStop")?.addEventListener("click", (e) => {
@@ -405,7 +405,7 @@ document.getElementById("wwStop")?.addEventListener("click", (e) => {
 
   if (!webGraph || !webGraph.isRenderingActive) return;
 
-  webGraph.ForceAtlas2WebWorker?.stop();
+  webGraph.stopForceAtlas2WebWorker();
 });
 
 document.getElementById("wwReset")?.addEventListener("click", (e) => {
