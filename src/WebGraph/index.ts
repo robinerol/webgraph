@@ -911,6 +911,12 @@ class WebGraph {
       layout === Layout.FORCEATLAS2 &&
       this.configuration.useForceAtlas2WebWorker
     ) {
+      // this will overwrite the setImmediate which is not supported widely but used in the graphology library
+      // to work in almost every environment
+      // see: https://developer.mozilla.org/en-US/docs/Web/API/Window/setImmediate
+      // see also: https://stackoverflow.com/questions/52164025/onsenui-uncaught-referenceerror-setimmediate-is-not-defined
+      (window.setImmediate as any) = window.setTimeout; // eslint-disable-line @typescript-eslint/no-explicit-any
+
       const forceAtlas2LayoutOptions = layoutConfig.forceAtlas2LayoutOptions;
 
       this.forceAtlas2WebWorker = new FA2Layout(this.graphData, {
@@ -1299,6 +1305,8 @@ class WebGraph {
           neighborsNeighborsColor &&
           this.hoveredNode &&
           this.hoveredNode !== node &&
+          this.graphData.hasNode(this.hoveredNode) &&
+          this.graphData.hasNode(node) &&
           !this.graphData.neighbors(this.hoveredNode, node)
         ) {
           return { ...data, color: neighborsNeighborsColor, z: 1 };
@@ -1523,7 +1531,6 @@ class WebGraph {
       startX = event.event.x;
       startY = event.event.y;
       node = event.node;
-      console.log(event);
 
       if (this.appMode === AppMode.STATIC || event.event.original.button === 2)
         return;
@@ -1538,7 +1545,6 @@ class WebGraph {
       // calculate the distance of the drag
       const diffX = Math.abs(event.x - startX);
       const diffY = Math.abs(event.y - startY);
-      console.log(event);
 
       // if distance of drag is smaller than delta show
       // infoBoxContainer on click if enabled
