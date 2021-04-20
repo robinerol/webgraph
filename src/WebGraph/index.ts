@@ -205,8 +205,6 @@ class WebGraph {
     this.isHistoryEnabled = this.configuration.enableHistory;
 
     if (this.isHistoryEnabled) this.history = new HistoryManager();
-
-    this.renderer.addListener("", (event) => console.log(event));
   }
 
   /**
