@@ -212,6 +212,29 @@ async function drawGraph(graphDataJSON: any[]) {
     },
   });
 
+  webGraph.on("rendered", () => console.log("graph rendered"));
+  webGraph.on("syncLayoutCompleted", () => console.log("syncLayoutCompleted"));
+
+  webGraph.on("clickNode", (e) => console.log("clickNode: ", e));
+  webGraph.on("rightClickNode", (e) => console.log("rightClickNode: ", e));
+  webGraph.on("dragNode", (e) => console.log("dragNode: ", e));
+  webGraph.on("draggedNode", (e) => console.log("draggedNode: ", e));
+  webGraph.on("enterNode", (e) => console.log("enterNode: ", e));
+  webGraph.on("leaveNode", (e) => console.log("leaveNode: ", e));
+
+  webGraph.on("nodeInfoBoxOpened", (e) =>
+    console.log("nodeInfoBoxOpened: ", e)
+  );
+  webGraph.on("nodeInfoBoxClosed", (e) =>
+    console.log("nodeInfoBoxClosed: ", e)
+  );
+  webGraph.on("contextMenuOpened", (e) =>
+    console.log("contextMenuOpened: ", e)
+  );
+  webGraph.on("contextMenuClosed", (e) =>
+    console.log("contextMenuClosed: ", e)
+  );
+
   webGraph.render();
 
   if (status) {

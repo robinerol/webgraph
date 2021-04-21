@@ -44,13 +44,30 @@ import { ActionType, HistoryManager } from "./History";
 import drawLabel from "./Canvas/label";
 import { InternalUtils } from "../Utils";
 import FA2Layout from "graphology-layout-forceatlas2/worker";
+import EventEmitter from "events";
 
 /**
  * The WebGraph class represents the main endpoint of the module.
  *
+ * Events to listen for:
+ * - "rendered" | When the graph has been rendered
+ * - "syncLayoutCompleted" | When the synchronous calculated layout animation is completed
+ *
+ * - "clickNode" | Click on node (mouse button 0 or 1)
+ * - "rightClickNode" | Right click on node (mouse button 2)
+ * - "dragNode" | Drag of node (using mouse button 0 or 1)
+ * - "draggedNode" | Node has been dragged (using mouse button 0 or 1)
+ * - "enterNode" | Hover over a node (enter)
+ * - "leaveNode" | Hover over a node (leave)
+ *
+ * - "nodeInfoBoxOpened" | When the node info box has been opened
+ * - "nodeInfoBoxClosed" | When the node info box has been closed
+ * - "contextMenuOpened" | When the context menu has been opened
+ * - "contextMenuClosed" | When the context menu has been closed
+ *
  * {@label WebGraph}
  */
-class WebGraph {
+class WebGraph extends EventEmitter {
   private container: HTMLElement;
   private graphData: Graph;
   private configuration: IGraphConfiguration;
@@ -108,6 +125,8 @@ class WebGraph {
     graphData: Graph | SerializedGraph,
     graphConfiguration: Partial<IGraphConfiguration> = {}
   ) {
+    super();
+
     this.container = container;
 
     if (graphData instanceof Graph) {
@@ -206,6 +225,8 @@ class WebGraph {
     this.isHistoryEnabled = this.configuration.enableHistory;
 
     if (this.isHistoryEnabled) this.history = new HistoryManager();
+
+    this.emit("rendered");
   }
 
   /**
@@ -519,13 +540,15 @@ class WebGraph {
    * @param nodeType - The {@link NodeType} to be set and applied
    * @param [addToHistory] - True by default. Whether the action should be added to the history or not. @defaultValue `true`
    *
+   * @returns - true if successful
+   *
    * @public
    */
   public setAndApplyDefaultNodeType(
     nodeType: NodeType,
     addToHistory = true
-  ): void {
-    if (!this.renderer) return;
+  ): boolean {
+    if (!this.renderer) return false;
 
     const oldNodeType = this.configuration.defaultNodeType;
     this.configuration.defaultNodeType = nodeType;
@@ -542,6 +565,8 @@ class WebGraph {
         { nodeType: nodeType }
       );
     }
+
+    return true;
   }
 
   /**
@@ -878,6 +903,8 @@ class WebGraph {
    * @throws Error - If the renderer is not defined.
    *
    * @returns - The camera object of the renderer.
+   *
+   * @public
    */
   public get camera(): Camera {
     if (!this.renderer || !this.isRenderingActive) {
@@ -894,6 +921,8 @@ class WebGraph {
    * @throws Error - If the renderer is not defined or the 'useForceAtlas2WebWorker' is not enabled
    *
    * @returns - True if successful
+   *
+   * @public
    */
   public startForceAtlas2WebWorker(): boolean {
     if (!this.renderer || !this.isRenderingActive) {
@@ -923,6 +952,8 @@ class WebGraph {
    * @throws Error - If the renderer is not defined or the 'useForceAtlas2WebWorker' is not enabled
    *
    * @returns - True if successful
+   *
+   * @public
    */
   public stopForceAtlas2WebWorker(): boolean {
     if (!this.renderer || !this.isRenderingActive) {
@@ -1137,7 +1168,7 @@ class WebGraph {
       mapping,
       { duration: 1000, easing: easings["cubicInOut"] },
       () => {
-        /** do nothing */
+        this.emit("syncLayoutCompleted");
       }
     );
   }
@@ -1297,6 +1328,11 @@ class WebGraph {
         nodeInfoBoxContainer.style.left = data.x + xoffset + "px";
         nodeInfoBoxContainer.className = nodeInfoBox.cssShow;
         this.isNodeInfoBoxContainerVisible = true;
+        this.emit("nodeInfoBoxOpened", {
+          data,
+          posTop: data.y + yoffset,
+          posLeft: data.x + xoffset,
+        });
       })
       .catch((e) => {
         console.error(e);
@@ -1330,6 +1366,9 @@ class WebGraph {
 
     nodeInfoBox.container.className = nodeInfoBox.cssHide;
     this.isNodeInfoBoxContainerVisible = false;
+    this.emit("nodeInfoBoxClosed", {
+      byRightClick: rightClickNode ? rightClickNode : false,
+    });
   }
 
   /**
@@ -1486,10 +1525,14 @@ class WebGraph {
     const cssShow = allContextMenus.cssShow;
 
     let isContextMenuOpen = false;
+    let contextNode: NodeKey | undefined = undefined;
 
     this.renderer.on("rightClickNode", ({ node, event }) => {
+      this.emit("rightClickNode", { node, event: event });
       if (event.original.type !== "contextmenu") return;
       if (!cmcontainer) return;
+
+      contextNode = node;
 
       if (isContextMenuOpen) {
         // hide the context menu that's open
@@ -1556,9 +1599,16 @@ class WebGraph {
 
       // hide the node info box container
       this.hideNodeInfoBoxContainer(true);
+
+      this.emit("contextMenuOpened", {
+        node,
+        posTop: event.y + yoffset,
+        posLeft: event.x + xoffset,
+        event: event,
+      });
     });
 
-    this.container.addEventListener("click", () => {
+    this.container.addEventListener("click", (event) => {
       // hide node info box container if open
       this.hideNodeInfoBoxContainer();
 
@@ -1568,6 +1618,7 @@ class WebGraph {
       // hide the context menu if open
       cmcontainer.className = cssHide;
       isContextMenuOpen = false;
+      this.emit("contextMenuClosed", { contextNode, event: event });
     });
 
     // handles whether the default context menu is suppressed or not
@@ -1613,6 +1664,7 @@ class WebGraph {
       this.isNodeDragged = true;
       draggedNode = event.node;
       camera.disable();
+      this.emit("dragNode", { node, event: event });
     });
 
     mouseCaptor.on("mouseup", (event) => {
@@ -1620,32 +1672,40 @@ class WebGraph {
       const diffX = Math.abs(event.x - startX);
       const diffY = Math.abs(event.y - startY);
 
-      // if distance of drag is smaller than delta show
-      // infoBoxContainer on click if enabled
+      // if distance of drag is smaller than delta its a click, not a drag
       if (
         (event.original.button === 0 || event.original.button === 1) &&
         diffX < delta &&
-        diffY < delta &&
-        this.configuration.showNodeInfoBoxOnClick
+        diffY < delta
       ) {
-        const nodeInfoBox = this.configuration.nodeInfoBox;
-        const nodeInfoBoxContainer = nodeInfoBox?.container;
+        this.emit("clickNode", { node, event: event });
 
-        if (nodeInfoBox && nodeInfoBoxContainer && node) {
-          const data = this.graphData.getNodeAttributes(node);
+        // show infoBoxContainer on click if enabled
+        if (this.configuration.showNodeInfoBoxOnClick) {
+          const nodeInfoBox = this.configuration.nodeInfoBox;
+          const nodeInfoBoxContainer = nodeInfoBox?.container;
 
-          // make the node info box visible
-          this.generateNodeInfoBox(nodeInfoBox, nodeInfoBoxContainer, {
-            key: node,
-            label: data.label,
-            color: data.color,
-            size: data.size,
-            x: event.x,
-            y: event.y,
-            score: data.score,
-            category: data.category,
-          });
+          if (nodeInfoBox && nodeInfoBoxContainer && node) {
+            const data = this.graphData.getNodeAttributes(node);
+
+            // make the node info box visible
+            this.generateNodeInfoBox(nodeInfoBox, nodeInfoBoxContainer, {
+              key: node,
+              label: data.label,
+              color: data.color,
+              size: data.size,
+              x: event.x,
+              y: event.y,
+              score: data.score,
+              category: data.category,
+            });
+          }
         }
+      } else if (
+        draggedNode &&
+        (event.original.button === 0 || event.original.button === 1)
+      ) {
+        this.emit("draggedNode", { node, event: event });
       }
 
       if (this.appMode === AppMode.STATIC) return;
@@ -1695,16 +1755,23 @@ class WebGraph {
   private initializeHoverHighlightingListeners(): void {
     if (!this.renderer) return;
     if (!this.configuration.highlightSubGraphOnHover) {
-      // if highlighting the subgraph is disabled just add that the node info box container
-      // will be hidden when leaving a node
-      this.renderer.on("leaveNode", () => {
+      // if highlighting the subgraph is disabled add that the node info box container
+      // will be hidden when leaving a node and emit the hover event
+      this.renderer.on("enterNode", ({ node }) => {
+        this.emit("enterNode", { node });
+      });
+
+      this.renderer.on("leaveNode", ({ node }) => {
         this.hideNodeInfoBoxContainer();
+        this.emit("leaveNode", { node });
       });
 
       return;
     }
 
     this.renderer.on("enterNode", ({ node }) => {
+      this.emit("enterNode", { node });
+
       this.hoveredNode = node;
 
       const directNeighbors = this.graphData.neighbors(node);
@@ -1817,6 +1884,8 @@ class WebGraph {
     });
 
     this.renderer.on("leaveNode", ({ node }) => {
+      this.emit("leaveNode", { node });
+
       this.hoveredNode = undefined;
 
       // reset the zIndex

@@ -77,6 +77,69 @@ and open [localhost:9001](http://localhost:9001) using your favorite browser.
 
 To use the example to its full extent, either use your own server and data or go for the super minimal WebGraph Dev Server which can be found [here](https://github.com/robinerol/webgraph-server).
 
+## 🎤 Events
+
+The WebGraph class extends the [EventEmitter](https://www.npmjs.com/package/events) class. The followings events are available to listen for:
+
+<table>
+  <thead>
+    <tr>
+      <th>Event</th>
+      <th>Description</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td><code>rendered</code></td>
+      <td>Emitted when the graph has been rendered.</td>
+    </tr>
+    <tr>
+      <td><code>syncLayoutCompleted</code></td>
+      <td>Emitted when the synchronous calculated layout animation is completed.</td>
+    </tr>
+    <tr>
+      <td><code>clickNode</code></td>
+      <td>Emitted when click on node (mouse button 0 or 1).</td>
+    </tr>
+    <tr>
+      <td><code>rightClickNode</code></td>
+      <td>Emitted when right click on node (mouse button 2).</td>
+    </tr>
+    <tr>
+      <td><code>dragNode</code></td>
+      <td>Emitted when user drags node (using mouse button 0 or 1)</td>
+    </tr>
+    <tr>
+      <td><code>draggedNode</code></td>
+      <td>Emitted when node has been dragged (using mouse button 0 or 1)</td>
+    </tr>
+    <tr>
+      <td><code>enterNode</code></td>
+      <td>Emitted when hovering over a node (enter).</td>
+    </tr>
+    <tr>
+      <td><code>leaveNode</code></td>
+      <td>Emitted when hovering over a node (leave).</td>
+    </tr>
+    <tr>
+      <td><code>nodeInfoBoxOpened</code></td>
+      <td>Emitted when the node info box has been opened.</td>
+    </tr>
+    <tr>
+      <td><code>nodeInfoBoxClosed</code></td>
+      <td>Emitted when the node info box has been closed.</td>
+    </tr>
+    <tr>
+      <td><code>contextMenuOpened</code></td>
+      <td>Emitted when the context menu has been opened.</td>
+    </tr>
+    <tr>
+      <td><code>contextMenuClosed</code></td>
+      <td>Emitted when the context menu has been closed.</td>
+    </tr>
+  </tbody>
+</table>
+
 ## 🛠 Configuration
 
 ### 🧾 Overview

@@ -37,6 +37,7 @@
   },
   "homepage": "https://github.com/robinerol/webgraph#readme",
   "dependencies": {
+    "events": "^3.3.0",
     "graphology": "^0.19.3",
     "graphology-layout": "^0.4.0",
     "graphology-layout-forceatlas2": "^0.6.0",
