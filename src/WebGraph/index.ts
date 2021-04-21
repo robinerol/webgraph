@@ -1515,6 +1515,15 @@ class WebGraph extends EventEmitter {
   private initializeContextMenuListeners(): void {
     if (!this.renderer) return;
 
+    // handles whether the default context menu is suppressed or not
+    this.container.addEventListener("contextmenu", (event) => {
+      const suppressContextMenu = this.configuration.suppressContextMenu;
+
+      if (!suppressContextMenu) return;
+
+      event.preventDefault();
+    });
+
     // load context menus from the active configuration
     const allContextMenus = this.configuration.contextMenus;
 
@@ -1619,15 +1628,6 @@ class WebGraph extends EventEmitter {
       cmcontainer.className = cssHide;
       isContextMenuOpen = false;
       this.emit("contextMenuClosed", { contextNode, event: event });
-    });
-
-    // handles whether the default context menu is suppressed or not
-    this.container.addEventListener("contextmenu", (event) => {
-      const suppressContextMenu = this.configuration.suppressContextMenu;
-
-      if (!suppressContextMenu) return;
-
-      event.preventDefault();
     });
   }
 
