@@ -36,8 +36,14 @@ class Utils {
     minNodeSize = 6,
     maxNodeSize = 12
   ): number => {
-    if (steps <= 0) {
-      throw new Error("steps must be a positive number");
+    if (steps <= 0 || minNodeSize <= 0 || maxNodeSize <= 0) {
+      throw new Error(
+        "steps, minNodeSize and maxNodeSize must all be positive numbers and greater 0"
+      );
+    }
+
+    if (minNodeSize > maxNodeSize) {
+      throw new Error("minNodeSize can't be larger than maxNodeSize");
     }
 
     let divider = steps;
@@ -47,7 +53,7 @@ class Utils {
 
     const sizeOffset = (maxNodeSize - minNodeSize) / divider;
 
-    const interval = (maxValue - minValue) / steps;
+    const interval = Math.abs(maxValue - minValue) / steps;
 
     let section = Math.floor((value - minValue) / interval);
     section = section === steps ? section - 1 : section;

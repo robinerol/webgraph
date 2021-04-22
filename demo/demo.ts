@@ -48,10 +48,10 @@ async function drawGraph(graphDataJSON: any[]) {
     "#BBBDF6",
   ];
 
-  let minScore = 10000;
-  let maxScore = 0;
-  let minYear = 10000;
-  let maxYear = 0;
+  let minScore = Infinity;
+  let maxScore = -Infinity;
+  let minYear = Infinity;
+  let maxYear = -Infinity;
 
   graphDataJSON.forEach((node) => {
     if (node.score < minScore) minScore = node.score;
