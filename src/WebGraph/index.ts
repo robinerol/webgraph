@@ -75,6 +75,7 @@ class WebGraph extends EventEmitter {
   private renderer: WebGLRenderer | undefined = undefined;
   private highlightedNodes: Set<NodeKey> = new Set<NodeKey>();
   private highlightedEdges: Set<EdgeKey> = new Set<EdgeKey>();
+  private manuallyHighlightedNodes: Set<NodeKey> = new Set<NodeKey>();
   private hoveredNode: NodeKey | undefined = undefined;
   private isNodeInfoBoxContainerVisible = false;
   private isNodeDragged = false;
@@ -976,6 +977,81 @@ class WebGraph extends EventEmitter {
     return true;
   }
 
+  /**
+   * Starts/stops the ForceAtlas2 web worker. Please be aware that all interactions with the web worker
+   * are not tracked by the history.
+   *
+   * @throws Error - If the renderer is not defined or the 'useForceAtlas2WebWorker' is not enabled
+   *
+   * @returns - True if successful
+   *
+   * @public
+   */
+  public toggleForceAtlas2WebWorker(): boolean {
+    if (!this.renderer || !this.isRenderingActive) {
+      throw new Error(
+        "Can't retrieve ForceAtlas2 web worker when rendering is inactive."
+      );
+    }
+
+    if (!this.configuration.useForceAtlas2WebWorker) {
+      throw new Error(
+        "ForceAtlas2 web worker was not enabled. Use the 'useForceAtlas2WebWorker' configuration to enable it."
+      );
+    }
+
+    if (!this.forceAtlas2WebWorker) return false;
+
+    if (this.isForceAtlas2WebWorkerActive) {
+      this.forceAtlas2WebWorker.stop();
+    } else {
+      this.forceAtlas2WebWorker.start();
+    }
+
+    return true;
+  }
+
+  /**
+   * Gets a nodes current position.
+   *
+   * @param nodeKey - The nodeKey of the node the position should be returned
+   *
+   * @throws Error - If the renderer is not defined or the 'useForceAtlas2WebWorker' is not enabled
+   *
+   * @returns an object holding the x and y coordinate of the node
+   *
+   * @public
+   */
+  public getNodePosition(nodeKey: NodeKey): { [key: string]: number } {
+    if (!this.renderer || !this.isRenderingActive) {
+      throw new Error(
+        "Can't retrieve ForceAtlas2 web worker when rendering is inactive."
+      );
+    }
+
+    const nodeData = this.graphData.getNodeAttributes(nodeKey);
+
+    return { x: nodeData.x, y: nodeData.y };
+  }
+
+  /**
+   * Highlights a node for a specified duration.
+   *
+   * @param nodeKey - The key of the node to highlight
+   * @param duration - The duration of the highlight in milliseconds
+   *
+   * @public
+   */
+  public highlightNode(nodeKey: NodeKey, duration: number): void {
+    this.manuallyHighlightedNodes.add(nodeKey);
+
+    setTimeout(() => {
+      if (this.manuallyHighlightedNodes.has(nodeKey)) {
+        this.manuallyHighlightedNodes.delete(nodeKey);
+      }
+    }, duration);
+  }
+
   /**---------------------------------------------------------------------------
    * Internal methods.
    *--------------------------------------------------------------------------*/
@@ -1406,11 +1482,26 @@ class WebGraph extends EventEmitter {
    * @internal
    */
   private overwriteReducers(): void {
-    if (!this.configuration.highlightSubGraphOnHover) return;
-
     const highlightColor = this.configuration.subGraphHighlightColor;
+    this.configuration.sigmaSettings.zIndex = true;
+
+    if (!this.configuration.highlightSubGraphOnHover) {
+      // if subgraph highlighting is disabled, just highlight manually highlighted nodes
+      const nodeReducer = (node: NodeKey, data: NodeAttributes) => {
+        if (this.manuallyHighlightedNodes.has(node)) {
+          return { ...data, color: highlightColor, z: 1 };
+        }
+
+        return data;
+      };
+
+      this.configuration.sigmaSettings.nodeReducer = nodeReducer;
+      return;
+    }
+
     const neighborsNeighborsColor = this.configuration.importantNeighborsColor;
 
+    // if subgraph highlighting is enabled, highlight all subgraph nodes
     const nodeReducer = (node: NodeKey, data: NodeAttributes) => {
       if (this.highlightedNodes.has(node)) {
         // if neighbor of neighbor and different color is set
@@ -1426,6 +1517,8 @@ class WebGraph extends EventEmitter {
         }
 
         // default
+        return { ...data, color: highlightColor, z: 1 };
+      } else if (this.manuallyHighlightedNodes.has(node)) {
         return { ...data, color: highlightColor, z: 1 };
       }
 
@@ -1453,7 +1546,6 @@ class WebGraph extends EventEmitter {
 
     this.configuration.sigmaSettings.nodeReducer = nodeReducer;
     this.configuration.sigmaSettings.edgeReducer = edgeReducer;
-    this.configuration.sigmaSettings.zIndex = true;
   }
 
   /**
