@@ -1105,8 +1105,9 @@ class WebGraph extends EventEmitter {
 
       let forceAtlas2LayoutOptions = layoutConfig.forceAtlas2LayoutOptions;
 
-      if (forceAtlas2LayoutOptions)
+      if (!forceAtlas2LayoutOptions) {
         forceAtlas2LayoutOptions = DEFAULT_FORCEATLAS2_LAYOUT_OPTIONS;
+      }
 
       this.forceAtlas2WebWorker = new FA2Layout(this.graphData, {
         settings: forceAtlas2LayoutOptions?.settings,
@@ -1145,8 +1146,9 @@ class WebGraph extends EventEmitter {
     } else if (this.configuration.useForceAtlas2WebWorker) {
       let forceAtlas2LayoutOptions = layoutConfig.forceAtlas2LayoutOptions;
 
-      if (forceAtlas2LayoutOptions)
+      if (!forceAtlas2LayoutOptions) {
         forceAtlas2LayoutOptions = DEFAULT_FORCEATLAS2_LAYOUT_OPTIONS;
+      }
 
       this.forceAtlas2WebWorker = new FA2Layout(this.graphData, {
         settings: forceAtlas2LayoutOptions?.settings,

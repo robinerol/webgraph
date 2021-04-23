@@ -87,11 +87,11 @@ const DEFAULT_FORCEATLAS2_ITERATIONS = 50;
 /**
  * Represents the default layout options used when applying the {@link Layout.FORCEATLAS2} layout.
  * The default amount of iterations is defined in {@link DEFAULT_FORCEATLAS2_ITERATIONS}. The default
- * layout to be applied before running the {@link Layout.FORCEATLAS2} is {@link Layout.CIRCULAR}.
+ * layout to be applied before running the {@link Layout.FORCEATLAS2} is {@link Layout.CIRCLEPACK}.
  */
 const DEFAULT_FORCEATLAS2_LAYOUT_OPTIONS: IExtendedForceAtlas2LayoutOptions = {
   iterations: DEFAULT_FORCEATLAS2_ITERATIONS,
-  preAppliedLayout: Layout.CIRCULAR,
+  preAppliedLayout: Layout.CIRCLEPACK,
 };
 
 /**
