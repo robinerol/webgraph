@@ -58,7 +58,7 @@ interface IContextMenu {
  * const cmitem: IContextMenuItem = {
  *   label: "Delete Node",
  *   callback: (key: string) => console.log("todo: delete node " + key),
- *   icon: "https://example-link.to/fancy_icon.jpg",
+ *   icon: document.createElement("img"),
  * }
  * ```
  *
@@ -67,7 +67,7 @@ interface IContextMenu {
 interface IContextMenuItem {
   label: string;
   callback: (key: string) => void;
-  icon?: string;
+  icon?: HTMLElement;
 }
 
 export { IContextMenu, IContextMenuItem };

@@ -444,7 +444,7 @@ This container can be freely styled. Then retrieve the container in your script 
   <!-- Here begins the mounted part -->
   <ol>
     <li onclick="IContextMenuItem.callback">
-      <img src="IContextMenuItem.icon" style="display: inline-block; height: 1em; overflow: hidden; background-repeat: no-repeat;">
+      IContextMenuItem.icon
       <span>IContextMenuItem.label</span>
     </li>
   </ol>
