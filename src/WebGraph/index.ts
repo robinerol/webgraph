@@ -1103,7 +1103,10 @@ class WebGraph extends EventEmitter {
       // see also: https://stackoverflow.com/questions/52164025/onsenui-uncaught-referenceerror-setimmediate-is-not-defined
       (window.setImmediate as any) = window.setTimeout; // eslint-disable-line @typescript-eslint/no-explicit-any
 
-      const forceAtlas2LayoutOptions = layoutConfig.forceAtlas2LayoutOptions;
+      let forceAtlas2LayoutOptions = layoutConfig.forceAtlas2LayoutOptions;
+
+      if (forceAtlas2LayoutOptions)
+        forceAtlas2LayoutOptions = DEFAULT_FORCEATLAS2_LAYOUT_OPTIONS;
 
       this.forceAtlas2WebWorker = new FA2Layout(this.graphData, {
         settings: forceAtlas2LayoutOptions?.settings,
@@ -1139,6 +1142,15 @@ class WebGraph extends EventEmitter {
         this.isForceAtlas2WebWorkerActive = false;
       }, this.configuration.useForceAtlas2WebWorker);
       return;
+    } else if (this.configuration.useForceAtlas2WebWorker) {
+      let forceAtlas2LayoutOptions = layoutConfig.forceAtlas2LayoutOptions;
+
+      if (forceAtlas2LayoutOptions)
+        forceAtlas2LayoutOptions = DEFAULT_FORCEATLAS2_LAYOUT_OPTIONS;
+
+      this.forceAtlas2WebWorker = new FA2Layout(this.graphData, {
+        settings: forceAtlas2LayoutOptions?.settings,
+      });
     }
 
     let newLayout;
