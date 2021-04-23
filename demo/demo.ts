@@ -15,6 +15,7 @@ import Graph, { MultiGraph } from "graphology";
  * Graph drawing
  *--------------------------------------------------------------------------*/
 let webGraph: WebGraph | undefined = undefined;
+let graph: Graph | undefined = undefined;
 const webGraphContainer = document.getElementById("webGraph");
 const webGraphContextMenuContainer = document.getElementById("webGraphCM");
 const webGraphNodeInfoBox = document.getElementById("webGraphNIB");
@@ -37,7 +38,7 @@ async function drawGraph(graphDataJSON: any[]) {
     );
   }
 
-  const graph = new MultiGraph();
+  graph = new MultiGraph();
 
   const COLOR_PALETTE = [
     "#EDAE49",
@@ -62,7 +63,7 @@ async function drawGraph(graphDataJSON: any[]) {
 
   // create nodes
   graphDataJSON.forEach((result) => {
-    graph.addNode(result.id, {
+    graph?.addNode(result.id, {
       label: result.author + ", " + result.year,
       size: Utils.getNodeSizeForValue(result.score, minScore, maxScore, 4),
       category: result.category,
@@ -82,7 +83,7 @@ async function drawGraph(graphDataJSON: any[]) {
   graphDataJSON.forEach((result) => {
     if (result.cluster !== undefined) {
       result.refs.forEach((ref: string) => {
-        graph.addEdge(result.id, ref, {
+        graph?.addEdge(result.id, ref, {
           weight: 0.1,
           color: "#ccc",
           important: Math.random() > 0.7,
@@ -172,6 +173,10 @@ async function drawGraph(graphDataJSON: any[]) {
                 { key: key, attributes: { type: NodeType.RECTANGLE } },
               ]),
           },
+          {
+            label: "highlight node",
+            callback: (key: string) => webGraph?.highlightNode(key, 2000),
+          },
         ],
         1: [
           {
@@ -191,6 +196,10 @@ async function drawGraph(graphDataJSON: any[]) {
               webGraph?.mergeNodes([
                 { key: key, attributes: { hidden: false } },
               ]),
+          },
+          {
+            label: "highlight node",
+            callback: (key: string) => webGraph?.highlightNode(key, 2000),
           },
         ],
       },
@@ -247,7 +256,7 @@ function drawExampleGraph() {
     throw new Error("No div container with the ID 'webGraph' has been found.");
   }
 
-  const graph = new Graph();
+  graph = new Graph();
 
   graph.addNode("Node 1", {
     label: "Node 1",
@@ -431,6 +440,14 @@ document.getElementById("wwStop")?.addEventListener("click", (e) => {
   webGraph.stopForceAtlas2WebWorker();
 });
 
+document.getElementById("wwToggle")?.addEventListener("click", (e) => {
+  e.preventDefault();
+
+  if (!webGraph || !webGraph.isRenderingActive) return;
+
+  webGraph.toggleForceAtlas2WebWorker();
+});
+
 document.getElementById("wwReset")?.addEventListener("click", (e) => {
   e.preventDefault();
 
@@ -556,4 +573,15 @@ document.getElementById("zoomReset")?.addEventListener("click", (e) => {
   if (!webGraph || !webGraph.isRenderingActive) return;
 
   webGraph.camera.animatedReset({});
+});
+
+/**---------------------------------
+ * Settings Menu - Highlight
+ *--------------------------------*/
+document.getElementById("highlightNode")?.addEventListener("click", (e) => {
+  e.preventDefault();
+
+  if (!webGraph || !webGraph.isRenderingActive || !graph) return;
+
+  webGraph.highlightNode(graph?.nodes()[0], 3000);
 });
