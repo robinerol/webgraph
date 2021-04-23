@@ -82,6 +82,8 @@ class WebGraph extends EventEmitter {
   private history: HistoryManager | undefined = undefined;
   private forceAtlas2WebWorker: FA2Layout | undefined = undefined;
   private isForceAtlas2WebWorkerActive = false;
+  private isEdgeRenderingDisabled = false;
+  private isJustImportantEdgesEnabled = false;
 
   /**
    * Creates an instance of web graph.
@@ -226,6 +228,9 @@ class WebGraph extends EventEmitter {
 
     if (this.isHistoryEnabled) this.history = new HistoryManager();
 
+    this.isEdgeRenderingDisabled = this.renderer.settings.hideEdges;
+    this.isJustImportantEdgesEnabled = this.renderer.settings.renderJustImportantEdges;
+
     this.emit("rendered");
   }
 
@@ -338,13 +343,21 @@ class WebGraph extends EventEmitter {
   /**
    * Changes whether edges are rendered or not.
    *
-   * @param hideEdges - if true: hides edges, if false: renders edges
+   * @param [hideEdges] - if true: hides edges, if false: renders edges
    * @param [addToHistory] - True by default. Whether the action should be added to the history or not. @defaultValue `true`
    *
    * @public
    */
-  public toggleEdgeRendering(hideEdges: boolean, addToHistory = true): void {
-    const oldValue = this.renderer?.toggleEdgeRendering(hideEdges);
+  public toggleEdgeRendering(hideEdges?: boolean, addToHistory = true): void {
+    const oldValue = this.isEdgeRenderingDisabled;
+
+    if (hideEdges !== undefined) {
+      this.isEdgeRenderingDisabled = hideEdges;
+      this.renderer?.toggleEdgeRendering(hideEdges);
+    } else {
+      this.isEdgeRenderingDisabled = !this.isEdgeRenderingDisabled;
+      this.renderer?.toggleEdgeRendering(this.isEdgeRenderingDisabled);
+    }
 
     if (this.isHistoryEnabled && addToHistory) {
       this.history?.addAction(
@@ -362,18 +375,26 @@ class WebGraph extends EventEmitter {
   /**
    * Changes whether just edges are rendered or all.
    *
-   * @param renderJustImportant - if true: render just important edges, if false: renders all edges
+   * @param [renderJustImportant] - if true: render just important edges, if false: renders all edges
    * @param [addToHistory] - True by default. Whether the action should be added to the history or not. @defaultValue `true`
    *
    * @public
    */
   public toggleJustImportantEdgeRendering(
-    renderJustImportant: boolean,
+    renderJustImportant?: boolean,
     addToHistory = true
   ): void {
-    const oldValue = this.renderer?.renderJustImportantEdges(
-      renderJustImportant
-    );
+    const oldValue = this.isJustImportantEdgesEnabled;
+
+    if (renderJustImportant !== undefined) {
+      this.isJustImportantEdgesEnabled = renderJustImportant;
+      this.renderer?.renderJustImportantEdges(renderJustImportant);
+    } else {
+      this.isJustImportantEdgesEnabled = !this.isJustImportantEdgesEnabled;
+      this.renderer?.renderJustImportantEdges(this.isJustImportantEdgesEnabled);
+    }
+
+    this.toggleEdgeRendering(false);
 
     if (this.isHistoryEnabled && addToHistory) {
       this.history?.addAction(
@@ -691,13 +712,19 @@ class WebGraph extends EventEmitter {
    * The history feature is just available if it was enabled in the
    * {@link IGraphConfiguration} using the "enableHistory" boolean.
    *
-   * @throws Error - If the History is disabled.
+   * @throws Error - If the History is disabled or rendering is inactive.
    *
    * @returns true if the operation was successful, false if not
    *
    * @public
    */
   public undo(): boolean {
+    if (!this.renderer || !this.isRenderingActive) {
+      throw new Error(
+        "This operation is not possible if rendering is inactive."
+      );
+    }
+
     if (!this.isHistoryEnabled) {
       throw new Error(
         "The history is not enabled. Use the 'enableHistory' boolean to enable it in the IGraphConfiguration."
@@ -808,13 +835,19 @@ class WebGraph extends EventEmitter {
    * The history feature is just available if it was enabled in the
    * {@link IGraphConfiguration} using the "enableHistory" boolean.
    *
-   * @throws Error - If the History is disabled.
+   * @throws Error - If the History is disabled or rendering is inactive.
    *
    * @returns true if the operation was successful, false if not
    *
    * @public
    */
   public redo(): boolean {
+    if (!this.renderer || !this.isRenderingActive) {
+      throw new Error(
+        "This operation is not possible if rendering is inactive."
+      );
+    }
+
     if (!this.isHistoryEnabled) {
       throw new Error(
         "The history is not enabled. Use the 'enableHistory' boolean to enable it in the IGraphConfiguration."

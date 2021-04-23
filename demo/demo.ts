@@ -475,6 +475,14 @@ document.getElementById("edgeHide")?.addEventListener("click", (e) => {
   webGraph.toggleEdgeRendering(true);
 });
 
+document.getElementById("toggleEdges")?.addEventListener("click", (e) => {
+  e.preventDefault();
+
+  if (!webGraph || !webGraph.isRenderingActive) return;
+
+  webGraph.toggleEdgeRendering();
+});
+
 /**---------------------------------
  * Settings Menu - Important Edges
  *--------------------------------*/
@@ -493,6 +501,16 @@ document.getElementById("impEdgeHide")?.addEventListener("click", (e) => {
 
   webGraph.toggleJustImportantEdgeRendering(false);
 });
+
+document
+  .getElementById("toggleImportantEdges")
+  ?.addEventListener("click", (e) => {
+    e.preventDefault();
+
+    if (!webGraph || !webGraph.isRenderingActive) return;
+
+    webGraph.toggleJustImportantEdgeRendering();
+  });
 
 /**---------------------------------
  * Settings Menu - Default Node Type
