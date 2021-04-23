@@ -108,6 +108,23 @@ class Utils {
 
     return colors[index];
   };
+
+  /**
+   * Normalizes a value within it's min and max bounds from 0.0 to 1.0.
+   *
+   * @param value - The value of the node as a number
+   * @param minValue - The minimum value of any node in the node-set this function is applied to
+   * @param maxValue - The maximum value of any node in the node-set this function is applied to
+   *
+   * @returns - The normalized value from 0.0 to 1.0
+   */
+  static getNormalizedValue = (
+    value: number,
+    minValue: number,
+    maxValue: number
+  ): number => {
+    return (value - minValue) / (maxValue - minValue);
+  };
 }
 
 /**
