@@ -677,13 +677,13 @@ class WebGraph extends EventEmitter {
    * @public
    */
   public destroy(): void {
+    this.forceAtlas2WebWorker?.stop();
+    this.forceAtlas2WebWorker?.kill();
+    this.isForceAtlas2WebWorkerActive = false;
     this.renderer?.removeAllListeners();
     this.renderer?.getMouseCaptor().removeAllListeners();
     this.renderer?.clear();
     this.renderer?.kill();
-    this.forceAtlas2WebWorker?.stop();
-    this.forceAtlas2WebWorker?.kill();
-    this.isForceAtlas2WebWorkerActive = false;
     this.appState = AppState.INACTIVE;
   }
 
