@@ -1852,107 +1852,8 @@ class WebGraph extends EventEmitter {
 
       this.hoveredNode = node;
 
-      const directNeighbors = this.graphData.neighbors(node);
-
-      for (let i = 0; i < directNeighbors.length; i++) {
-        const neighbor = directNeighbors[i];
-        let isAtLeastOneEdgeVisible = false;
-
-        if (this.renderer?.settings.renderJustImportantEdges) {
-          // add just if at least one edge between both nodes is visible
-          this.graphData.edges(node, neighbor).forEach((edge) => {
-            if (this.graphData.getEdgeAttribute(edge, "important") === true) {
-              this.highlightedEdges.add(edge);
-              isAtLeastOneEdgeVisible = true;
-            }
-          });
-          this.graphData.edges(neighbor, node).forEach((edge) => {
-            if (this.graphData.getEdgeAttribute(edge, "important") === true) {
-              this.highlightedEdges.add(edge);
-              isAtLeastOneEdgeVisible = true;
-            }
-          });
-
-          if (isAtLeastOneEdgeVisible) {
-            this.highlightedNodes.add(neighbor);
-          }
-        } else {
-          // add the neighbor and all connected edges
-          this.highlightedNodes.add(neighbor);
-          this.graphData
-            .edges(node, neighbor)
-            .forEach((edge) => this.highlightedEdges.add(edge));
-          this.graphData
-            .edges(neighbor, node)
-            .forEach((edge) => this.highlightedEdges.add(edge));
-          isAtLeastOneEdgeVisible = true;
-        }
-
-        const importantNeighborsOfNeighbor: Array<NodeKey> = [];
-
-        // if at least one edge between the node and the neighbor is visible
-        // and important neighbors of the neighbor should be included
-        // add the important neighbors of our nodes neighbor to an array
-        if (
-          isAtLeastOneEdgeVisible &&
-          this.configuration.includeImportantNeighbors
-        ) {
-          this.graphData.forEachNeighbor(
-            neighbor,
-            (neighborNeighbor: NodeKey, attributes: Attributes) => {
-              if (attributes.important === true) {
-                importantNeighborsOfNeighbor.push(neighborNeighbor);
-              }
-            }
-          );
-        }
-
-        // iterate through the array to make sure the neighbor is just included if there
-        // is a visible edge between both
-        for (let j = 0; j < importantNeighborsOfNeighbor.length; j++) {
-          const neighborsImportantNeighbor = importantNeighborsOfNeighbor[j];
-
-          let isAtLeastOneEdgeVisible = false;
-
-          const edgesOut = this.graphData.edges(
-            neighbor,
-            neighborsImportantNeighbor
-          );
-          edgesOut.forEach((edge) => {
-            if (
-              this.renderer?.settings.renderJustImportantEdges === true &&
-              this.graphData.getEdgeAttribute(edge, "important") === false
-            ) {
-              return;
-            }
-
-            isAtLeastOneEdgeVisible = true;
-            this.highlightedEdges.add(edge);
-          });
-
-          // include both directions if enabled
-          if (this.configuration.importantNeighborsBidirectional) {
-            const edgesIn = this.graphData.edges(
-              neighborsImportantNeighbor,
-              neighbor
-            );
-            edgesIn.forEach((edge) => {
-              if (
-                this.renderer?.settings.renderJustImportantEdges === true &&
-                this.graphData.getEdgeAttribute(edge, "important") === false
-              ) {
-                return;
-              }
-
-              isAtLeastOneEdgeVisible = true;
-              this.highlightedEdges.add(edge);
-            });
-          }
-
-          if (isAtLeastOneEdgeVisible) {
-            this.highlightedNodes.add(neighborsImportantNeighbor);
-          }
-        }
+      if (!this.isEdgeRenderingDisabled) {
+        this.highlightSubgraphOfNode(node);
       }
 
       // add the hovered node
@@ -1987,6 +1888,118 @@ class WebGraph extends EventEmitter {
       // hide the node info box container if visible
       this.hideNodeInfoBoxContainer();
     });
+  }
+
+  /**
+   * Highlights the subgraph of a node.
+   *
+   * @param node - The node the subgraph should be highlighted of
+   *
+   * @internal
+   */
+  private highlightSubgraphOfNode(node: NodeKey): void {
+    const directNeighbors = this.graphData.neighbors(node);
+
+    for (let i = 0; i < directNeighbors.length; i++) {
+      const neighbor = directNeighbors[i];
+      let isAtLeastOneEdgeVisible = false;
+
+      if (this.isJustImportantEdgesEnabled) {
+        // add just if at least one edge between both nodes is visible
+        this.graphData.edges(node, neighbor).forEach((edge) => {
+          if (this.graphData.getEdgeAttribute(edge, "important") === true) {
+            this.highlightedEdges.add(edge);
+            isAtLeastOneEdgeVisible = true;
+          }
+        });
+        this.graphData.edges(neighbor, node).forEach((edge) => {
+          if (this.graphData.getEdgeAttribute(edge, "important") === true) {
+            this.highlightedEdges.add(edge);
+            isAtLeastOneEdgeVisible = true;
+          }
+        });
+
+        if (isAtLeastOneEdgeVisible) {
+          this.highlightedNodes.add(neighbor);
+        }
+      } else {
+        // add the neighbor and all connected edges
+        this.highlightedNodes.add(neighbor);
+        this.graphData
+          .edges(node, neighbor)
+          .forEach((edge) => this.highlightedEdges.add(edge));
+        this.graphData
+          .edges(neighbor, node)
+          .forEach((edge) => this.highlightedEdges.add(edge));
+        isAtLeastOneEdgeVisible = true;
+      }
+
+      const importantNeighborsOfNeighbor: Array<NodeKey> = [];
+
+      // if at least one edge between the node and the neighbor is visible
+      // and important neighbors of the neighbor should be included
+      // add the important neighbors of our nodes neighbor to an array
+      if (
+        isAtLeastOneEdgeVisible &&
+        this.configuration.includeImportantNeighbors
+      ) {
+        this.graphData.forEachNeighbor(
+          neighbor,
+          (neighborNeighbor: NodeKey, attributes: Attributes) => {
+            if (attributes.important === true) {
+              importantNeighborsOfNeighbor.push(neighborNeighbor);
+            }
+          }
+        );
+      }
+
+      // iterate through the array to make sure the neighbor is just included if there
+      // is a visible edge between both
+      for (let j = 0; j < importantNeighborsOfNeighbor.length; j++) {
+        const neighborsImportantNeighbor = importantNeighborsOfNeighbor[j];
+
+        let isAtLeastOneEdgeVisible = false;
+
+        const edgesOut = this.graphData.edges(
+          neighbor,
+          neighborsImportantNeighbor
+        );
+        edgesOut.forEach((edge) => {
+          if (
+            this.renderer?.settings.renderJustImportantEdges === true &&
+            this.graphData.getEdgeAttribute(edge, "important") === false
+          ) {
+            return;
+          }
+
+          isAtLeastOneEdgeVisible = true;
+          this.highlightedEdges.add(edge);
+        });
+
+        // include both directions if enabled
+        if (this.configuration.importantNeighborsBidirectional) {
+          const edgesIn = this.graphData.edges(
+            neighborsImportantNeighbor,
+            neighbor
+          );
+          edgesIn.forEach((edge) => {
+            if (
+              this.renderer?.settings.renderJustImportantEdges === true &&
+              this.graphData.getEdgeAttribute(edge, "important") === false
+            ) {
+              return;
+            }
+
+            isAtLeastOneEdgeVisible = true;
+            this.highlightedEdges.add(edge);
+          });
+        }
+
+        if (isAtLeastOneEdgeVisible) {
+          this.highlightedNodes.add(neighborsImportantNeighbor);
+        }
+      }
+    }
   }
 }
 
