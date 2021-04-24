@@ -1933,6 +1933,10 @@ class WebGraph extends EventEmitter {
 
     for (let i = 0; i < directNeighbors.length; i++) {
       const neighbor = directNeighbors[i];
+
+      // skip this neighbor if it is hidden
+      if (this.graphData.getNodeAttribute(neighbor, "hidden")) continue;
+
       let isAtLeastOneEdgeVisible = false;
 
       if (this.isJustImportantEdgesEnabled) {
@@ -1977,7 +1981,7 @@ class WebGraph extends EventEmitter {
         this.graphData.forEachNeighbor(
           neighbor,
           (neighborNeighbor: NodeKey, attributes: Attributes) => {
-            if (attributes.important === true) {
+            if (attributes.important === true && !attributes.hidden) {
               importantNeighborsOfNeighbor.push(neighborNeighbor);
             }
           }
