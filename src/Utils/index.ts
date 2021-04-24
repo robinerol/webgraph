@@ -137,11 +137,25 @@ class InternalUtils {
    * Selects all visible nodes to have a visible label.
    *
    * @param params - Currently visible nodes.
+   * - @param cache - Cache storing nodes' data.
+   * - @param visibleNodes - Nodes inside the viewport.
    *
    * @returns - The selected labels.
    */
-  static labelSelectorAll(params: { visibleNodes: NodeKey[] }): NodeKey[] {
-    return params.visibleNodes;
+  static labelSelectorAll(params: {
+    cache: { [key: string]: NodeAttributes };
+    visibleNodes: NodeKey[];
+  }): NodeKey[] {
+    const visibleNodes = Array<NodeKey>();
+
+    for (let i = 0, l = params.visibleNodes.length; i < l; i++) {
+      const node = params.visibleNodes[i],
+        nodeData = params.cache[node];
+
+      if (!nodeData.hidden) visibleNodes.push(node);
+    }
+
+    return visibleNodes;
   }
 
   /**
@@ -163,7 +177,7 @@ class InternalUtils {
       const node = params.visibleNodes[i],
         nodeData = params.cache[node];
 
-      if (nodeData.important) importantNodes.push(node);
+      if (nodeData.important && !nodeData.hidden) importantNodes.push(node);
     }
 
     return importantNodes;
@@ -234,6 +248,8 @@ class InternalUtils {
     // sort the nodes by their size
     params.visibleNodes.forEach((node) => {
       const nodeData = params.cache[node];
+
+      if (nodeData.hidden) return;
 
       if (nodes[nodeData.size]) {
         nodes[nodeData.size].push(node);

@@ -679,10 +679,9 @@ class WebGraph extends EventEmitter {
   public destroy(): void {
     this.forceAtlas2WebWorker?.stop();
     this.forceAtlas2WebWorker?.kill();
+    this.forceAtlas2WebWorker = undefined;
     this.isForceAtlas2WebWorkerActive = false;
 
-    this.renderer?.removeAllListeners();
-    this.renderer?.getMouseCaptor().removeAllListeners();
     this.renderer?.clear();
     this.renderer?.kill();
     this.renderer = undefined;
@@ -1340,9 +1339,12 @@ class WebGraph extends EventEmitter {
       >,
       settings: WebGLSettings
     ) => {
-      if (!this.graphData.hasNode(data.key) || data.hidden) return;
+      if (!this.graphData.hasNode(data.key)) return;
 
       const nodeAttributes = this.graphData.getNodeAttributes(data.key);
+
+      // if node is hidden, return
+      if (nodeAttributes.hidden) return;
 
       // set the type for the hover canvas to know which form to draw
       data.type = nodeAttributes.type;
@@ -1878,7 +1880,10 @@ class WebGraph extends EventEmitter {
 
       this.hoveredNode = node;
 
-      if (!this.isEdgeRenderingDisabled) {
+      if (
+        !this.isEdgeRenderingDisabled &&
+        !this.graphData.getNodeAttribute(node, "hidden")
+      ) {
         this.highlightSubgraphOfNode(node);
       }
 

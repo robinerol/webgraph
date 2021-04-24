@@ -186,9 +186,11 @@ describe("test public methods of the WebGraph class", () => {
       webGraph.destroy();
 
       expect(webGraph.isRenderingActive).toBeFalsy();
-      expect(webGraph["renderer"]?.removeAllListeners).toHaveBeenCalled();
-      expect(webGraph["renderer"]?.clear).toHaveBeenCalled();
-      expect(webGraph["renderer"]?.kill).toHaveBeenCalled();
+      expect(webGraph["forceAtlas2WebWorker"]).toBeUndefined();
+      expect(webGraph["highlightedNodes"].size).toEqual(0);
+      expect(webGraph["highlightedEdges"].size).toEqual(0);
+      expect(webGraph["hoveredNode"]).toBeUndefined();
+      expect(webGraph["history"]).toBeUndefined();
     });
 
     it("should return exact same graph on export", () => {
