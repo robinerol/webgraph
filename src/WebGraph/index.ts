@@ -680,11 +680,23 @@ class WebGraph extends EventEmitter {
     this.forceAtlas2WebWorker?.stop();
     this.forceAtlas2WebWorker?.kill();
     this.isForceAtlas2WebWorkerActive = false;
+
     this.renderer?.removeAllListeners();
     this.renderer?.getMouseCaptor().removeAllListeners();
     this.renderer?.clear();
     this.renderer?.kill();
+    this.renderer = undefined;
+
     this.appState = AppState.INACTIVE;
+
+    this.removeAllListeners();
+
+    this.highlightedNodes = new Set();
+    this.highlightedEdges = new Set();
+
+    this.hoveredNode = undefined;
+
+    this.history = undefined;
   }
 
   /**
@@ -1328,7 +1340,7 @@ class WebGraph extends EventEmitter {
       >,
       settings: WebGLSettings
     ) => {
-      if (!this.graphData.hasNode(data.key)) return;
+      if (!this.graphData.hasNode(data.key) || data.hidden) return;
 
       const nodeAttributes = this.graphData.getNodeAttributes(data.key);
 
