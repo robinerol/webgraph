@@ -1652,6 +1652,7 @@ class WebGraph extends EventEmitter {
       this.emit("rightClickNode", { node, event: event });
       if (event.original.type !== "contextmenu") return;
       if (!cmcontainer) return;
+      if (this.graphData.getNodeAttribute(node, "hidden")) return;
 
       contextNode = node;
 
@@ -1787,7 +1788,10 @@ class WebGraph extends EventEmitter {
         this.emit("clickNode", { node, event: event });
 
         // show infoBoxContainer on click if enabled
-        if (this.configuration.showNodeInfoBoxOnClick) {
+        if (
+          !this.graphData.getNodeAttribute(node, "hidden") &&
+          this.configuration.showNodeInfoBoxOnClick
+        ) {
           const nodeInfoBox = this.configuration.nodeInfoBox;
           const nodeInfoBoxContainer = nodeInfoBox?.container;
 
