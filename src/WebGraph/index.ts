@@ -235,6 +235,23 @@ class WebGraph extends EventEmitter {
   }
 
   /**
+   * Gets the camera. All interactions with the camera are not tracked by the history.
+   *
+   * @throws Error - If the renderer is not defined.
+   *
+   * @returns - The camera object of the renderer.
+   *
+   * @public
+   */
+  public get camera(): Camera {
+    if (!this.renderer || !this.isRenderingActive) {
+      throw new Error("Can't retrieve camera when rendering is inactive.");
+    }
+
+    return this.renderer.getCamera();
+  }
+
+  /**
    * Merges edges into the graph.
    *
    * @param edges - A Set of SerializedEdge to merge into the graph
@@ -474,123 +491,6 @@ class WebGraph extends EventEmitter {
   }
 
   /**
-   * Sets and applies the requested layout to the graph.
-   *
-   * @param layout - The {@link Layout} to be set and applied
-   * @param layoutConfiguration - The {@link ILayoutConfiguration} of the layout
-   * @param [addToHistory] - True by default. Whether the action should be added to the history or not. @defaultValue `true`
-   *
-   * @returns - true if successful
-   *
-   * @public
-   */
-  public setAndApplyLayout(
-    layout: Layout,
-    layoutConfiguration: ILayoutConfiguration,
-    addToHistory = true
-  ): boolean {
-    if (this.isForceAtlas2WebWorkerActive) return false;
-
-    if (this.isHistoryEnabled && addToHistory) {
-      const oldLayout = this.configuration.layout;
-      const layoutMapping: { [key: string]: { x: number; y: number } } = {};
-
-      if (oldLayout === Layout.FORCEATLAS2 || layout === Layout.FORCEATLAS2) {
-        this.graphData.nodes().forEach((node) => {
-          const attr = this.graphData.getNodeAttributes(node);
-          layoutMapping[node] = { x: attr.x, y: attr.y };
-        });
-      }
-
-      this.history?.addAction(
-        {
-          layout: oldLayout,
-          layoutConfig: this.configuration.layoutConfiguration,
-          layoutMapping: layoutMapping,
-        },
-        ActionType.SET_LAYOUT,
-        {
-          layout: layout,
-          layoutConfig: layoutConfiguration,
-        }
-      );
-    }
-
-    this.configuration.layout = layout;
-    this.configuration.layoutConfiguration = layoutConfiguration;
-
-    this.applyLayout(layout, layoutConfiguration, false, false);
-
-    return true;
-  }
-
-  /**
-   * Applies the currently set layout again. Used for clustering algorithms.
-   * If the currently active {@link Layout} is {@link FORCEATLAS2}, the
-   * preAppliedLayout and preAppliedLayoutOptions will be overwritten
-   * with undefined.
-   *
-   * @returns - true if successful
-   *
-   * @public
-   */
-  public reapplyLayout(): boolean {
-    if (this.isForceAtlas2WebWorkerActive) return false;
-
-    if (
-      this.configuration.layout === Layout.FORCEATLAS2 &&
-      this.configuration.layoutConfiguration.forceAtlas2LayoutOptions
-    ) {
-      this.configuration.layoutConfiguration.forceAtlas2LayoutOptions.preAppliedLayout = undefined;
-      this.configuration.layoutConfiguration.forceAtlas2LayoutOptions.preAppliedLayoutOptions = undefined;
-    }
-
-    this.applyLayout(
-      this.configuration.layout,
-      this.configuration.layoutConfiguration,
-      false,
-      false
-    );
-
-    return true;
-  }
-
-  /**
-   * Sets and applies the requested nodeType as default node type.
-   *
-   * @param nodeType - The {@link NodeType} to be set and applied
-   * @param [addToHistory] - True by default. Whether the action should be added to the history or not. @defaultValue `true`
-   *
-   * @returns - true if successful
-   *
-   * @public
-   */
-  public setAndApplyDefaultNodeType(
-    nodeType: NodeType,
-    addToHistory = true
-  ): boolean {
-    if (!this.renderer) return false;
-
-    const oldNodeType = this.configuration.defaultNodeType;
-    this.configuration.defaultNodeType = nodeType;
-    this.configuration.sigmaSettings.defaultNodeType = nodeType;
-    this.renderer.settings.defaultNodeType = nodeType;
-
-    this.renderer.process();
-    this.renderer.refresh();
-
-    if (this.isHistoryEnabled && addToHistory) {
-      this.history?.addAction(
-        { nodeType: oldNodeType },
-        ActionType.UPDATE_NODE_TYPE,
-        { nodeType: nodeType }
-      );
-    }
-
-    return true;
-  }
-
-  /**
    * Drops nodes from the graph.
    *
    * @param nodes - The keys of the nodes (or the whole node) to drop in an array
@@ -672,47 +572,310 @@ class WebGraph extends EventEmitter {
   }
 
   /**
-   * Destroys the WebGraph.
+   * Highlights a node for a specified duration.
+   *
+   * @param nodeKey - The key of the node to highlight
+   * @param duration - The duration of the highlight in milliseconds
    *
    * @public
    */
-  public destroy(): void {
-    this.forceAtlas2WebWorker?.stop();
-    this.forceAtlas2WebWorker?.kill();
-    this.forceAtlas2WebWorker = undefined;
-    this.isForceAtlas2WebWorkerActive = false;
+  public highlightNode(nodeKey: NodeKey, duration: number): void {
+    this.renderer?.highlightNode(nodeKey);
 
-    this.renderer?.clear();
-    this.renderer?.kill();
-    this.renderer = undefined;
-
-    this.appState = AppState.INACTIVE;
-
-    this.removeAllListeners();
-
-    this.highlightedNodes = new Set();
-    this.highlightedEdges = new Set();
-
-    this.hoveredNode = undefined;
-
-    this.history = undefined;
+    setTimeout(() => {
+      this.renderer?.unhighlightNode(nodeKey);
+    }, duration);
   }
 
   /**
-   * Exports the graph as a Graphology.SerializedGraph object.
+   * Sets and applies the requested layout to the graph.
    *
-   * @param [excludeEdges] - whether the edges of the graph should be included (false) or excluded (true), @defaultValue `false`
+   * @param layout - The {@link Layout} to be set and applied
+   * @param layoutConfiguration - The {@link ILayoutConfiguration} of the layout
+   * @param [addToHistory] - True by default. Whether the action should be added to the history or not. @defaultValue `true`
    *
-   * @returns the graph as SerializedGraph object
+   * @returns - true if successful
    *
    * @public
    */
-  public exportGraph(excludeEdges = false): SerializedGraph {
-    if (excludeEdges) {
-      this.graphData.clearEdges();
+  public setAndApplyLayout(
+    layout: Layout,
+    layoutConfiguration: ILayoutConfiguration,
+    addToHistory = true
+  ): boolean {
+    if (this.isForceAtlas2WebWorkerActive) return false;
+
+    if (this.isHistoryEnabled && addToHistory) {
+      const oldLayout = this.configuration.layout;
+      const layoutMapping: { [key: string]: { x: number; y: number } } = {};
+
+      if (oldLayout === Layout.FORCEATLAS2 || layout === Layout.FORCEATLAS2) {
+        this.graphData.nodes().forEach((node) => {
+          const attr = this.graphData.getNodeAttributes(node);
+          layoutMapping[node] = { x: attr.x, y: attr.y };
+        });
+      }
+
+      this.history?.addAction(
+        {
+          layout: oldLayout,
+          layoutConfig: this.configuration.layoutConfiguration,
+          layoutMapping: layoutMapping,
+        },
+        ActionType.SET_LAYOUT,
+        {
+          layout: layout,
+          layoutConfig: layoutConfiguration,
+        }
+      );
     }
 
-    return this.graphData.export();
+    this.configuration.layout = layout;
+    this.configuration.layoutConfiguration = layoutConfiguration;
+
+    this.applyLayout(layout, layoutConfiguration, false, false);
+
+    return true;
+  }
+
+  /**
+   * Applies the currently set layout again. Used for clustering algorithms.
+   * If the currently active {@link Layout} is {@link FORCEATLAS2}, the
+   * preAppliedLayout and preAppliedLayoutOptions will be overwritten
+   * with undefined.
+   *
+   * @param [addToHistory] - True by default. Whether the action should be added to the history or not. @defaultValue `true`
+   *
+   * @returns - true if successful
+   *
+   * @public
+   */
+  public reapplyLayout(addToHistory = true): boolean {
+    if (this.isForceAtlas2WebWorkerActive) return false;
+
+    if (
+      this.configuration.layout === Layout.FORCEATLAS2 &&
+      this.configuration.layoutConfiguration.forceAtlas2LayoutOptions
+    ) {
+      this.configuration.layoutConfiguration.forceAtlas2LayoutOptions.preAppliedLayout = undefined;
+      this.configuration.layoutConfiguration.forceAtlas2LayoutOptions.preAppliedLayoutOptions = undefined;
+    }
+
+    if (this.isHistoryEnabled && addToHistory) {
+      const oldLayout = this.configuration.layout;
+      const layoutMapping: { [key: string]: { x: number; y: number } } = {};
+
+      if (oldLayout === Layout.FORCEATLAS2) {
+        this.graphData.nodes().forEach((node) => {
+          const attr = this.graphData.getNodeAttributes(node);
+          layoutMapping[node] = { x: attr.x, y: attr.y };
+        });
+      }
+
+      this.history?.addAction(
+        {
+          layout: oldLayout,
+          layoutConfig: this.configuration.layoutConfiguration,
+          layoutMapping: layoutMapping,
+        },
+        ActionType.SET_LAYOUT,
+        {
+          layout: oldLayout,
+          layoutConfig: this.configuration.layoutConfiguration,
+        }
+      );
+    }
+
+    this.applyLayout(
+      this.configuration.layout,
+      this.configuration.layoutConfiguration,
+      false,
+      false
+    );
+
+    return true;
+  }
+
+  /**
+   * Starts the ForceAtlas2 web worker. Please be aware that just the initial and final position of the nodes
+   * can be tracked by history. Intermediate results are not logged!
+   *
+   * @param [addToHistory] - True by default. Whether the action should be added to the history or not. @defaultValue `true`
+   *
+   * @throws Error - If the renderer is not defined or the 'useForceAtlas2WebWorker' is not enabled
+   *
+   * @returns - True if successful
+   *
+   * @public
+   */
+  public startForceAtlas2WebWorker(addToHistory = true): boolean {
+    if (!this.renderer || !this.isRenderingActive) {
+      throw new Error(
+        "Can't retrieve ForceAtlas2 web worker when rendering is inactive."
+      );
+    }
+
+    if (!this.configuration.useForceAtlas2WebWorker) {
+      throw new Error(
+        "ForceAtlas2 web worker was not enabled. Use the 'useForceAtlas2WebWorker' configuration to enable it."
+      );
+    }
+
+    if (!this.forceAtlas2WebWorker) return false;
+
+    if (this.isHistoryEnabled && addToHistory) {
+      const oldLayout = this.configuration.layout;
+      const layoutMapping: { [key: string]: { x: number; y: number } } = {};
+
+      if (oldLayout === Layout.FORCEATLAS2) {
+        this.graphData.nodes().forEach((node) => {
+          const attr = this.graphData.getNodeAttributes(node);
+          layoutMapping[node] = { x: attr.x, y: attr.y };
+        });
+      }
+
+      this.history?.addAction(
+        {
+          layout: oldLayout,
+          layoutConfig: this.configuration.layoutConfiguration,
+          layoutMapping: layoutMapping,
+        },
+        ActionType.SET_LAYOUT_WEB_WORKER,
+        {}
+      );
+    }
+
+    this.configuration.layout = Layout.FORCEATLAS2;
+
+    this.forceAtlas2WebWorker.start();
+    this.isForceAtlas2WebWorkerActive = true;
+
+    return true;
+  }
+
+  /**
+   * Stops the ForceAtlas2 web worker. Please be aware that just the initial and final position of the nodes
+   * can be tracked by history. Intermediate results are not logged!
+   *
+   * @param [addToHistory] - True by default. Whether the action should be added to the history or not. @defaultValue `true`
+   *
+   * @throws Error - If the renderer is not defined or the 'useForceAtlas2WebWorker' is not enabled
+   *
+   * @returns - True if successful
+   *
+   * @public
+   */
+  public stopForceAtlas2WebWorker(addToHistory = true): boolean {
+    if (!this.renderer || !this.isRenderingActive) {
+      throw new Error(
+        "Can't retrieve ForceAtlas2 web worker when rendering is inactive."
+      );
+    }
+
+    if (!this.configuration.useForceAtlas2WebWorker) {
+      throw new Error(
+        "ForceAtlas2 web worker was not enabled. Use the 'useForceAtlas2WebWorker' configuration to enable it."
+      );
+    }
+
+    if (!this.forceAtlas2WebWorker) return false;
+
+    this.forceAtlas2WebWorker.stop();
+    this.isForceAtlas2WebWorkerActive = false;
+
+    if (this.isHistoryEnabled && addToHistory) {
+      const layoutMapping: { [key: string]: { x: number; y: number } } = {};
+
+      this.graphData.nodes().forEach((node) => {
+        const attr = this.graphData.getNodeAttributes(node);
+        layoutMapping[node] = { x: attr.x, y: attr.y };
+      });
+
+      const latestAction = this.history?.getLatestAction();
+
+      if (
+        latestAction &&
+        latestAction.actionType === ActionType.SET_LAYOUT_WEB_WORKER
+      ) {
+        latestAction.newData = {
+          layout: Layout.FORCEATLAS2,
+          layoutMapping: layoutMapping,
+        };
+      }
+    }
+
+    return true;
+  }
+
+  /**
+   * Starts/stops the ForceAtlas2 web worker. Please be aware that just the initial and final position of the nodes
+   * can be tracked by history. Intermediate results are not logged!
+   *
+   * @param [addToHistory] - True by default. Whether the action should be added to the history or not. @defaultValue `true`
+   *
+   * @throws Error - If the renderer is not defined or the 'useForceAtlas2WebWorker' is not enabled
+   *
+   * @returns - True if successful
+   *
+   * @public
+   */
+  public toggleForceAtlas2WebWorker(addToHistory = true): boolean {
+    if (!this.renderer || !this.isRenderingActive) {
+      throw new Error(
+        "Can't retrieve ForceAtlas2 web worker when rendering is inactive."
+      );
+    }
+
+    if (!this.configuration.useForceAtlas2WebWorker) {
+      throw new Error(
+        "ForceAtlas2 web worker was not enabled. Use the 'useForceAtlas2WebWorker' configuration to enable it."
+      );
+    }
+
+    if (!this.forceAtlas2WebWorker) return false;
+
+    if (this.isForceAtlas2WebWorkerActive) {
+      this.stopForceAtlas2WebWorker(addToHistory);
+    } else {
+      this.startForceAtlas2WebWorker(addToHistory);
+    }
+
+    return true;
+  }
+
+  /**
+   * Sets and applies the requested nodeType as default node type.
+   *
+   * @param nodeType - The {@link NodeType} to be set and applied
+   * @param [addToHistory] - True by default. Whether the action should be added to the history or not. @defaultValue `true`
+   *
+   * @returns - true if successful
+   *
+   * @public
+   */
+  public setAndApplyDefaultNodeType(
+    nodeType: NodeType,
+    addToHistory = true
+  ): boolean {
+    if (!this.renderer) return false;
+
+    const oldNodeType = this.configuration.defaultNodeType;
+    this.configuration.defaultNodeType = nodeType;
+    this.configuration.sigmaSettings.defaultNodeType = nodeType;
+    this.renderer.settings.defaultNodeType = nodeType;
+
+    this.renderer.process();
+    this.renderer.refresh();
+
+    if (this.isHistoryEnabled && addToHistory) {
+      this.history?.addAction(
+        { nodeType: oldNodeType },
+        ActionType.UPDATE_NODE_TYPE,
+        { nodeType: nodeType }
+      );
+    }
+
+    return true;
   }
 
   /**
@@ -741,6 +904,8 @@ class WebGraph extends EventEmitter {
         "The history is not enabled. Use the 'enableHistory' boolean to enable it in the IGraphConfiguration."
       );
     }
+
+    if (this.isForceAtlas2WebWorkerActive) return false;
 
     const latestAction = this.history?.getLatestAction();
     if (!latestAction) return false;
@@ -832,6 +997,22 @@ class WebGraph extends EventEmitter {
           false
         );
         break;
+
+      case ActionType.SET_LAYOUT_WEB_WORKER:
+        if (
+          !latestAction.oldData.layout ||
+          !latestAction.oldData.layoutConfig ||
+          !latestAction.oldData.layoutMapping
+        ) {
+          return false;
+        }
+
+        this.configuration.layout = latestAction.oldData.layout;
+        this.configuration.layoutConfiguration =
+          latestAction.oldData.layoutConfig;
+        this.animateGraph(this.graphData, latestAction.oldData.layoutMapping);
+
+        break;
     }
 
     this.history?.markLatestActionAsReverted();
@@ -864,6 +1045,8 @@ class WebGraph extends EventEmitter {
         "The history is not enabled. Use the 'enableHistory' boolean to enable it in the IGraphConfiguration."
       );
     }
+
+    if (this.isForceAtlas2WebWorkerActive) return false;
 
     const latestRevertedAction = this.history?.getLatestRevertedAction();
     if (!latestRevertedAction) return false;
@@ -935,6 +1118,22 @@ class WebGraph extends EventEmitter {
           false
         );
         break;
+
+      case ActionType.SET_LAYOUT_WEB_WORKER:
+        if (
+          !latestRevertedAction.newData.layout ||
+          !latestRevertedAction.newData.layoutMapping
+        ) {
+          return false;
+        }
+
+        this.configuration.layout = latestRevertedAction.newData.layout;
+        this.animateGraph(
+          this.graphData,
+          latestRevertedAction.newData.layoutMapping
+        );
+
+        break;
     }
 
     this.history?.markLatestRevertedActionAsNotReverted();
@@ -942,132 +1141,61 @@ class WebGraph extends EventEmitter {
   }
 
   /**
-   * Gets the camera. All interactions with the camera are not tracked by the history.
+   * Clears the history and re-initializes it.
    *
-   * @throws Error - If the renderer is not defined.
-   *
-   * @returns - The camera object of the renderer.
-   *
-   * @public
+   * @returns true if history has been successfully cleared, false if not
    */
-  public get camera(): Camera {
-    if (!this.renderer || !this.isRenderingActive) {
-      throw new Error("Can't retrieve camera when rendering is inactive.");
-    }
+  public clearHistory(): boolean {
+    if (this.isForceAtlas2WebWorkerActive) return false;
 
-    return this.renderer.getCamera();
-  }
-
-  /**
-   * Starts the ForceAtlas2 web worker. Please be aware that all interactions with the web worker
-   * are not tracked by the history.
-   *
-   * @throws Error - If the renderer is not defined or the 'useForceAtlas2WebWorker' is not enabled
-   *
-   * @returns - True if successful
-   *
-   * @public
-   */
-  public startForceAtlas2WebWorker(): boolean {
-    if (!this.renderer || !this.isRenderingActive) {
-      throw new Error(
-        "Can't retrieve ForceAtlas2 web worker when rendering is inactive."
-      );
-    }
-
-    if (!this.configuration.useForceAtlas2WebWorker) {
-      throw new Error(
-        "ForceAtlas2 web worker was not enabled. Use the 'useForceAtlas2WebWorker' configuration to enable it."
-      );
-    }
-
-    if (!this.forceAtlas2WebWorker) return false;
-
-    this.forceAtlas2WebWorker.start();
-    this.isForceAtlas2WebWorkerActive = true;
+    this.history = undefined;
+    this.history = new HistoryManager();
 
     return true;
   }
 
   /**
-   * Stops the ForceAtlas2 web worker. Please be aware that all interactions with the web worker
-   * are not tracked by the history.
-   *
-   * @throws Error - If the renderer is not defined or the 'useForceAtlas2WebWorker' is not enabled
-   *
-   * @returns - True if successful
+   * Destroys the WebGraph.
    *
    * @public
    */
-  public stopForceAtlas2WebWorker(): boolean {
-    if (!this.renderer || !this.isRenderingActive) {
-      throw new Error(
-        "Can't retrieve ForceAtlas2 web worker when rendering is inactive."
-      );
-    }
-
-    if (!this.configuration.useForceAtlas2WebWorker) {
-      throw new Error(
-        "ForceAtlas2 web worker was not enabled. Use the 'useForceAtlas2WebWorker' configuration to enable it."
-      );
-    }
-
-    if (!this.forceAtlas2WebWorker) return false;
-
-    this.forceAtlas2WebWorker.stop();
+  public destroy(): void {
+    this.forceAtlas2WebWorker?.stop();
+    this.forceAtlas2WebWorker?.kill();
+    this.forceAtlas2WebWorker = undefined;
     this.isForceAtlas2WebWorkerActive = false;
 
-    return true;
+    this.renderer?.clear();
+    this.renderer?.kill();
+    this.renderer = undefined;
+
+    this.appState = AppState.INACTIVE;
+
+    this.removeAllListeners();
+
+    this.highlightedNodes = new Set();
+    this.highlightedEdges = new Set();
+
+    this.hoveredNode = undefined;
+
+    this.history = undefined;
   }
 
   /**
-   * Starts/stops the ForceAtlas2 web worker. Please be aware that all interactions with the web worker
-   * are not tracked by the history.
+   * Exports the graph as a Graphology.SerializedGraph object.
    *
-   * @throws Error - If the renderer is not defined or the 'useForceAtlas2WebWorker' is not enabled
+   * @param [excludeEdges] - whether the edges of the graph should be included (false) or excluded (true), @defaultValue `false`
    *
-   * @returns - True if successful
-   *
-   * @public
-   */
-  public toggleForceAtlas2WebWorker(): boolean {
-    if (!this.renderer || !this.isRenderingActive) {
-      throw new Error(
-        "Can't retrieve ForceAtlas2 web worker when rendering is inactive."
-      );
-    }
-
-    if (!this.configuration.useForceAtlas2WebWorker) {
-      throw new Error(
-        "ForceAtlas2 web worker was not enabled. Use the 'useForceAtlas2WebWorker' configuration to enable it."
-      );
-    }
-
-    if (!this.forceAtlas2WebWorker) return false;
-
-    if (this.isForceAtlas2WebWorkerActive) {
-      this.stopForceAtlas2WebWorker();
-    } else {
-      this.startForceAtlas2WebWorker();
-    }
-
-    return true;
-  }
-
-  /**
-   * Highlights a node for a specified duration.
-   *
-   * @param nodeKey - The key of the node to highlight
-   * @param duration - The duration of the highlight in milliseconds
+   * @returns the graph as SerializedGraph object
    *
    * @public
    */
-  public highlightNode(nodeKey: NodeKey, duration: number): void {
-    this.renderer?.highlightNode(nodeKey);
+  public exportGraph(excludeEdges = false): SerializedGraph {
+    if (excludeEdges) {
+      this.graphData.clearEdges();
+    }
 
-    setTimeout(() => {
-      this.renderer?.unhighlightNode(nodeKey);
-    }, duration);
+    return this.graphData.export();
   }
 
   /**---------------------------------------------------------------------------
@@ -1106,7 +1234,8 @@ class WebGraph extends EventEmitter {
     if (
       useWorker &&
       layout === Layout.FORCEATLAS2 &&
-      this.configuration.useForceAtlas2WebWorker
+      this.configuration.useForceAtlas2WebWorker &&
+      !this.forceAtlas2WebWorker
     ) {
       // this will overwrite the setImmediate which is not supported widely but used in the graphology library
       // to work in almost every environment
@@ -1154,7 +1283,10 @@ class WebGraph extends EventEmitter {
         this.isForceAtlas2WebWorkerActive = false;
       }, this.configuration.useForceAtlas2WebWorker);
       return;
-    } else if (this.configuration.useForceAtlas2WebWorker) {
+    } else if (
+      this.configuration.useForceAtlas2WebWorker &&
+      !this.forceAtlas2WebWorker
+    ) {
       let forceAtlas2LayoutOptions = layoutConfig.forceAtlas2LayoutOptions;
 
       if (!forceAtlas2LayoutOptions) {
@@ -1381,6 +1513,18 @@ class WebGraph extends EventEmitter {
     );
   }
 
+  /**
+   * Generates a node info box by mounting the INodeInfoBox of the corresponding
+   * node into the given container.
+   *
+   * @param nodeInfoBox - The node info box to display
+   * @param nodeInfoBoxContainer - The container to merge the node info box into
+   * @param data - The nodes attributes the node info box is mounted for
+   * @param [context] - The canvas context the node info box is mounted into
+   * @param [settings] - The sigma.js settings
+   *
+   * @internal
+   */
   private generateNodeInfoBox(
     nodeInfoBox: INodeInfoBox,
     nodeInfoBoxContainer: HTMLElement,

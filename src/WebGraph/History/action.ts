@@ -28,6 +28,7 @@ enum ActionType {
 
   // Layout
   SET_LAYOUT = "set_layout",
+  SET_LAYOUT_WEB_WORKER = "set_layout_web_worker",
 }
 
 /**
