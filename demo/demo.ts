@@ -566,6 +566,14 @@ document.getElementById("redo")?.addEventListener("click", (e) => {
   webGraph.redo();
 });
 
+document.getElementById("clearHistory")?.addEventListener("click", (e) => {
+  e.preventDefault();
+
+  if (!webGraph || !webGraph.isRenderingActive) return;
+
+  webGraph.clearHistory();
+});
+
 /**---------------------------------
  * Settings Menu - Camera
  *--------------------------------*/

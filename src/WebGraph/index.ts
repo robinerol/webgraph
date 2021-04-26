@@ -727,12 +727,10 @@ class WebGraph extends EventEmitter {
       const oldLayout = this.configuration.layout;
       const layoutMapping: { [key: string]: { x: number; y: number } } = {};
 
-      if (oldLayout === Layout.FORCEATLAS2) {
-        this.graphData.nodes().forEach((node) => {
-          const attr = this.graphData.getNodeAttributes(node);
-          layoutMapping[node] = { x: attr.x, y: attr.y };
-        });
-      }
+      this.graphData.nodes().forEach((node) => {
+        const attr = this.graphData.getNodeAttributes(node);
+        layoutMapping[node] = { x: attr.x, y: attr.y };
+      });
 
       this.history?.addAction(
         {
