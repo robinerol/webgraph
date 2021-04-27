@@ -207,12 +207,29 @@ class WebGraph extends EventEmitter {
 
     this.appState = AppState.ACTIVE;
 
-    this.applyLayout(
-      this.configuration.layout,
-      this.configuration.layoutConfiguration,
-      true,
-      this.configuration.useForceAtlas2WebWorker !== undefined
-    );
+    if (
+      this.configuration.useForceAtlas2WebWorker &&
+      this.configuration.layout === Layout.FORCEATLAS2
+    ) {
+      // use forceatlas2 web worker and also forceatlas2 as layout
+      this.initializeForceAtlas2WebWorker(true);
+    } else if (this.configuration.useForceAtlas2WebWorker) {
+      // use forceatlas2 web worker but another layout initially
+      this.initializeForceAtlas2WebWorker(false);
+
+      this.applyLayout(
+        this.configuration.layout,
+        this.configuration.layoutConfiguration,
+        true
+      );
+    } else {
+      // don't use the forceatlas2 web worker
+      this.applyLayout(
+        this.configuration.layout,
+        this.configuration.layoutConfiguration,
+        true
+      );
+    }
 
     this.overwriteRenderSettings();
 
@@ -633,7 +650,7 @@ class WebGraph extends EventEmitter {
     this.configuration.layout = layout;
     this.configuration.layoutConfiguration = layoutConfiguration;
 
-    this.applyLayout(layout, layoutConfiguration, false, false);
+    this.applyLayout(layout, layoutConfiguration, false);
 
     return true;
   }
@@ -689,7 +706,6 @@ class WebGraph extends EventEmitter {
     this.applyLayout(
       this.configuration.layout,
       this.configuration.layoutConfiguration,
-      false,
       false
     );
 
@@ -1214,86 +1230,19 @@ class WebGraph extends EventEmitter {
    *
    * @param layout - The {@link Layout} to apply to the graph
    * @param layoutConfig - The corresponding {@link ILayoutConfiguration} to the given layout
-   * @param initialLayout - true: If this is the first layout to apply, apply random layout for incoming animation | false: nothing happens
-   * @param useWorker - Whether to use the ForceAtlas2 worker or not
+   * @param randomlyInitializeNodes - true: Whether the nodes should be initialized with a random x and y value | false: nothing happens
    *
    * @internal
    */
   private applyLayout(
     layout: Layout,
     layoutConfig: ILayoutConfiguration,
-    initialLayout: boolean,
-    useWorker: boolean
+    randomlyInitializeNodes: boolean
   ): void {
-    if (initialLayout && layout !== Layout.PREDEFINED) {
+    // to prevent nodes from having no x and y coordinate, set random x and y when initializing for the first time
+    // this is necessary for the animation to interpolate between two points rather than a point and nothing
+    if (randomlyInitializeNodes && layout !== Layout.PREDEFINED) {
       random.assign(this.graphData);
-    }
-
-    if (
-      useWorker &&
-      layout === Layout.FORCEATLAS2 &&
-      this.configuration.useForceAtlas2WebWorker &&
-      !this.forceAtlas2WebWorker
-    ) {
-      // this will overwrite the setImmediate which is not supported widely but used in the graphology library
-      // to work in almost every environment
-      // see: https://developer.mozilla.org/en-US/docs/Web/API/Window/setImmediate
-      // see also: https://stackoverflow.com/questions/52164025/onsenui-uncaught-referenceerror-setimmediate-is-not-defined
-      (window.setImmediate as any) = window.setTimeout; // eslint-disable-line @typescript-eslint/no-explicit-any
-
-      let forceAtlas2LayoutOptions = layoutConfig.forceAtlas2LayoutOptions;
-
-      if (!forceAtlas2LayoutOptions) {
-        forceAtlas2LayoutOptions = DEFAULT_FORCEATLAS2_LAYOUT_OPTIONS;
-      }
-
-      this.forceAtlas2WebWorker = new FA2Layout(this.graphData, {
-        settings: forceAtlas2LayoutOptions?.settings,
-      });
-
-      // if custom layout options are available
-      if (forceAtlas2LayoutOptions) {
-        const preAppliedLayout: Layout | undefined =
-          forceAtlas2LayoutOptions.preAppliedLayout;
-
-        // if another layout should be pre applied to the ForceAtlas2
-        if (preAppliedLayout) {
-          if (preAppliedLayout === Layout.FORCEATLAS2) {
-            throw new Error(
-              "preAppliedLayout for Layout.FORCEATLAS2 can't be Layout.FORCEATLAS2"
-            );
-          }
-
-          this.applyLayout(
-            preAppliedLayout,
-            forceAtlas2LayoutOptions.preAppliedLayoutOptions || {},
-            initialLayout,
-            false
-          );
-        }
-      }
-
-      this.forceAtlas2WebWorker.start();
-      this.isForceAtlas2WebWorkerActive = true;
-
-      setTimeout(() => {
-        this.forceAtlas2WebWorker?.stop();
-        this.isForceAtlas2WebWorkerActive = false;
-      }, this.configuration.useForceAtlas2WebWorker);
-      return;
-    } else if (
-      this.configuration.useForceAtlas2WebWorker &&
-      !this.forceAtlas2WebWorker
-    ) {
-      let forceAtlas2LayoutOptions = layoutConfig.forceAtlas2LayoutOptions;
-
-      if (!forceAtlas2LayoutOptions) {
-        forceAtlas2LayoutOptions = DEFAULT_FORCEATLAS2_LAYOUT_OPTIONS;
-      }
-
-      this.forceAtlas2WebWorker = new FA2Layout(this.graphData, {
-        settings: forceAtlas2LayoutOptions?.settings,
-      });
     }
 
     let newLayout;
@@ -1409,6 +1358,62 @@ class WebGraph extends EventEmitter {
         this.emit("syncLayoutCompleted");
       }
     );
+  }
+
+  /**
+   * Initializes the ForceAtlas2 web worker.
+   *
+   * @param runAfterInitialization - Whether the web worker should be started after initialization
+   *
+   * @internal
+   */
+  private initializeForceAtlas2WebWorker(runAfterInitialization = false): void {
+    if (this.forceAtlas2WebWorker) return;
+
+    // this will overwrite the setImmediate which is not supported widely but used in the graphology library
+    // to work in almost every environment
+    // see: https://developer.mozilla.org/en-US/docs/Web/API/Window/setImmediate
+    // see also: https://stackoverflow.com/questions/52164025/onsenui-uncaught-referenceerror-setimmediate-is-not-defined
+    (window.setImmediate as any) = window.setTimeout; // eslint-disable-line @typescript-eslint/no-explicit-any
+
+    let forceAtlas2LayoutOptions = this.configuration.layoutConfiguration
+      .forceAtlas2LayoutOptions;
+    if (!forceAtlas2LayoutOptions) {
+      forceAtlas2LayoutOptions = DEFAULT_FORCEATLAS2_LAYOUT_OPTIONS;
+    }
+
+    this.forceAtlas2WebWorker = new FA2Layout(this.graphData, {
+      settings: forceAtlas2LayoutOptions?.settings,
+    });
+
+    // if custom layout options are available
+    if (runAfterInitialization && forceAtlas2LayoutOptions) {
+      const preAppliedLayout: Layout | undefined =
+        forceAtlas2LayoutOptions.preAppliedLayout;
+
+      // if another layout should be pre applied to the ForceAtlas2
+      if (preAppliedLayout) {
+        if (preAppliedLayout === Layout.FORCEATLAS2) {
+          throw new Error(
+            "preAppliedLayout for Layout.FORCEATLAS2 can't be Layout.FORCEATLAS2"
+          );
+        }
+
+        this.applyLayout(
+          preAppliedLayout,
+          forceAtlas2LayoutOptions.preAppliedLayoutOptions || {},
+          true
+        );
+      }
+
+      this.forceAtlas2WebWorker.start();
+      this.isForceAtlas2WebWorkerActive = true;
+
+      setTimeout(() => {
+        this.forceAtlas2WebWorker?.stop();
+        this.isForceAtlas2WebWorkerActive = false;
+      }, this.configuration.useForceAtlas2WebWorker);
+    }
   }
 
   /**
