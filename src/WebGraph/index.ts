@@ -84,6 +84,7 @@ class WebGraph extends EventEmitter {
   private isForceAtlas2WebWorkerActive = false;
   private isEdgeRenderingDisabled = false;
   private isJustImportantEdgesEnabled = false;
+  private isNodeBackdropRenderingEnabled = false;
 
   /**
    * Creates an instance of web graph.
@@ -247,6 +248,7 @@ class WebGraph extends EventEmitter {
 
     this.isEdgeRenderingDisabled = this.renderer.settings.hideEdges;
     this.isJustImportantEdgesEnabled = this.renderer.settings.renderJustImportantEdges;
+    this.isNodeBackdropRenderingEnabled = this.renderer.settings.renderNodeBackdrop;
 
     this.emit("rendered");
   }
@@ -888,6 +890,48 @@ class WebGraph extends EventEmitter {
         { nodeType: nodeType }
       );
     }
+
+    return true;
+  }
+
+  /**
+   * Toggles node backdrop rendering.
+   *
+   * @params colors - A record holding each clusters color. The key is the cluster id, the value the clusters color.
+   * @param [manuallyEnOrDisable] - if true: manually enables the node backdrop rendering, if false: disables it, otherwise toggles
+   *
+   * @throws Error - if rendering is not active
+   *
+   * @returns true if node backdrop rendering was successfully enabled
+   *
+   * @public
+   */
+  public toggleNodeBackdropRendering(
+    colors: Record<number, string>,
+    manuallyEnOrDisable?: boolean
+  ): boolean {
+    if (!this.renderer || !this.isRenderingActive) {
+      throw new Error(
+        "Can't enable node backdrop rendering when renderer is inactive. Use the configuration of the constructor to do so."
+      );
+    }
+
+    this.renderer.settings.clusterColors = colors;
+    this.configuration.sigmaSettings.clusterColors = colors;
+
+    if (manuallyEnOrDisable !== undefined) {
+      this.renderer.settings.renderNodeBackdrop = manuallyEnOrDisable;
+      this.configuration.sigmaSettings.renderNodeBackdrop = manuallyEnOrDisable;
+      this.isNodeBackdropRenderingEnabled = manuallyEnOrDisable;
+      return true;
+    }
+
+    this.isNodeBackdropRenderingEnabled = !this.isNodeBackdropRenderingEnabled;
+    this.renderer.settings.renderNodeBackdrop = this.isNodeBackdropRenderingEnabled;
+    this.configuration.sigmaSettings.renderNodeBackdrop = this.isNodeBackdropRenderingEnabled;
+
+    this.renderer.needToProcess = true;
+    this.renderer.scheduleRender();
 
     return true;
   }
@@ -1730,12 +1774,7 @@ class WebGraph extends EventEmitter {
       triangle: NodeTriangleProgram,
     };
 
-    if (
-      this.configuration.sigmaSettings.renderNodeBackdrop &&
-      !this.configuration.sigmaSettings.nodeBackdropProgram
-    ) {
-      this.configuration.sigmaSettings.nodeBackdropProgram = NodeBackdropProgram;
-    }
+    this.configuration.sigmaSettings.nodeBackdropProgram = NodeBackdropProgram;
   }
 
   /**
