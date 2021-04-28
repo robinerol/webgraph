@@ -9,6 +9,7 @@ import {
   NodeType,
   LabelSelector,
 } from "../src/index";
+import { SerializedEdge, SerializedNode } from "graphology-types";
 import Graph, { MultiGraph } from "graphology";
 
 /**---------------------------------------------------------------------------
@@ -21,7 +22,7 @@ const webGraphContextMenuContainer = document.getElementById("webGraphCM");
 const webGraphNodeInfoBox = document.getElementById("webGraphNIB");
 const status = document.getElementById("status");
 
-async function drawGraph(graphDataJSON: any[]) {
+async function drawFullGraph(graphDataJSON: any[]) {
   if (!webGraphContainer) {
     throw new Error("No div container with the ID 'webGraph' has been found.");
   }
@@ -251,6 +252,113 @@ async function drawGraph(graphDataJSON: any[]) {
   }
 }
 
+function drawGraph(json: any[], baseUrl: string): void {
+  if (!webGraphContainer) {
+    throw new Error("No div container with the ID 'webGraph' has been found.");
+  }
+
+  if (!webGraphContextMenuContainer) {
+    throw new Error(
+      "No div container with the ID 'webGraphCM' has been found."
+    );
+  }
+
+  if (!webGraphNodeInfoBox) {
+    throw new Error(
+      "No div container with the ID 'webGraphNIB' has been found."
+    );
+  }
+
+  if (webGraph?.isRenderingActive) webGraph.destroy();
+
+  graph = new MultiGraph();
+
+  json.forEach((result) => {
+    graph?.addNode(result.id, {
+      label: result.author + ", " + result.year,
+      size: 10,
+      category: 0,
+      color: "#30638E",
+      score: result.score,
+      important: result.important,
+    });
+  });
+
+  const contextMenus = {
+    container: webGraphContextMenuContainer,
+    cssHide: "hide",
+    cssShow: "show",
+    entries: {
+      0: [
+        {
+          label: "Load 1 Node",
+          callback: (key: string) => loadNNodes(1, key, baseUrl),
+        },
+        {
+          label: "Load 5 Nodes",
+          callback: (key: string) => loadNNodes(5, key, baseUrl),
+        },
+        {
+          label: "Load 10 Node",
+          callback: (key: string) => loadNNodes(10, key, baseUrl),
+        },
+      ],
+    },
+  };
+
+  webGraph = new WebGraph(webGraphContainer, graph, {
+    layout: Layout.CIRCLEPACK,
+    useForceAtlas2WebWorker: 1,
+    contextMenus: contextMenus,
+  });
+
+  webGraph.render();
+}
+
+function loadNNodes(n: number, key: string, url: string): void {
+  fetchGraphData(url + n).then((json) => {
+    const newNodes = Array<SerializedNode>();
+    const newEdges = new Set<SerializedEdge>();
+
+    const nodeData = graph?.getNodeAttributes(key);
+    if (!nodeData) return;
+
+    json.forEach((node) => {
+      const newID = node.id + Math.random() * Math.random();
+
+      const angle = Math.random() * Math.PI * 2;
+
+      newNodes.push({
+        key: newID,
+        attributes: {
+          label: node.author + ", " + node.year,
+          x: nodeData.x + Math.cos(angle) / 10,
+          y: nodeData.y + Math.sin(angle) / 10,
+          category: 0,
+          color: "#30638E",
+          size: 10,
+        },
+      });
+
+      newEdges.add({
+        source: key,
+        target: newID,
+        attributes: {
+          color: "#e5e5e5",
+          weight: 1.0,
+        },
+      });
+    });
+
+    webGraph?.mergeNodes(newNodes);
+    webGraph?.mergeEdges(newEdges);
+
+    webGraph?.startForceAtlas2WebWorker();
+
+    setTimeout(() => webGraph?.stopForceAtlas2WebWorker(), 500);
+  });
+}
+
 function drawExampleGraph() {
   if (!webGraphContainer) {
     throw new Error("No div container with the ID 'webGraph' has been found.");
@@ -259,7 +367,7 @@ function drawExampleGraph() {
   graph = new Graph();
 
   graph.addNode("Node 1", {
-    label: "Node 1",
+    label: "Hello",
     x: 1,
     y: 1,
     color: "#D1495B",
@@ -268,7 +376,7 @@ function drawExampleGraph() {
   });
 
   graph.addNode("Node 2", {
-    label: "Node 2",
+    label: "Graph",
     x: 1,
     y: 0,
     color: "#EDAE49",
@@ -277,7 +385,7 @@ function drawExampleGraph() {
   });
 
   graph.addNode("Node 3", {
-    label: "Node 3",
+    label: "and World!",
     x: 0,
     y: 0,
     color: "#30638E",
@@ -312,37 +420,10 @@ window.onload = () => {
   drawExampleGraph();
 };
 
-/**---------------------------------------------------------------------------
- * Settings Menu
- *--------------------------------------------------------------------------*/
-/**---------------------------------
- * Settings Menu - API endpoint
- *--------------------------------*/
-document.getElementById("searchButton")?.addEventListener("click", (e) => {
-  e.preventDefault();
-
-  const searchEndpointElement = document.getElementById("searchEndpoint");
-  const searchInputElement = document.getElementById("searchInput");
-
-  if (!searchEndpointElement || !searchInputElement) return;
-
-  // parse inputs to url
-  const url =
-    (<HTMLInputElement>searchEndpointElement).value +
-    encodeURIComponent((<HTMLInputElement>searchInputElement).value);
-
-  if (status) {
-    status.innerHTML = "Working...";
-  }
-
-  fetchGraphData(url);
-});
-
-async function fetchGraphData(url: string) {
+function fetchGraphData(url: string): Promise<any[]> {
   // fetch json resource
-  await fetch(url)
+  return fetch(url)
     .then((response) => response.json())
-    .then((json) => drawGraph(json))
     .catch((e) => {
       console.error(e);
       drawExampleGraph();
@@ -351,6 +432,57 @@ async function fetchGraphData(url: string) {
       }
     });
 }
+
+/**---------------------------------------------------------------------------
+ * Settings Menu
+ *--------------------------------------------------------------------------*/
+/**---------------------------------
+ * Settings Menu - API endpoint
+ *--------------------------------*/
+document.getElementById("graphButton")?.addEventListener("click", async (e) => {
+  e.preventDefault();
+
+  const searchEndpointElement = document.getElementById("searchEndpoint");
+  const searchGraphRoute = document.getElementById("graphRoute");
+  const searchGraphQuery = document.getElementById("graphQuery");
+
+  if (!searchEndpointElement || !searchGraphRoute || !searchGraphQuery) return;
+
+  // parse inputs to url
+  const url =
+    (<HTMLInputElement>searchEndpointElement).value +
+    (<HTMLInputElement>searchGraphRoute).value +
+    encodeURIComponent((<HTMLInputElement>searchGraphQuery).value);
+
+  if (status) {
+    status.innerHTML = "Working...";
+  }
+
+  fetchGraphData(url).then((json) => drawFullGraph(json));
+});
+
+/**---------------------------------
+ * Settings Menu - Start blank
+ *--------------------------------*/
+
+document.getElementById("blankButton")?.addEventListener("click", async (e) => {
+  e.preventDefault();
+
+  const searchEndpointElement = document.getElementById("searchEndpoint");
+  const blankRoute = document.getElementById("blankRoute");
+  const blankAmount = document.getElementById("blankAmount");
+
+  if (!blankAmount || !blankRoute || !searchEndpointElement) return;
+
+  // parse inputs to url
+  const baseUrl =
+    (<HTMLInputElement>searchEndpointElement).value +
+    (<HTMLInputElement>blankRoute).value;
+  const url =
+    baseUrl + encodeURIComponent((<HTMLInputElement>blankAmount).value);
+
+  fetchGraphData(url).then((json) => drawGraph(json, baseUrl));
+});
 
 /**---------------------------------
  * Settings Menu - App Mode

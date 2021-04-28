@@ -9,15 +9,33 @@
       <input
         id="searchEndpoint"
         type="text"
-        value="http://localhost:9002/?q="
+        value="http://localhost:9002"
         placeholder="Endpoint"
       />
-      <input id="searchInput" type="text" placeholder="Query" />
-      <button id="searchButton">Load data!</button>
       <div class="flex-row">
         <span class="flex-row-child status">Status: </span>
         <span class="flex-row-child status" id="status">Idle</span>
       </div>
+      <hr />
+      <label>Load Graph</label>
+      <input
+        id="graphRoute"
+        type="text"
+        placeholder="e.g. /?q=hello"
+        value="/?q="
+      />
+      <input id="graphQuery" type="text" placeholder="Query" />
+      <button id="graphButton">Load data!</button>
+      <hr />
+      <label>Start Blank</label>
+      <input
+        id="blankRoute"
+        type="text"
+        placeholder="e.g. /?q="
+        value="/node/random/?q="
+      />
+      <input id="blankAmount" type="text" placeholder="# of init Nodes" />
+      <button id="blankButton">Load data!</button>
       <hr />
       <label>AppMode</label>
       <div class="flex-row">
