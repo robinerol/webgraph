@@ -743,3 +743,14 @@ document.getElementById("highlightNode")?.addEventListener("click", (e) => {
 
   webGraph.highlightNode(graph?.nodes()[0], 3000);
 });
+
+/**---------------------------------
+ * Settings Menu - Cluster
+ *--------------------------------*/
+document.getElementById("toggleCluster")?.addEventListener("click", (e) => {
+  e.preventDefault();
+
+  if (!webGraph || !webGraph.isRenderingActive || !graph) return;
+
+  webGraph.toggleNodeBackdropRendering();
+});
