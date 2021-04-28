@@ -897,7 +897,7 @@ class WebGraph extends EventEmitter {
   /**
    * Toggles node backdrop rendering.
    *
-   * @params colors - A record holding each clusters color. The key is the cluster id, the value the clusters color.
+   * @params [colors] - A record holding each clusters color. The key is the cluster id, the value the clusters color.
    * @param [manuallyEnOrDisable] - if true: manually enables the node backdrop rendering, if false: disables it, otherwise toggles
    *
    * @throws Error - if rendering is not active
@@ -907,7 +907,7 @@ class WebGraph extends EventEmitter {
    * @public
    */
   public toggleNodeBackdropRendering(
-    colors: Record<number, string>,
+    colors?: Record<number, string>,
     manuallyEnOrDisable?: boolean
   ): boolean {
     if (!this.renderer || !this.isRenderingActive) {
@@ -916,8 +916,10 @@ class WebGraph extends EventEmitter {
       );
     }
 
-    this.renderer.settings.clusterColors = colors;
-    this.configuration.sigmaSettings.clusterColors = colors;
+    if (colors) {
+      this.renderer.settings.clusterColors = colors;
+      this.configuration.sigmaSettings.clusterColors = colors;
+    }
 
     if (manuallyEnOrDisable !== undefined) {
       this.renderer.settings.renderNodeBackdrop = manuallyEnOrDisable;
