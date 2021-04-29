@@ -172,14 +172,14 @@ Here is a list of all available configurations. None of the configurations is ma
     </tr>
     <tr>
       <td><code>layoutConfiguration</code></td>
-      <td><a href="https://github.com/robinerol/webgraph/blob/f27997b49ab51c3fc92924f8790a1d094d8232e2/src/Configuration/layouts.ts#L102">ILayoutConfiguration</a></td>
+      <td><a href="https://github.com/robinerol/webgraph/blob/8cc70e1c25433ad8591a969d79400e5a9f776638/src/Configuration/layouts.ts#L103">ILayoutConfiguration</a></td>
       <td>Configurations to be applied to the selected <code>Layout</code>. More info can be found <a href="https://github.com/graphology/graphology-layout#readme">here</a> and <a href="https://github.com/graphology/graphology-layout-forceatlas2#readme">here</a>.</td>
       <td><code>{predefinedLayoutOptions: {}}</code></td>
     </tr>
     <tr>
       <td><code>initializeForceAtlas2WebWorker</code></td>
       <td>boolean</td>
-      <td>Initializes a <a href="https://developer.mozilla.org/en-US/docs/Web/API/Web_Workers_API">web worker</a> to be used for the <a href="https://github.com/graphology/graphology-layout-forceatlas2#webworker">ForceAtlas2 layout</a>. If not enabled, the ForceAtlas2 will run synchronous with the in the <code>layoutConfiguration</code> defined iterations. <b>Warning:</b> With many nodes/edges/iterations running the algorithm synchronous might block the UI! Using the web worker will execute the algorithm live in the browser. To configure the duration the web worker is running, use the <code>webWorkerRuntime</code> field of the ForceAtlas2<a href="https://github.com/robinerol/webgraph/blob/f27997b49ab51c3fc92924f8790a1d094d8232e2/src/Configuration/layouts.ts#L102">ILayoutConfiguration</a> which takes the time in milliseconds. By default, the web worker is disabled due to <a href="https://caniuse.com/webworkers">compatibility reasons</a>.</td>
+      <td>Initializes a <a href="https://developer.mozilla.org/en-US/docs/Web/API/Web_Workers_API">web worker</a> to be used for the <a href="https://github.com/graphology/graphology-layout-forceatlas2#webworker">ForceAtlas2 layout</a>. If not enabled, the ForceAtlas2 will run synchronous with the in the <code>layoutConfiguration</code> defined iterations. <b>Warning:</b> With many nodes/edges/iterations running the algorithm synchronous might block the UI! Using the web worker will execute the algorithm live in the browser. To configure the duration the web worker is running, use the <code>initialWebWorkerRuntime</code> field of the ForceAtlas2<a href="https://github.com/robinerol/webgraph/blob/8cc70e1c25433ad8591a969d79400e5a9f776638/src/Configuration/layouts.ts#L103">ILayoutConfiguration</a> which takes the time in milliseconds. By default, the web worker is disabled due to <a href="https://caniuse.com/webworkers">compatibility reasons</a>.</td>
       <td><code>false</code></td>
     </tr>
     <tr>
