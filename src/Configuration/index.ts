@@ -29,7 +29,7 @@ interface IGraphConfiguration {
   defaultNodeType: NodeType;
   enableHistory: boolean;
   labelSelector: LabelSelector;
-  useForceAtlas2WebWorker?: number;
+  initializeForceAtlas2WebWorker?: boolean;
 }
 
 /**
@@ -54,7 +54,7 @@ const DEFAULT_GRAPH_CONFIGURATION: IGraphConfiguration = {
   defaultNodeType: NodeType.RING,
   enableHistory: false,
   labelSelector: LabelSelector.LEVELS,
-  useForceAtlas2WebWorker: undefined,
+  initializeForceAtlas2WebWorker: false,
 };
 
 export * from "./layouts";

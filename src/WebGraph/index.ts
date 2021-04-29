@@ -52,6 +52,8 @@ import EventEmitter from "events";
  * Events to listen for:
  * - "rendered" | When the graph has been rendered
  * - "syncLayoutCompleted" | When the synchronous calculated layout animation is completed
+ * - "initialFA2wwStarted" | Initial ForceAtlas2 web worker rendering started
+ * - "initialFA2wwCompleted" | Initial ForceAtlas2 web worker rendering completed
  *
  * - "clickNode" | Click on node (mouse button 0 or 1)
  * - "rightClickNode" | Right click on node (mouse button 2)
@@ -209,13 +211,14 @@ class WebGraph extends EventEmitter {
     this.appState = AppState.ACTIVE;
 
     if (
-      this.configuration.useForceAtlas2WebWorker &&
-      this.configuration.layout === Layout.FORCEATLAS2
+      this.configuration.initializeForceAtlas2WebWorker &&
+      this.configuration.layoutConfiguration.forceAtlas2LayoutOptions
+        ?.initialWebWorkerRuntime
     ) {
-      // use forceatlas2 web worker and also forceatlas2 as layout
+      // initialize ForceAtlas2 Web Worker and also start it
       this.initializeForceAtlas2WebWorker(true);
-    } else if (this.configuration.useForceAtlas2WebWorker) {
-      // use forceatlas2 web worker but another layout initially
+    } else if (this.configuration.initializeForceAtlas2WebWorker) {
+      // initialize ForceAtlas2 Web Worker but don't start it
       this.initializeForceAtlas2WebWorker(false);
 
       this.applyLayout(
@@ -720,7 +723,7 @@ class WebGraph extends EventEmitter {
    *
    * @param [addToHistory] - True by default. Whether the action should be added to the history or not. @defaultValue `true`
    *
-   * @throws Error - If the renderer is not defined or the 'useForceAtlas2WebWorker' is not enabled
+   * @throws Error - If the renderer is not defined or the 'initializeForceAtlas2WebWorker' is not enabled
    *
    * @returns - True if successful
    *
@@ -733,9 +736,9 @@ class WebGraph extends EventEmitter {
       );
     }
 
-    if (!this.configuration.useForceAtlas2WebWorker) {
+    if (!this.configuration.initializeForceAtlas2WebWorker) {
       throw new Error(
-        "ForceAtlas2 web worker was not enabled. Use the 'useForceAtlas2WebWorker' configuration to enable it."
+        "ForceAtlas2 web worker was not enabled. Use the 'initializeForceAtlas2WebWorker' configuration to enable it."
       );
     }
 
@@ -775,7 +778,7 @@ class WebGraph extends EventEmitter {
    *
    * @param [addToHistory] - True by default. Whether the action should be added to the history or not. @defaultValue `true`
    *
-   * @throws Error - If the renderer is not defined or the 'useForceAtlas2WebWorker' is not enabled
+   * @throws Error - If the renderer is not defined or the 'initializeForceAtlas2WebWorker' is not enabled
    *
    * @returns - True if successful
    *
@@ -788,9 +791,9 @@ class WebGraph extends EventEmitter {
       );
     }
 
-    if (!this.configuration.useForceAtlas2WebWorker) {
+    if (!this.configuration.initializeForceAtlas2WebWorker) {
       throw new Error(
-        "ForceAtlas2 web worker was not enabled. Use the 'useForceAtlas2WebWorker' configuration to enable it."
+        "ForceAtlas2 web worker was not enabled. Use the 'initializeForceAtlas2WebWorker' configuration to enable it."
       );
     }
 
@@ -829,7 +832,7 @@ class WebGraph extends EventEmitter {
    *
    * @param [addToHistory] - True by default. Whether the action should be added to the history or not. @defaultValue `true`
    *
-   * @throws Error - If the renderer is not defined or the 'useForceAtlas2WebWorker' is not enabled
+   * @throws Error - If the renderer is not defined or the 'initializeForceAtlas2WebWorker' is not enabled
    *
    * @returns - True if successful
    *
@@ -842,9 +845,9 @@ class WebGraph extends EventEmitter {
       );
     }
 
-    if (!this.configuration.useForceAtlas2WebWorker) {
+    if (!this.configuration.initializeForceAtlas2WebWorker) {
       throw new Error(
-        "ForceAtlas2 web worker was not enabled. Use the 'useForceAtlas2WebWorker' configuration to enable it."
+        "ForceAtlas2 web worker was not enabled. Use the 'initializeForceAtlas2WebWorker' configuration to enable it."
       );
     }
 
@@ -1432,8 +1435,12 @@ class WebGraph extends EventEmitter {
       settings: forceAtlas2LayoutOptions?.settings,
     });
 
-    // if custom layout options are available
-    if (runAfterInitialization && forceAtlas2LayoutOptions) {
+    // if the web worker should be started right after initialization
+    if (
+      runAfterInitialization &&
+      forceAtlas2LayoutOptions &&
+      forceAtlas2LayoutOptions.initialWebWorkerRuntime
+    ) {
       const preAppliedLayout: Layout | undefined =
         forceAtlas2LayoutOptions.preAppliedLayout;
 
@@ -1445,20 +1452,43 @@ class WebGraph extends EventEmitter {
           );
         }
 
-        this.applyLayout(
-          preAppliedLayout,
-          forceAtlas2LayoutOptions.preAppliedLayoutOptions || {},
-          true
-        );
+        switch (preAppliedLayout) {
+          case Layout.RANDOM:
+            random.assign(
+              this.graphData,
+              <RandomLayoutOptions>(
+                forceAtlas2LayoutOptions.preAppliedLayoutOptions
+              ) || {}
+            );
+            break;
+          case Layout.CIRCULAR:
+            circular.assign(
+              this.graphData,
+              <CircularLayoutOptions>(
+                forceAtlas2LayoutOptions.preAppliedLayoutOptions
+              ) || {}
+            );
+            break;
+          case Layout.CIRCLEPACK:
+            circlepack.assign(
+              this.graphData,
+              <CirclePackLayoutOptions>(
+                forceAtlas2LayoutOptions.preAppliedLayoutOptions
+              ) || {}
+            );
+            break;
+        }
       }
 
       this.forceAtlas2WebWorker.start();
       this.isForceAtlas2WebWorkerActive = true;
+      this.emit("initialFA2wwStarted");
 
       setTimeout(() => {
         this.forceAtlas2WebWorker?.stop();
         this.isForceAtlas2WebWorkerActive = false;
-      }, this.configuration.useForceAtlas2WebWorker);
+        this.emit("initialFA2wwCompleted");
+      }, forceAtlas2LayoutOptions.initialWebWorkerRuntime);
     }
   }
 

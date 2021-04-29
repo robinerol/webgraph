@@ -98,11 +98,12 @@ async function drawFullGraph(graphDataJSON: any[]) {
   // initialize and render graph
   webGraph = new WebGraph(webGraphContainer, graph, {
     layout: Layout.FORCEATLAS2,
-    useForceAtlas2WebWorker: 1,
+    initializeForceAtlas2WebWorker: true,
     layoutConfiguration: {
       forceAtlas2LayoutOptions: {
         iterations: DEFAULT_FORCEATLAS2_ITERATIONS,
-        preAppliedLayout: Layout.CIRCLEPACK,
+        initialWebWorkerRuntime: undefined,
+        preAppliedLayout: Layout.CIRCULAR,
         settings: {
           edgeWeightInfluence: 2.0,
           barnesHutOptimize: true,
@@ -224,6 +225,10 @@ async function drawFullGraph(graphDataJSON: any[]) {
 
   webGraph.on("rendered", () => console.log("graph rendered"));
   webGraph.on("syncLayoutCompleted", () => console.log("syncLayoutCompleted"));
+  webGraph.on("initialFA2wwStarted", () => console.log("initialFA2wwStarted"));
+  webGraph.on("initialFA2wwCompleted", () =>
+    console.log("initialFA2wwCompleted")
+  );
 
   webGraph.on("clickNode", (e) => console.log("clickNode: ", e));
   webGraph.on("rightClickNode", (e) => console.log("rightClickNode: ", e));
@@ -299,7 +304,7 @@ function drawGraph(json: any[], baseUrl: string): void {
           callback: (key: string) => loadNNodes(5, key, baseUrl),
         },
         {
-          label: "Load 10 Node",
+          label: "Load 10 Nodes",
           callback: (key: string) => loadNNodes(10, key, baseUrl),
         },
       ],
@@ -308,7 +313,18 @@ function drawGraph(json: any[], baseUrl: string): void {
 
   webGraph = new WebGraph(webGraphContainer, graph, {
     layout: Layout.CIRCLEPACK,
-    useForceAtlas2WebWorker: 1,
+    layoutConfiguration: {
+      forceAtlas2LayoutOptions: {
+        iterations: 0,
+        initialWebWorkerRuntime: 100,
+        preAppliedLayout: Layout.CIRCULAR,
+        settings: {
+          edgeWeightInfluence: 2.0,
+          barnesHutOptimize: true,
+        },
+      },
+    },
+    initializeForceAtlas2WebWorker: true,
     contextMenus: contextMenus,
   });
 

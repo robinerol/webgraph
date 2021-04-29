@@ -67,13 +67,14 @@ type PredefinedLayoutOptions = Record<string, never>;
  * Interface extending the {@link ForceAtlas2LayoutOptions} by a [preAppliedLayout],
  * which is defining the {@link Layout} that should be applied before applying the
  * {@link Layout.FORCEATLAS2}. A matching {@link ILayoutConfiguration} for the pre-applied
- * layout can be provided too.
+ * layout can be provided too. Also the runtime for the webworker is passed here.
  *
  * {@label IExtendedForceAtlas2LayoutOptions}
  */
 interface IExtendedForceAtlas2LayoutOptions extends ForceAtlas2LayoutOptions {
   preAppliedLayout?: Layout;
   preAppliedLayoutOptions?: ILayoutConfiguration;
+  initialWebWorkerRuntime?: number;
 }
 
 /**
