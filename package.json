@@ -41,7 +41,7 @@
     "graphology": "^0.19.3",
     "graphology-layout": "^0.4.0",
     "graphology-layout-forceatlas2": "^0.6.0",
-    "sigma": "git+https://github.com/robinerol/sigma.js/tree/v2"
+    "sigma": "robinerol/sigma.js#v2"
   },
   "devDependencies": {
     "@types/jest": "^26.0.20",
